@@ -1,0 +1,15 @@
+{
+    "name": "Currency",
+    "alias": "currency",
+    "description": "Multi-currency support with exchange rates",
+    "version": "1.0.0",
+    "keywords": ["currency", "exchange", "money", "rates"],
+    "priority": 12,
+    "enabled": true,
+    "providers": [
+        "Modules\\Currency\\Providers\\CurrencyServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core"]
+}

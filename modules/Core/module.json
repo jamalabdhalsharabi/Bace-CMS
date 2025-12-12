@@ -1,0 +1,15 @@
+{
+    "name": "Core",
+    "alias": "core",
+    "description": "Core module providing base classes, traits, and shared functionality",
+    "version": "1.0.0",
+    "keywords": ["core", "base", "foundation"],
+    "priority": 1,
+    "enabled": true,
+    "providers": [
+        "Modules\\Core\\Providers\\CoreServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": []
+}

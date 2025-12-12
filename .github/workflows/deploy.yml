@@ -1,0 +1,37 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+
+      - name: Build assets
+        run: |
+          npm ci
+          npm run build
+
+      - name: Deploy to production
+        uses: deployphp/action@v1
+        with:
+          deployer-version: "7.3.0"
+          private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          dep: deploy production
+        env:
+          DOT_ENV: ${{ secrets.DOT_ENV }}

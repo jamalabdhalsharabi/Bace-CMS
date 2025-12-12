@@ -1,0 +1,15 @@
+{
+    "name": "Auth",
+    "alias": "auth",
+    "description": "Authentication and authorization module with roles and permissions",
+    "version": "1.0.0",
+    "keywords": ["auth", "roles", "permissions", "acl"],
+    "priority": 6,
+    "enabled": true,
+    "providers": [
+        "Modules\\Auth\\Providers\\AuthServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "users"]
+}

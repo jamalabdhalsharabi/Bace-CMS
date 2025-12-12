@@ -1,0 +1,58 @@
+<?php
+
+use PhpCsFixer\Config;
+use PhpCsFixer\Finder;
+
+$finder = Finder::create()
+    ->in([
+        __DIR__ . '/app',
+        __DIR__ . '/modules',
+        __DIR__ . '/config',
+        __DIR__ . '/database',
+        __DIR__ . '/routes',
+        __DIR__ . '/tests',
+    ])
+    ->name('*.php')
+    ->notName('*.blade.php')
+    ->ignoreDotFiles(true)
+    ->ignoreVCS(true);
+
+return (new Config())
+    ->setRules([
+        '@PSR12' => true,
+        'array_syntax' => ['syntax' => 'short'],
+        'ordered_imports' => ['sort_algorithm' => 'alpha'],
+        'no_unused_imports' => true,
+        'not_operator_with_successor_space' => true,
+        'trailing_comma_in_multiline' => true,
+        'phpdoc_scalar' => true,
+        'unary_operator_spaces' => true,
+        'binary_operator_spaces' => true,
+        'blank_line_before_statement' => [
+            'statements' => ['break', 'continue', 'declare', 'return', 'throw', 'try'],
+        ],
+        'phpdoc_single_line_var_spacing' => true,
+        'phpdoc_var_without_name' => true,
+        'class_attributes_separation' => [
+            'elements' => [
+                'method' => 'one',
+            ],
+        ],
+        'method_argument_space' => [
+            'on_multiline' => 'ensure_fully_multiline',
+            'keep_multiple_spaces_after_comma' => true,
+        ],
+        'single_trait_insert_per_statement' => true,
+        'declare_strict_types' => true,
+        'no_superfluous_phpdoc_tags' => [
+            'allow_mixed' => true,
+        ],
+        'fully_qualified_strict_types' => true,
+        'no_alias_functions' => true,
+        'no_mixed_echo_print' => true,
+        'strict_param' => true,
+        'ternary_to_null_coalescing' => true,
+    ])
+    ->setFinder($finder)
+    ->setRiskyAllowed(true)
+    ->setUsingCache(true);

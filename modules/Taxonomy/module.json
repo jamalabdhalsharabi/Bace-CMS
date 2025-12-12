@@ -1,0 +1,15 @@
+{
+    "name": "Taxonomy",
+    "alias": "taxonomy",
+    "description": "Taxonomy management for categories, tags, and custom taxonomies",
+    "version": "1.0.0",
+    "keywords": ["taxonomy", "categories", "tags", "classification"],
+    "priority": 22,
+    "enabled": true,
+    "providers": [
+        "Modules\\Taxonomy\\Providers\\TaxonomyServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "localization"]
+}

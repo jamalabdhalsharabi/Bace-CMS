@@ -1,0 +1,15 @@
+{
+    "name": "Seo",
+    "alias": "seo",
+    "description": "SEO management, meta tags, redirects, and analytics",
+    "version": "1.0.0",
+    "keywords": ["seo", "meta", "redirects", "sitemap"],
+    "priority": 15,
+    "enabled": true,
+    "providers": [
+        "Modules\\Seo\\Providers\\SeoServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core"]
+}

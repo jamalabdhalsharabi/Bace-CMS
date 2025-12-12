@@ -1,0 +1,15 @@
+{
+    "name": "Testimonials",
+    "alias": "testimonials",
+    "description": "Customer testimonials and reviews",
+    "version": "1.0.0",
+    "keywords": ["testimonials", "reviews", "feedback"],
+    "priority": 43,
+    "enabled": true,
+    "providers": [
+        "Modules\\Testimonials\\Providers\\TestimonialsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "media", "localization"]
+}

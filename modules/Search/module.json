@@ -1,0 +1,15 @@
+{
+    "name": "Search",
+    "alias": "search",
+    "description": "Full-text search module with multiple engine support",
+    "version": "1.0.0",
+    "keywords": ["search", "fulltext", "meilisearch", "indexing"],
+    "priority": 30,
+    "enabled": true,
+    "providers": [
+        "Modules\\Search\\Providers\\SearchServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core"]
+}

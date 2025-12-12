@@ -1,0 +1,15 @@
+{
+    "name": "Menu",
+    "alias": "menu",
+    "description": "Navigation menu management with nested items",
+    "version": "1.0.0",
+    "keywords": ["menu", "navigation", "links"],
+    "priority": 25,
+    "enabled": true,
+    "providers": [
+        "Modules\\Menu\\Providers\\MenuServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "localization"]
+}

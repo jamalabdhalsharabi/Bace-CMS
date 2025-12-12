@@ -1,0 +1,61 @@
+name: Minimal
+description: Minimal CMS configuration for simple websites
+version: 1.0.0
+
+features:
+  # Core Features
+  multi_language: false
+  multi_currency: false
+  media_library: true
+
+  # Content Features
+  articles: false
+  pages: true
+  services: false
+  portfolio: false
+  products: false
+  events: false
+
+  # Interactive Features
+  comments: false
+  forms: true
+  newsletter: false
+
+  # Advanced Features
+  search: false
+  analytics: false
+  seo: true
+  revisions: false
+  notifications: false
+
+  # API Features
+  api: false
+  api_docs: false
+
+  # Admin Features
+  admin_dashboard: true
+  activity_log: false
+  user_management: true
+  role_permissions: false
+
+modules:
+  core: true
+  users: true
+  auth: true
+  media: true
+  localization: false
+  currency: false
+  content: true
+  taxonomy: false
+  menu: true
+  search: false
+  forms: true
+  comments: false
+  notifications: false
+  analytics: false
+  settings: true
+
+settings:
+  app.timezone: UTC
+  app.locale: en
+  core.pagination.per_page: 10

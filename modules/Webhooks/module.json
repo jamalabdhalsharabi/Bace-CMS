@@ -1,0 +1,15 @@
+{
+    "name": "Webhooks",
+    "alias": "webhooks",
+    "description": "Webhook management and logging",
+    "version": "1.0.0",
+    "keywords": ["webhooks", "integration", "api"],
+    "priority": 50,
+    "enabled": true,
+    "providers": [
+        "Modules\\Webhooks\\Providers\\WebhooksServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core"]
+}

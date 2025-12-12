@@ -1,0 +1,15 @@
+{
+    "name": "Pricing",
+    "alias": "pricing",
+    "description": "Pricing plans, subscriptions, and coupons management",
+    "version": "1.0.0",
+    "keywords": ["pricing", "plans", "subscriptions", "coupons"],
+    "priority": 45,
+    "enabled": true,
+    "providers": [
+        "Modules\\Pricing\\Providers\\PricingServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "users", "currency", "localization"]
+}

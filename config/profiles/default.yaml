@@ -1,0 +1,62 @@
+name: Default
+description: Default CMS configuration with all standard features enabled
+version: 1.0.0
+
+features:
+  # Core Features
+  multi_language: true
+  multi_currency: true
+  media_library: true
+
+  # Content Features
+  articles: true
+  pages: true
+  services: true
+  portfolio: false
+  products: false
+  events: false
+
+  # Interactive Features
+  comments: true
+  forms: true
+  newsletter: true
+
+  # Advanced Features
+  search: true
+  analytics: true
+  seo: true
+  revisions: true
+  notifications: true
+
+  # API Features
+  api: true
+  api_docs: true
+
+  # Admin Features
+  admin_dashboard: true
+  activity_log: true
+  user_management: true
+  role_permissions: true
+
+modules:
+  core: true
+  users: true
+  auth: true
+  media: true
+  localization: true
+  currency: true
+  content: true
+  taxonomy: true
+  menu: true
+  search: true
+  forms: true
+  comments: true
+  notifications: true
+  analytics: true
+  settings: true
+
+settings:
+  app.timezone: UTC
+  app.locale: en
+  app.fallback_locale: en
+  core.pagination.per_page: 15
