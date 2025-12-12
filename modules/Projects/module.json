@@ -1,0 +1,15 @@
+{
+    "name": "Projects",
+    "alias": "projects",
+    "description": "Portfolio and case studies management",
+    "version": "1.0.0",
+    "keywords": ["projects", "portfolio", "case-studies"],
+    "priority": 41,
+    "enabled": true,
+    "providers": [
+        "Modules\\Projects\\Providers\\ProjectsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "media", "localization"]
+}

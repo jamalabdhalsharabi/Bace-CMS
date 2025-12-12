@@ -1,0 +1,15 @@
+{
+    "name": "Services",
+    "alias": "services",
+    "description": "Services management with workflow, revisions, and translations",
+    "version": "1.0.0",
+    "keywords": ["services", "workflow", "revisions"],
+    "priority": 35,
+    "enabled": true,
+    "providers": [
+        "Modules\\Services\\Providers\\ServicesServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "media", "taxonomy", "localization", "search"]
+}

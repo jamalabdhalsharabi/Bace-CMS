@@ -1,0 +1,15 @@
+{
+    "name": "StaticBlocks",
+    "alias": "static-blocks",
+    "description": "Reusable content blocks and widgets",
+    "version": "1.0.0",
+    "keywords": ["blocks", "widgets", "sections"],
+    "priority": 44,
+    "enabled": true,
+    "providers": [
+        "Modules\\StaticBlocks\\Providers\\StaticBlocksServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "localization"]
+}

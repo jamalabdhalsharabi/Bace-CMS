@@ -1,0 +1,15 @@
+{
+    "name": "Events",
+    "alias": "events",
+    "description": "Events and tickets management",
+    "version": "1.0.0",
+    "keywords": ["events", "tickets", "registrations"],
+    "priority": 42,
+    "enabled": true,
+    "providers": [
+        "Modules\\Events\\Providers\\EventsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "media", "localization", "users"]
+}

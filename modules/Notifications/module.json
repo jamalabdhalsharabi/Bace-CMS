@@ -1,0 +1,15 @@
+{
+    "name": "Notifications",
+    "alias": "notifications",
+    "description": "In-app and email notifications system",
+    "version": "1.0.0",
+    "keywords": ["notifications", "alerts", "email"],
+    "priority": 37,
+    "enabled": true,
+    "providers": [
+        "Modules\\Notifications\\Providers\\NotificationsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "users"]
+}

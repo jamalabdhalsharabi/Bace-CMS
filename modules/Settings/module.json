@@ -1,0 +1,15 @@
+{
+    "name": "Settings",
+    "alias": "settings",
+    "description": "System settings and configuration management",
+    "version": "1.0.0",
+    "keywords": ["settings", "configuration", "options"],
+    "priority": 5,
+    "enabled": true,
+    "providers": [
+        "Modules\\Settings\\Providers\\SettingsServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core"]
+}

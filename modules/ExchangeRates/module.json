@@ -1,0 +1,15 @@
+{
+    "name": "ExchangeRates",
+    "alias": "exchange-rates",
+    "description": "Exchange rates management with API sync and history",
+    "version": "1.0.0",
+    "keywords": ["exchange", "rates", "currency", "conversion"],
+    "priority": 13,
+    "enabled": true,
+    "providers": [
+        "Modules\\ExchangeRates\\Providers\\ExchangeRatesServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "currency"]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "Content",
+    "alias": "content",
+    "description": "Content management module for articles, pages, and services",
+    "version": "1.0.0",
+    "keywords": ["content", "articles", "pages", "services", "cms"],
+    "priority": 20,
+    "enabled": true,
+    "providers": [
+        "Modules\\Content\\Providers\\ContentServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core", "users", "media", "localization"]
+}

@@ -1,0 +1,15 @@
+{
+    "name": "Localization",
+    "alias": "localization",
+    "description": "Multi-language support and translation management",
+    "version": "1.0.0",
+    "keywords": ["localization", "languages", "translations", "i18n"],
+    "priority": 8,
+    "enabled": true,
+    "providers": [
+        "Modules\\Localization\\Providers\\LocalizationServiceProvider"
+    ],
+    "aliases": {},
+    "files": [],
+    "dependencies": ["core"]
+}
