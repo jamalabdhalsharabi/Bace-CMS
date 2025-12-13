@@ -5,82 +5,101 @@ declare(strict_types=1);
 namespace Modules\Content\Domain\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Core\Traits\HasMedia;
-use Modules\Core\Traits\HasOrdering;
-use Modules\Core\Traits\HasStatus;
 
 /**
- * Class Page
+ * Page Model - Represents static pages with hierarchical structure.
  *
- * Eloquent model representing a CMS page with translations,
- * hierarchy, and publishing capabilities.
+ * This model handles CMS pages with parent-child relationships,
+ * multi-language support, custom templates, and page builder sections.
  *
- * @package Modules\Content\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $status Publication status (draft, pending, published, archived)
+ * @property bool $is_homepage Whether this is the site homepage
+ * @property bool $is_system Whether this is a protected system page
+ * @property string $template Page template to use for rendering
+ * @property string|null $parent_id Foreign key to parent page
+ * @property int $depth Nesting depth in page hierarchy (0 = root)
+ * @property string|null $path Full path from root (e.g., 'about/team')
+ * @property int $sort_order Display order among siblings
+ * @property int $version Content version number
+ * @property \Carbon\Carbon|null $published_at Publication date/time
+ * @property \Carbon\Carbon|null $scheduled_at Scheduled publication date
+ * @property string $created_by UUID of user who created the page
+ * @property string|null $updated_by UUID of user who last updated
+ * @property string|null $deleted_by UUID of user who deleted
+ * @property array|null $sections Page builder sections as JSON
+ * @property array|null $meta Additional metadata as JSON
+ * @property array|null $settings Page-specific settings as JSON
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ * @property \Carbon\Carbon|null $deleted_at Soft delete timestamp
  *
- * @property string $id
- * @property string|null $parent_id
- * @property string|null $author_id
- * @property string|null $featured_image_id
- * @property string|null $template
- * @property string $status
- * @property bool $is_homepage
- * @property int $ordering
- * @property \Carbon\Carbon|null $published_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property \Carbon\Carbon|null $deleted_at
+ * @property-read Page|null $parent Parent page
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Page> $children Child pages
+ * @property-read \App\Models\User $creator User who created the page
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, PageTranslation> $translations All translations
+ * @property-read PageTranslation|null $translation Current locale translation
+ * @property-read string|null $title Localized title (accessor)
+ * @property-read string|null $slug Localized slug (accessor)
  *
- * @property-read Page|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection|Page[] $children
- * @property-read \Illuminate\Database\Eloquent\Collection|PageTranslation[] $translations
- * @property-read PageTranslation|null $translation
- * @property-read string|null $title
- * @property-read string|null $slug
- * @property-read string|null $content
- * @property-read string $full_slug
- * @property-read string $url
+ * @method static \Illuminate\Database\Eloquent\Builder|Page published() Filter published pages
+ * @method static \Illuminate\Database\Eloquent\Builder|Page root() Filter root-level pages
+ * @method static \Illuminate\Database\Eloquent\Builder|Page newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Page newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Page query()
  */
 class Page extends Model
 {
-    use HasFactory;
     use HasUuids;
     use SoftDeletes;
-    use HasStatus;
-    use HasMedia;
-    use HasOrdering;
 
     protected $table = 'pages';
 
     protected $fillable = [
-        'parent_id',
-        'author_id',
-        'featured_image_id',
-        'template',
         'status',
         'is_homepage',
-        'ordering',
+        'is_system',
+        'template',
+        'parent_id',
+        'depth',
+        'path',
+        'sort_order',
+        'version',
         'published_at',
+        'scheduled_at',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+        'sections',
+        'meta',
+        'settings',
     ];
 
-    protected $casts = [
-        'is_homepage' => 'boolean',
-        'ordering' => 'integer',
-        'published_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'is_homepage' => 'boolean',
+            'is_system' => 'boolean',
+            'depth' => 'integer',
+            'sort_order' => 'integer',
+            'version' => 'integer',
+            'published_at' => 'datetime',
+            'scheduled_at' => 'datetime',
+            'sections' => 'array',
+            'meta' => 'array',
+            'settings' => 'array',
+        ];
+    }
 
     /**
-     * Define the belongs-to relationship with the parent page.
+     * Get the parent page.
      *
-     * Retrieves the parent Page model for hierarchical navigation.
-     * Returns null for top-level pages with no parent.
-     *
-     * @return BelongsTo The belongs-to relationship instance to Page
+     * @return BelongsTo<Page, Page>
      */
     public function parent(): BelongsTo
     {
@@ -88,51 +107,29 @@ class Page extends Model
     }
 
     /**
-     * Define the has-many relationship with child pages.
+     * Get child pages ordered by sort_order.
      *
-     * Retrieves all direct child pages ordered by their ordering field.
-     * Used for building navigation menus and page hierarchies.
-     *
-     * @return HasMany The has-many relationship instance to Page
+     * @return HasMany<Page>
      */
     public function children(): HasMany
     {
-        return $this->hasMany(self::class, 'parent_id')->ordered();
+        return $this->hasMany(self::class, 'parent_id')->orderBy('sort_order');
     }
 
     /**
-     * Define the belongs-to relationship with the page author.
+     * Get the user who created this page.
      *
-     * Retrieves the User model who created or manages this page.
-     * Used for attribution and permission checking.
-     *
-     * @return BelongsTo The belongs-to relationship instance to User
+     * @return BelongsTo<\App\Models\User, Page>
      */
-    public function author(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model'), 'author_id');
+        return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
     }
 
     /**
-     * Define the belongs-to relationship with the featured image.
+     * Get all translations for this page.
      *
-     * Retrieves the Media model representing the page's hero image
-     * or thumbnail for social sharing and visual display.
-     *
-     * @return BelongsTo The belongs-to relationship instance to Media
-     */
-    public function featuredImage(): BelongsTo
-    {
-        return $this->belongsTo(\Modules\Media\Domain\Models\Media::class, 'featured_image_id');
-    }
-
-    /**
-     * Define the has-many relationship with page translations.
-     *
-     * Retrieves all translation records for this page across
-     * all supported locales including title, content, and SEO fields.
-     *
-     * @return HasMany The has-many relationship instance to PageTranslation
+     * @return HasMany<PageTranslation>
      */
     public function translations(): HasMany
     {
@@ -140,26 +137,19 @@ class Page extends Model
     }
 
     /**
-     * Define the has-one relationship with the current locale translation.
+     * Get the translation for the current locale.
      *
-     * Retrieves the translation record matching the application's
-     * current locale setting for displaying localized content.
-     *
-     * @return HasOne The has-one relationship instance to PageTranslation
+     * @return HasOne<PageTranslation>
      */
     public function translation(): HasOne
     {
-        return $this->hasOne(PageTranslation::class)
-            ->where('locale', app()->getLocale());
+        return $this->hasOne(PageTranslation::class)->where('locale', app()->getLocale());
     }
 
     /**
-     * Accessor for the page's localized title.
+     * Get the localized title.
      *
-     * Returns the title from the current locale translation if available,
-     * otherwise falls back to the first available translation's title.
-     *
-     * @return string|null The localized title or null if no translations exist
+     * @return string|null The page title
      */
     public function getTitleAttribute(): ?string
     {
@@ -167,12 +157,9 @@ class Page extends Model
     }
 
     /**
-     * Accessor for the page's localized URL slug.
+     * Get the localized slug.
      *
-     * Returns the slug from the current locale translation if available,
-     * otherwise falls back to the first available translation's slug.
-     *
-     * @return string|null The localized slug or null if no translations exist
+     * @return string|null The page slug
      */
     public function getSlugAttribute(): ?string
     {
@@ -180,62 +167,10 @@ class Page extends Model
     }
 
     /**
-     * Accessor for the page's localized content.
+     * Scope to filter only published pages.
      *
-     * Returns the HTML content from the current locale translation
-     * for rendering the page body.
-     *
-     * @return string|null The localized content or null if not set
-     */
-    public function getContentAttribute(): ?string
-    {
-        return $this->translation?->content;
-    }
-
-    /**
-     * Accessor for the page's full hierarchical URL slug.
-     *
-     * Builds the complete URL path by traversing up the parent
-     * hierarchy and concatenating all slugs with slashes.
-     * Example: 'about/team/leadership'
-     *
-     * @return string The full hierarchical slug path
-     */
-    public function getFullSlugAttribute(): string
-    {
-        $slugs = [$this->slug];
-        $parent = $this->parent;
-
-        while ($parent) {
-            array_unshift($slugs, $parent->slug);
-            $parent = $parent->parent;
-        }
-
-        return implode('/', $slugs);
-    }
-
-    /**
-     * Accessor for the page's full public URL.
-     *
-     * Generates the complete URL to access this page on the
-     * frontend using the hierarchical slug path.
-     *
-     * @return string The fully qualified URL to the page
-     */
-    public function getUrlAttribute(): string
-    {
-        return url('/' . $this->full_slug);
-    }
-
-    /**
-     * Query scope to filter only published pages.
-     *
-     * Filters pages with 'published' status and where the
-     * published_at date is null or in the past.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     *
-     * @return \Illuminate\Database\Eloquent\Builder The modified query builder
+     * @param \Illuminate\Database\Eloquent\Builder<Page> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Page>
      */
     public function scopePublished($query)
     {
@@ -244,14 +179,10 @@ class Page extends Model
     }
 
     /**
-     * Query scope to filter only top-level pages.
+     * Scope to filter only root-level pages (no parent).
      *
-     * Filters pages that have no parent (root-level pages).
-     * Used for building main navigation menus.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     *
-     * @return \Illuminate\Database\Eloquent\Builder The modified query builder
+     * @param \Illuminate\Database\Eloquent\Builder<Page> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Page>
      */
     public function scopeRoot($query)
     {
@@ -259,32 +190,22 @@ class Page extends Model
     }
 
     /**
-     * Find a page by its translated slug.
+     * Find a page by its localized slug.
      *
-     * Searches for a page with a translation matching the
-     * given slug in the specified locale (or current locale).
-     *
-     * @param string $slug The URL slug to search for
-     * @param string|null $locale The locale to search in, defaults to current
-     *
-     * @return self|null The matching Page or null if not found
+     * @param string $slug The slug to search for
+     * @param string|null $locale The locale (defaults to current)
+     * @return self|null The page or null if not found
      */
     public static function findBySlug(string $slug, ?string $locale = null): ?self
     {
         $locale = $locale ?? app()->getLocale();
-
-        return static::whereHas('translations', fn ($q) => 
-            $q->where('slug', $slug)->where('locale', $locale)
-        )->first();
+        return static::whereHas('translations', fn ($q) => $q->where('slug', $slug)->where('locale', $locale))->first();
     }
 
     /**
-     * Get the homepage of the site.
+     * Get the site homepage.
      *
-     * Retrieves the page marked as homepage that is currently
-     * published. Returns null if no homepage is configured.
-     *
-     * @return self|null The homepage Page or null if not found
+     * @return self|null The homepage or null if not set
      */
     public static function getHomepage(): ?self
     {

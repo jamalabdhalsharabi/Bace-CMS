@@ -5,54 +5,64 @@ declare(strict_types=1);
 namespace Modules\Content\Domain\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Modules\Core\Traits\HasMedia;
-use Modules\Core\Traits\HasRevisions;
-use Modules\Core\Traits\HasStatus;
 
 /**
- * Class Article
+ * Article Model - Represents blog posts, news, and other article content.
  *
- * Eloquent model representing a blog article or news post
- * with translations, revisions, and publishing capabilities.
+ * This model handles various types of articles with multi-language support,
+ * featuring, pinning, comments, and comprehensive SEO capabilities.
  *
- * @package Modules\Content\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $author_id Foreign key to the article author
+ * @property string|null $featured_image_id Foreign key to featured image in media table
+ * @property string $type Article type (e.g., 'post', 'news', 'blog')
+ * @property string $status Publication status (draft, pending, published, archived)
+ * @property bool $is_featured Whether article is featured/highlighted
+ * @property bool $is_pinned Whether article is pinned to top
+ * @property string|null $pin_position Pin position (top, category, etc.)
+ * @property \Carbon\Carbon|null $pin_expires_at When pin status expires
+ * @property bool $allow_comments Whether comments are allowed
+ * @property \Carbon\Carbon|null $comments_closed_at When comments were closed
+ * @property int $view_count Total view count
+ * @property int $comment_count Cached comment count
+ * @property int $reading_time Estimated reading time in minutes
+ * @property int|null $word_count Total word count
+ * @property int $version Content version number
+ * @property \Carbon\Carbon|null $published_at Publication date/time
+ * @property \Carbon\Carbon|null $scheduled_at Scheduled publication date
+ * @property string $created_by UUID of user who created the article
+ * @property string|null $updated_by UUID of user who last updated
+ * @property string|null $deleted_by UUID of user who deleted
+ * @property array|null $meta Additional metadata as JSON
+ * @property array|null $settings Article-specific settings as JSON
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ * @property \Carbon\Carbon|null $deleted_at Soft delete timestamp
  *
- * @property string $id
- * @property string|null $author_id
- * @property string|null $featured_image_id
- * @property string|null $type
- * @property string $status
- * @property bool $is_featured
- * @property bool $is_commentable
- * @property int $view_count
- * @property int|null $reading_time
- * @property \Carbon\Carbon|null $published_at
- * @property \Carbon\Carbon $created_at
- * @property \Carbon\Carbon $updated_at
- * @property \Carbon\Carbon|null $deleted_at
+ * @property-read \App\Models\User $author Article author
+ * @property-read \App\Models\User $creator User who created the record
+ * @property-read \Modules\Media\Domain\Models\Media|null $featuredImage Featured image
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ArticleTranslation> $translations All translations
+ * @property-read ArticleTranslation|null $translation Current locale translation
+ * @property-read string|null $title Localized title (accessor)
+ * @property-read string|null $slug Localized slug (accessor)
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|ArticleTranslation[] $translations
- * @property-read ArticleTranslation|null $translation
- * @property-read string|null $title
- * @property-read string|null $slug
- * @property-read string|null $excerpt
- * @property-read string|null $content
- * @property-read string $url
+ * @method static \Illuminate\Database\Eloquent\Builder|Article published() Filter published articles
+ * @method static \Illuminate\Database\Eloquent\Builder|Article featured() Filter featured articles
+ * @method static \Illuminate\Database\Eloquent\Builder|Article ofType(string $type) Filter by article type
+ * @method static \Illuminate\Database\Eloquent\Builder|Article newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Article newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Article query()
  */
 class Article extends Model
 {
-    use HasFactory;
     use HasUuids;
     use SoftDeletes;
-    use HasStatus;
-    use HasMedia;
-    use HasRevisions;
 
     protected $table = 'articles';
 
@@ -62,29 +72,49 @@ class Article extends Model
         'type',
         'status',
         'is_featured',
-        'is_commentable',
+        'is_pinned',
+        'pin_position',
+        'pin_expires_at',
+        'allow_comments',
+        'comments_closed_at',
         'view_count',
+        'comment_count',
         'reading_time',
+        'word_count',
+        'version',
         'published_at',
+        'scheduled_at',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+        'meta',
+        'settings',
     ];
 
-    protected $casts = [
-        'is_featured' => 'boolean',
-        'is_commentable' => 'boolean',
-        'view_count' => 'integer',
-        'reading_time' => 'integer',
-        'published_at' => 'datetime',
-    ];
-
-    protected array $translatable = ['title', 'slug', 'excerpt', 'content'];
+    protected function casts(): array
+    {
+        return [
+            'is_featured' => 'boolean',
+            'is_pinned' => 'boolean',
+            'allow_comments' => 'boolean',
+            'view_count' => 'integer',
+            'comment_count' => 'integer',
+            'reading_time' => 'integer',
+            'word_count' => 'integer',
+            'version' => 'integer',
+            'published_at' => 'datetime',
+            'scheduled_at' => 'datetime',
+            'pin_expires_at' => 'datetime',
+            'comments_closed_at' => 'datetime',
+            'meta' => 'array',
+            'settings' => 'array',
+        ];
+    }
 
     /**
-     * Define the belongs-to relationship with the article's author.
+     * Get the article author.
      *
-     * Retrieves the User model who created this article. The author
-     * is responsible for the content and can edit the article.
-     *
-     * @return BelongsTo The belongs-to relationship instance to the User model
+     * @return BelongsTo<\App\Models\User, Article>
      */
     public function author(): BelongsTo
     {
@@ -92,12 +122,19 @@ class Article extends Model
     }
 
     /**
-     * Define the belongs-to relationship with the featured image.
+     * Get the user who created the article.
      *
-     * Retrieves the Media model representing the article's main
-     * featured image used for thumbnails and social sharing.
+     * @return BelongsTo<\App\Models\User, Article>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
+    }
+
+    /**
+     * Get the article's featured image.
      *
-     * @return BelongsTo The belongs-to relationship instance to Media model
+     * @return BelongsTo<\Modules\Media\Domain\Models\Media, Article>
      */
     public function featuredImage(): BelongsTo
     {
@@ -105,12 +142,9 @@ class Article extends Model
     }
 
     /**
-     * Define the has-many relationship with article translations.
+     * Get all translations for this article.
      *
-     * Retrieves all translation records for this article across
-     * all supported locales including title, content, and SEO fields.
-     *
-     * @return HasMany The has-many relationship instance to ArticleTranslation
+     * @return HasMany<ArticleTranslation>
      */
     public function translations(): HasMany
     {
@@ -118,26 +152,21 @@ class Article extends Model
     }
 
     /**
-     * Define the has-one relationship with the current locale translation.
+     * Get the translation for the current locale.
      *
-     * Retrieves the translation record matching the application's
-     * current locale setting for displaying localized content.
-     *
-     * @return HasOne The has-one relationship instance to ArticleTranslation
+     * @return HasOne<ArticleTranslation>
      */
     public function translation(): HasOne
     {
-        return $this->hasOne(ArticleTranslation::class)
-            ->where('locale', app()->getLocale());
+        return $this->hasOne(ArticleTranslation::class)->where('locale', app()->getLocale());
     }
 
     /**
-     * Accessor for the article's localized title.
+     * Get the localized title.
      *
-     * Returns the title from the current locale translation if available,
-     * otherwise falls back to the first available translation's title.
+     * Returns current locale title, falling back to first available translation.
      *
-     * @return string|null The localized title or null if no translations exist
+     * @return string|null The article title
      */
     public function getTitleAttribute(): ?string
     {
@@ -145,12 +174,11 @@ class Article extends Model
     }
 
     /**
-     * Accessor for the article's localized URL slug.
+     * Get the localized slug.
      *
-     * Returns the slug from the current locale translation if available,
-     * otherwise falls back to the first available translation's slug.
+     * Returns current locale slug, falling back to first available translation.
      *
-     * @return string|null The localized slug or null if no translations exist
+     * @return string|null The article slug
      */
     public function getSlugAttribute(): ?string
     {
@@ -158,82 +186,12 @@ class Article extends Model
     }
 
     /**
-     * Accessor for the article's localized excerpt.
+     * Scope to filter only published articles.
      *
-     * Returns the short summary/excerpt from the current locale
-     * translation for use in article listings and previews.
+     * Filters articles with 'published' status and publication date in the past.
      *
-     * @return string|null The localized excerpt or null if not set
-     */
-    public function getExcerptAttribute(): ?string
-    {
-        return $this->translation?->excerpt;
-    }
-
-    /**
-     * Accessor for the article's localized main content.
-     *
-     * Returns the full HTML content from the current locale
-     * translation for displaying the article body.
-     *
-     * @return string|null The localized content or null if not set
-     */
-    public function getContentAttribute(): ?string
-    {
-        return $this->translation?->content;
-    }
-
-    /**
-     * Accessor for the article's full public URL.
-     *
-     * Generates the complete URL path to view this article
-     * on the frontend using the localized slug.
-     *
-     * @return string The fully qualified URL to the article
-     */
-    public function getUrlAttribute(): string
-    {
-        return url('/articles/' . $this->slug);
-    }
-
-    /**
-     * Increment the article's view counter.
-     *
-     * Atomically increases the view_count field by one.
-     * Used for tracking article popularity and analytics.
-     *
-     * @return void
-     */
-    public function incrementViewCount(): void
-    {
-        $this->increment('view_count');
-    }
-
-    /**
-     * Calculate the estimated reading time for the article.
-     *
-     * Counts words in the content (excluding HTML tags) and
-     * divides by average reading speed of 200 words per minute.
-     * Returns a minimum of 1 minute.
-     *
-     * @return int Estimated reading time in minutes
-     */
-    public function calculateReadingTime(): int
-    {
-        $wordCount = str_word_count(strip_tags($this->content ?? ''));
-        return max(1, (int) ceil($wordCount / 200));
-    }
-
-    /**
-     * Query scope to filter only published articles.
-     *
-     * Filters articles with 'published' status and where the
-     * published_at date is null or in the past. Excludes
-     * scheduled future articles.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     *
-     * @return \Illuminate\Database\Eloquent\Builder The modified query builder
+     * @param \Illuminate\Database\Eloquent\Builder<Article> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Article>
      */
     public function scopePublished($query)
     {
@@ -242,14 +200,10 @@ class Article extends Model
     }
 
     /**
-     * Query scope to filter only featured articles.
+     * Scope to filter only featured articles.
      *
-     * Filters articles where is_featured flag is true.
-     * Featured articles are highlighted on the homepage or listings.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     *
-     * @return \Illuminate\Database\Eloquent\Builder The modified query builder
+     * @param \Illuminate\Database\Eloquent\Builder<Article> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Article>
      */
     public function scopeFeatured($query)
     {
@@ -257,15 +211,11 @@ class Article extends Model
     }
 
     /**
-     * Query scope to filter articles by content type.
+     * Scope to filter articles by type.
      *
-     * Filters articles matching the specified type such as
-     * 'blog', 'news', 'tutorial', etc.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
+     * @param \Illuminate\Database\Eloquent\Builder<Article> $query
      * @param string $type The article type to filter by
-     *
-     * @return \Illuminate\Database\Eloquent\Builder The modified query builder
+     * @return \Illuminate\Database\Eloquent\Builder<Article>
      */
     public function scopeOfType($query, string $type)
     {
@@ -273,39 +223,15 @@ class Article extends Model
     }
 
     /**
-     * Query scope to filter articles by author.
+     * Find an article by its localized slug.
      *
-     * Filters articles created by the specified author user ID.
-     * Useful for author profile pages and filtering.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query The query builder instance
-     * @param string $authorId The UUID of the author to filter by
-     *
-     * @return \Illuminate\Database\Eloquent\Builder The modified query builder
-     */
-    public function scopeByAuthor($query, string $authorId)
-    {
-        return $query->where('author_id', $authorId);
-    }
-
-    /**
-     * Find an article by its translated slug.
-     *
-     * Searches for an article with a translation matching the
-     * given slug in the specified locale (or current locale).
-     * Returns null if no matching article is found.
-     *
-     * @param string $slug The URL slug to search for
-     * @param string|null $locale The locale to search in, defaults to current locale
-     *
-     * @return self|null The matching Article or null if not found
+     * @param string $slug The slug to search for
+     * @param string|null $locale The locale to search in (defaults to current)
+     * @return self|null The article or null if not found
      */
     public static function findBySlug(string $slug, ?string $locale = null): ?self
     {
         $locale = $locale ?? app()->getLocale();
-
-        return static::whereHas('translations', fn ($q) => 
-            $q->where('slug', $slug)->where('locale', $locale)
-        )->first();
+        return static::whereHas('translations', fn ($q) => $q->where('slug', $slug)->where('locale', $locale))->first();
     }
 }

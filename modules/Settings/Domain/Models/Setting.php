@@ -8,19 +8,23 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
 /**
- * Class Setting
+ * Setting Model - Stores application configuration settings.
  *
- * Eloquent model representing a system setting
- * with type casting and group organization.
+ * This model provides key-value storage for application settings
+ * with type casting, grouping, and public/private visibility.
  *
- * @package Modules\Settings\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $group Setting group (e.g., 'general', 'email', 'seo')
+ * @property string $key Unique setting key identifier
+ * @property mixed $value Setting value (auto-cast based on type)
+ * @property string $type Value type (string, boolean, integer, float, array, json)
+ * @property bool $is_public Whether setting is accessible publicly
  *
- * @property string $id
- * @property string $group
- * @property string $key
- * @property mixed $value
- * @property string $type
- * @property bool $is_public
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting group(string $group) Filter by group
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting public() Filter public settings
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Setting query()
  */
 class Setting extends Model
 {
@@ -40,6 +44,12 @@ class Setting extends Model
         'is_public' => 'boolean',
     ];
 
+    /**
+     * Get the setting value with automatic type casting.
+     *
+     * @param string|null $value The raw stored value
+     * @return mixed The cast value based on type
+     */
     public function getValueAttribute($value): mixed
     {
         return match ($this->type) {
@@ -51,6 +61,12 @@ class Setting extends Model
         };
     }
 
+    /**
+     * Set the setting value with automatic serialization.
+     *
+     * @param mixed $value The value to store
+     * @return void
+     */
     public function setValueAttribute($value): void
     {
         $this->attributes['value'] = match ($this->type ?? 'string') {
@@ -60,22 +76,51 @@ class Setting extends Model
         };
     }
 
+    /**
+     * Scope to filter settings by group.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Setting> $query
+     * @param string $group The group name
+     * @return \Illuminate\Database\Eloquent\Builder<Setting>
+     */
     public function scopeGroup($query, string $group)
     {
         return $query->where('group', $group);
     }
 
+    /**
+     * Scope to filter only public settings.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Setting> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Setting>
+     */
     public function scopePublic($query)
     {
         return $query->where('is_public', true);
     }
 
+    /**
+     * Get a setting value by key.
+     *
+     * @param string $key The setting key
+     * @param mixed $default Default value if not found
+     * @return mixed The setting value or default
+     */
     public static function getValue(string $key, mixed $default = null): mixed
     {
         $setting = static::where('key', $key)->first();
         return $setting?->value ?? $default;
     }
 
+    /**
+     * Set a setting value, creating or updating as needed.
+     *
+     * @param string $key The setting key
+     * @param mixed $value The value to store
+     * @param string $group The setting group
+     * @param string $type The value type
+     * @return static The created or updated setting
+     */
     public static function setValue(string $key, mixed $value, string $group = 'general', string $type = 'string'): static
     {
         return static::updateOrCreate(

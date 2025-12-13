@@ -6,29 +6,44 @@ namespace Modules\Auth\Domain\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * Class Role
+ * Role Model - Defines user roles for authorization.
  *
- * Eloquent model representing a user role
- * with permissions management.
+ * This model represents roles in the RBAC (Role-Based Access Control) system.
+ * Roles group permissions together and can be assigned to users.
  *
- * @package Modules\Auth\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $slug Unique URL-friendly identifier (e.g., 'admin', 'editor')
+ * @property string $name Human-readable role name
+ * @property string|null $description Role description for documentation
+ * @property bool $is_system Whether this is a protected system role
+ * @property bool $is_default Whether this role is assigned to new users by default
+ * @property string $guard_name Authentication guard name (default: 'web')
+ * @property string|null $created_by UUID of user who created this role
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
  *
- * @property string $id
- * @property string $slug
- * @property string $name
- * @property string|null $description
- * @property bool $is_system
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Permission> $permissions Assigned permissions
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\User> $users Users with this role
+ * @property-read \App\Models\User|null $creator User who created this role
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|Permission[] $permissions
- * @property-read \Illuminate\Database\Eloquent\Collection $users
+ * @method static \Illuminate\Database\Eloquent\Builder|Role nonSystem() Exclude system roles
+ * @method static \Illuminate\Database\Eloquent\Builder|Role newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Role newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Role query()
  */
 class Role extends Model
 {
     use HasUuids;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'roles';
 
     protected $fillable = [
@@ -36,14 +51,38 @@ class Role extends Model
         'name',
         'description',
         'is_system',
-    ];
-
-    protected $casts = [
-        'is_system' => 'boolean',
+        'is_default',
+        'guard_name',
+        'created_by',
     ];
 
     /**
-     * Get permissions for this role.
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'is_system' => 'boolean',
+            'is_default' => 'boolean',
+        ];
+    }
+
+    /**
+     * Get the user who created this role.
+     *
+     * @return BelongsTo<\App\Models\User, Role>
+     */
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
+    }
+
+    /**
+     * Get all permissions assigned to this role.
+     *
+     * @return BelongsToMany<Permission>
      */
     public function permissions(): BelongsToMany
     {
@@ -51,7 +90,9 @@ class Role extends Model
     }
 
     /**
-     * Get users with this role.
+     * Get all users who have this role.
+     *
+     * @return BelongsToMany<\App\Models\User>
      */
     public function users(): BelongsToMany
     {
@@ -64,7 +105,10 @@ class Role extends Model
     }
 
     /**
-     * Check if role has permission.
+     * Check if this role has a specific permission.
+     *
+     * @param string $permission Permission slug to check
+     * @return bool True if role has the permission
      */
     public function hasPermission(string $permission): bool
     {
@@ -72,7 +116,12 @@ class Role extends Model
     }
 
     /**
-     * Give permission to role.
+     * Assign a permission to this role.
+     *
+     * @param Permission|string $permission Permission instance or slug
+     * @return self Returns self for method chaining
+     *
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException If permission slug not found
      */
     public function givePermission(Permission|string $permission): self
     {
@@ -86,7 +135,10 @@ class Role extends Model
     }
 
     /**
-     * Revoke permission from role.
+     * Remove a permission from this role.
+     *
+     * @param Permission|string $permission Permission instance or slug
+     * @return self Returns self for method chaining
      */
     public function revokePermission(Permission|string $permission): self
     {
@@ -102,7 +154,10 @@ class Role extends Model
     }
 
     /**
-     * Sync permissions.
+     * Replace all permissions with the given set.
+     *
+     * @param array<string> $permissions Array of permission slugs
+     * @return self Returns self for method chaining
      */
     public function syncPermissions(array $permissions): self
     {
@@ -113,7 +168,9 @@ class Role extends Model
     }
 
     /**
-     * Check if is super admin role.
+     * Check if this is the super admin role.
+     *
+     * @return bool True if this is the super admin role
      */
     public function isSuperAdmin(): bool
     {
@@ -121,7 +178,10 @@ class Role extends Model
     }
 
     /**
-     * Scope: Exclude system roles.
+     * Scope to exclude system-protected roles.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Role> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Role>
      */
     public function scopeNonSystem($query)
     {
@@ -129,7 +189,10 @@ class Role extends Model
     }
 
     /**
-     * Find role by slug.
+     * Find a role by its unique slug.
+     *
+     * @param string $slug The role slug to search for
+     * @return self|null The role or null if not found
      */
     public static function findBySlug(string $slug): ?self
     {
