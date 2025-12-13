@@ -11,6 +11,34 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Modules\Core\Traits\HasOrdering;
 
+/**
+ * Class MenuItem
+ *
+ * Eloquent model representing a navigation menu item
+ * with hierarchy, linkable polymorphism, and translations.
+ *
+ * @package Modules\Menu\Domain\Models
+ *
+ * @property string $id
+ * @property string $menu_id
+ * @property string|null $parent_id
+ * @property string $type
+ * @property string|null $linkable_id
+ * @property string|null $linkable_type
+ * @property array $title
+ * @property string|null $url
+ * @property string $target
+ * @property string|null $icon
+ * @property string|null $css_class
+ * @property int $ordering
+ * @property bool $is_active
+ * @property array|null $conditions
+ *
+ * @property-read Menu $menu
+ * @property-read MenuItem|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection|MenuItem[] $children
+ * @property-read Model|null $linkable
+ */
 class MenuItem extends Model
 {
     use HasUuids;

@@ -7,8 +7,26 @@ namespace Modules\Core\Traits;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
+/**
+ * Trait HasCloning
+ * 
+ * Provides model cloning/duplication functionality for Eloquent models.
+ * Handles translations, relations, and unique slug generation.
+ * 
+ * @package Modules\Core\Traits
+ * 
+ * @property array $excludeFromClone Attributes to exclude when cloning
+ * @property array $cloneableRelations Relations to clone with the model
+ */
 trait HasCloning
 {
+    /**
+     * Create a duplicate of this model.
+     * Clones the model with its translations and specified relations.
+     *
+     * @param string|null $newSlug Optional custom slug for the clone
+     * @return static The cloned model
+     */
     public function duplicate(?string $newSlug = null): static
     {
         return DB::transaction(function () use ($newSlug) {

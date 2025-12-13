@@ -9,6 +9,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Currency\Domain\Models\Currency;
 
+/**
+ * Class RateAlert
+ *
+ * Eloquent model representing a user-defined exchange rate alert
+ * with threshold conditions and notification tracking.
+ *
+ * @package Modules\ExchangeRates\Domain\Models
+ *
+ * @property string $id
+ * @property string $user_id
+ * @property string $base_currency_id
+ * @property string $target_currency_id
+ * @property string $condition
+ * @property float $threshold
+ * @property bool $is_active
+ * @property \Carbon\Carbon|null $triggered_at
+ * @property \Carbon\Carbon|null $notified_at
+ *
+ * @property-read \Modules\Users\Domain\Models\User $user
+ * @property-read \Modules\Currency\Domain\Models\Currency $baseCurrency
+ * @property-read \Modules\Currency\Domain\Models\Currency $targetCurrency
+ */
 class RateAlert extends Model
 {
     use HasUuids;

@@ -14,14 +14,41 @@ use Modules\Users\Http\Requests\CreateUserRequest;
 use Modules\Users\Http\Requests\UpdateUserRequest;
 use Modules\Users\Http\Resources\UserResource;
 
+/**
+ * Class UserController
+ * 
+ * API controller for managing users including CRUD,
+ * activation, and suspension.
+ * 
+ * @package Modules\Users\Http\Controllers\Api
+ */
 class UserController extends BaseController
 {
-    public function __construct(
-        protected UserServiceContract $userService
-    ) {}
+    /**
+     * The user service instance for handling user-related business logic.
+     *
+     * @var UserServiceContract
+     */
+    protected UserServiceContract $userService;
 
     /**
-     * List users.
+     * Create a new UserController instance.
+     *
+     * @param UserServiceContract $userService The user service contract implementation
+     */
+    public function __construct(
+        UserServiceContract $userService
+    ) {
+        $this->userService = $userService;
+    }
+
+    /**
+     * Display a paginated listing of users.
+     *
+     * Supports filtering by search term, status, and verification status.
+     *
+     * @param Request $request The incoming HTTP request containing filter parameters
+     * @return JsonResponse Paginated list of users wrapped in UserResource
      */
     public function index(Request $request): JsonResponse
     {
@@ -36,7 +63,10 @@ class UserController extends BaseController
     }
 
     /**
-     * Get single user.
+     * Display the specified user by their UUID.
+     *
+     * @param string $id The UUID of the user to retrieve
+     * @return JsonResponse The user data wrapped in UserResource or 404 error
      */
     public function show(string $id): JsonResponse
     {
@@ -50,7 +80,10 @@ class UserController extends BaseController
     }
 
     /**
-     * Create user.
+     * Store a newly created user in the database.
+     *
+     * @param CreateUserRequest $request The validated request containing user data
+     * @return JsonResponse The newly created user wrapped in UserResource (HTTP 201)
      */
     public function store(CreateUserRequest $request): JsonResponse
     {
@@ -61,7 +94,11 @@ class UserController extends BaseController
     }
 
     /**
-     * Update user.
+     * Update the specified user in the database.
+     *
+     * @param UpdateUserRequest $request The validated request containing updated user data
+     * @param string $id The UUID of the user to update
+     * @return JsonResponse The updated user wrapped in UserResource or 404 error
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
@@ -78,7 +115,10 @@ class UserController extends BaseController
     }
 
     /**
-     * Delete user.
+     * Delete the specified user from the database.
+     *
+     * @param string $id The UUID of the user to delete
+     * @return JsonResponse Success message or 404 error
      */
     public function destroy(string $id): JsonResponse
     {
@@ -94,7 +134,10 @@ class UserController extends BaseController
     }
 
     /**
-     * Activate user.
+     * Activate a user account, enabling their access.
+     *
+     * @param string $id The UUID of the user to activate
+     * @return JsonResponse The activated user or 404 error
      */
     public function activate(string $id): JsonResponse
     {
@@ -110,7 +153,10 @@ class UserController extends BaseController
     }
 
     /**
-     * Suspend user.
+     * Suspend a user account, disabling their access.
+     *
+     * @param string $id The UUID of the user to suspend
+     * @return JsonResponse The suspended user or 404 error
      */
     public function suspend(string $id): JsonResponse
     {

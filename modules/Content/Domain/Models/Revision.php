@@ -9,6 +9,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * Class Revision
+ *
+ * Eloquent model representing a content revision
+ * for version history and change tracking.
+ *
+ * @package Modules\Content\Domain\Models
+ *
+ * @property string $id
+ * @property string $revisionable_id
+ * @property string $revisionable_type
+ * @property string|null $user_id
+ * @property int $revision_number
+ * @property array $data
+ * @property array|null $changes
+ * @property string|null $summary
+ * @property bool $is_auto
+ * @property \Carbon\Carbon $created_at
+ *
+ * @property-read Model $revisionable
+ * @property-read \Modules\Users\Domain\Models\User|null $user
+ */
 class Revision extends Model
 {
     use HasUuids;

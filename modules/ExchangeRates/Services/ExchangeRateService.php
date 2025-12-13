@@ -14,8 +14,20 @@ use Modules\ExchangeRates\Domain\Models\ExchangeRate;
 use Modules\ExchangeRates\Domain\Models\ExchangeRateHistory;
 use Modules\ExchangeRates\Domain\Models\RateAlert;
 
+/**
+ * Class ExchangeRateService
+ * 
+ * Service implementation for managing exchange rates.
+ * Provides functionality for fetching rates from APIs, manual updates,
+ * rate history, alerts, and currency conversion.
+ * 
+ * @package Modules\ExchangeRates\Services
+ */
 class ExchangeRateService implements ExchangeRateServiceContract
 {
+    /**
+     * {@inheritdoc}
+     */
     public function fetchFromApi(?string $provider = null): array
     {
         $provider = $provider ?? config('exchange-rates.default_provider');
@@ -77,17 +89,26 @@ class ExchangeRateService implements ExchangeRateServiceContract
         }
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function scheduleUpdate(string $frequency = 'hourly'): bool
     {
         // This would typically update a scheduled task configuration
         return true;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getRate(string $baseId, string $targetId): ?ExchangeRate
     {
         return ExchangeRate::forPair($baseId, $targetId)->active()->first();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getAllRates(): Collection
     {
         return Cache::remember('exchange_rates', config('exchange-rates.cache_duration', 3600), function () {
@@ -95,6 +116,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function updateManually(string $baseId, string $targetId, float $rate): ExchangeRate
     {
         return DB::transaction(function () use ($baseId, $targetId, $rate) {
@@ -121,6 +145,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function freeze(ExchangeRate $rate): ExchangeRate
     {
         $rate->freeze();
@@ -128,6 +155,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return $rate->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function unfreeze(ExchangeRate $rate): ExchangeRate
     {
         $rate->unfreeze();
@@ -135,6 +165,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return $rate->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getHistory(string $baseId, string $targetId, ?string $from = null, ?string $to = null): Collection
     {
         $query = ExchangeRateHistory::where('base_currency_id', $baseId)
@@ -146,11 +179,17 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return $query->orderBy('recorded_at', 'desc')->get();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function cleanOldHistory(int $days = 365): int
     {
         return ExchangeRateHistory::where('recorded_at', '<', now()->subDays($days))->delete();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function importHistory(array $data): array
     {
         $imported = 0;
@@ -168,6 +207,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return ['imported' => $imported, 'errors' => $errors];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function exportHistory(string $baseId, string $targetId, string $format = 'json'): array
     {
         $history = $this->getHistory($baseId, $targetId);
@@ -178,6 +220,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         ])->toArray();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function createAlert(array $data): RateAlert
     {
         return RateAlert::create([
@@ -190,12 +235,18 @@ class ExchangeRateService implements ExchangeRateServiceContract
         ]);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function deactivateAlert(RateAlert $alert): RateAlert
     {
         $alert->deactivate();
         return $alert->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function checkAlerts(): array
     {
         $triggered = [];
@@ -212,6 +263,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return $triggered;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function convert(float $amount, string $fromCurrencyId, string $toCurrencyId): float
     {
         if ($fromCurrencyId === $toCurrencyId) return $amount;
@@ -225,6 +279,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return $amount;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function detectConflicts(): array
     {
         $conflicts = [];
@@ -250,6 +307,9 @@ class ExchangeRateService implements ExchangeRateServiceContract
         return $conflicts;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function updateProductPrices(string $currencyId): int
     {
         // This would update product prices based on new exchange rates

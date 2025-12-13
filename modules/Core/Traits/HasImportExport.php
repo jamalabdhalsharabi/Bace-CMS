@@ -7,8 +7,22 @@ namespace Modules\Core\Traits;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Trait HasImportExport
+ * 
+ * Provides import and export functionality for Eloquent models.
+ * Supports array and CSV formats with translation handling.
+ * 
+ * @package Modules\Core\Traits
+ */
 trait HasImportExport
 {
+    /**
+     * Export models to an array format.
+     *
+     * @param array $filters Optional filters (ids, status)
+     * @return array Exported data
+     */
     public static function exportToArray(array $filters = []): array
     {
         $query = static::query();

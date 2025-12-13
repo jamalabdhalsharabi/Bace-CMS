@@ -8,6 +8,29 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class FormField
+ *
+ * Eloquent model representing a form field definition
+ * with validation, options, and conditional logic.
+ *
+ * @package Modules\Forms\Domain\Models
+ *
+ * @property string $id
+ * @property string $form_id
+ * @property string $name
+ * @property array $label
+ * @property string $type
+ * @property array|null $placeholder
+ * @property string|null $default_value
+ * @property array|null $options
+ * @property array|null $validation_rules
+ * @property bool $is_required
+ * @property int $ordering
+ * @property array|null $conditions
+ *
+ * @property-read Form $form
+ */
 class FormField extends Model
 {
     use HasUuids;

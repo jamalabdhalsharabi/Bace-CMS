@@ -8,6 +8,26 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class PageTranslation
+ *
+ * Eloquent model representing a page translation
+ * for multi-language support.
+ *
+ * @package Modules\Content\Domain\Models
+ *
+ * @property string $id
+ * @property string $page_id
+ * @property string $locale
+ * @property string $title
+ * @property string $slug
+ * @property string|null $content
+ * @property string|null $meta_title
+ * @property string|null $meta_description
+ * @property string|null $meta_keywords
+ *
+ * @property-read Page $page
+ */
 class PageTranslation extends Model
 {
     use HasUuids;

@@ -8,6 +8,26 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class ProductTranslation
+ *
+ * Eloquent model representing a product translation
+ * for multi-language support.
+ *
+ * @package Modules\Products\Domain\Models
+ *
+ * @property string $id
+ * @property string $product_id
+ * @property string $locale
+ * @property string $name
+ * @property string $slug
+ * @property string|null $short_description
+ * @property string|null $description
+ * @property string|null $meta_title
+ * @property string|null $meta_description
+ *
+ * @property-read Product $product
+ */
 class ProductTranslation extends Model
 {
     use HasUuids;

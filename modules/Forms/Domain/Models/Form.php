@@ -8,6 +8,29 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class Form
+ *
+ * Eloquent model representing a dynamic form
+ * with fields, submissions, and notifications.
+ *
+ * @package Modules\Forms\Domain\Models
+ *
+ * @property string $id
+ * @property string $slug
+ * @property string $name
+ * @property string|null $description
+ * @property string $type
+ * @property array $success_message
+ * @property array $notification_emails
+ * @property string|null $redirect_url
+ * @property bool $is_active
+ * @property bool $captcha_enabled
+ * @property array|null $settings
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|FormField[] $fields
+ * @property-read \Illuminate\Database\Eloquent\Collection|FormSubmission[] $submissions
+ */
 class Form extends Model
 {
     use HasUuids;

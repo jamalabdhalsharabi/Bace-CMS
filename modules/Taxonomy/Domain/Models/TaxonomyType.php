@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class TaxonomyType
+ *
+ * Eloquent model representing a taxonomy type definition
+ * (e.g., categories, tags) with configuration.
+ *
+ * @package Modules\Taxonomy\Domain\Models
+ *
+ * @property string $id
+ * @property string $slug
+ * @property array $name
+ * @property bool $is_hierarchical
+ * @property bool $is_multiple
+ * @property array|null $applies_to
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|Taxonomy[] $taxonomies
+ */
 class TaxonomyType extends Model
 {
     use HasUuids;

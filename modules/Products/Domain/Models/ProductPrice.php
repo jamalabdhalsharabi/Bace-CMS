@@ -9,6 +9,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Currency\Domain\Models\Currency;
 
+/**
+ * Class ProductPrice
+ *
+ * Eloquent model representing a product price
+ * with currency, comparison pricing, and validity.
+ *
+ * @package Modules\Products\Domain\Models
+ *
+ * @property string $id
+ * @property string $product_id
+ * @property string|null $variant_id
+ * @property string $currency_id
+ * @property float $amount
+ * @property float|null $compare_at_amount
+ * @property float|null $cost_amount
+ * @property \Carbon\Carbon|null $starts_at
+ * @property \Carbon\Carbon|null $ends_at
+ *
+ * @property-read Product $product
+ * @property-read ProductVariant|null $variant
+ * @property-read \Modules\Currency\Domain\Models\Currency $currency
+ */
 class ProductPrice extends Model
 {
     use HasUuids;

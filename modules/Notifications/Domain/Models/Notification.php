@@ -9,6 +9,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * Class Notification
+ *
+ * Eloquent model representing a user notification
+ * with read status and polymorphic notifiable.
+ *
+ * @package Modules\Notifications\Domain\Models
+ *
+ * @property string $id
+ * @property string $user_id
+ * @property string $type
+ * @property string|null $notifiable_id
+ * @property string|null $notifiable_type
+ * @property array $data
+ * @property \Carbon\Carbon|null $read_at
+ *
+ * @property-read \Modules\Users\Domain\Models\User $user
+ * @property-read Model|null $notifiable
+ */
 class Notification extends Model
 {
     use HasUuids;

@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class SubscriptionUsage
+ *
+ * Eloquent model representing subscription resource usage
+ * for tracking limits and quotas.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $subscription_id
+ * @property string $resource
+ * @property int $quantity
+ * @property \Carbon\Carbon $period_start
+ * @property \Carbon\Carbon $period_end
+ *
+ * @property-read Subscription $subscription
+ */
 class SubscriptionUsage extends Model
 {
     use HasUuids;

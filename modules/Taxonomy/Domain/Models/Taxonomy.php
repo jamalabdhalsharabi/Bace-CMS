@@ -14,6 +14,31 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Core\Traits\HasMedia;
 use Modules\Core\Traits\HasOrdering;
 
+/**
+ * Class Taxonomy
+ *
+ * Eloquent model representing a taxonomy term (category, tag)
+ * with translations, hierarchy, and polymorphic relationships.
+ *
+ * @package Modules\Taxonomy\Domain\Models
+ *
+ * @property string $id
+ * @property string $type_id
+ * @property string|null $parent_id
+ * @property string|null $featured_image_id
+ * @property int $ordering
+ * @property bool $is_active
+ *
+ * @property-read TaxonomyType $type
+ * @property-read Taxonomy|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection|Taxonomy[] $children
+ * @property-read \Illuminate\Database\Eloquent\Collection|TaxonomyTranslation[] $translations
+ * @property-read TaxonomyTranslation|null $translation
+ * @property-read string|null $name
+ * @property-read string|null $slug
+ * @property-read string|null $description
+ * @property-read array $path
+ */
 class Taxonomy extends Model
 {
     use HasUuids;

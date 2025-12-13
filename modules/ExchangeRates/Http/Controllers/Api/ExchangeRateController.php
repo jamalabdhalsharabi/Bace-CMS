@@ -12,21 +12,62 @@ use Modules\ExchangeRates\Domain\Models\ExchangeRate;
 use Modules\ExchangeRates\Domain\Models\RateAlert;
 use Modules\ExchangeRates\Http\Resources\ExchangeRateResource;
 
+/**
+ * Class ExchangeRateController
+ * 
+ * API controller for managing exchange rates including fetching,
+ * updating, history, alerts, and currency conversion.
+ * 
+ * @package Modules\ExchangeRates\Http\Controllers\Api
+ */
 class ExchangeRateController extends BaseController
 {
-    public function __construct(protected ExchangeRateServiceContract $rateService) {}
+    /**
+     * The exchange rate service instance.
+     *
+     * @var ExchangeRateServiceContract
+     */
+    protected ExchangeRateServiceContract $rateService;
 
+    /**
+     * Create a new ExchangeRateController instance.
+     *
+     * @param ExchangeRateServiceContract $rateService The exchange rate service implementation
+     */
+    public function __construct(ExchangeRateServiceContract $rateService)
+    {
+        $this->rateService = $rateService;
+    }
+
+    /**
+     * Display all exchange rates.
+     *
+     * @return JsonResponse Collection of exchange rates
+     */
     public function index(): JsonResponse
     {
         return $this->success(ExchangeRateResource::collection($this->rateService->getAllRates()));
     }
 
+    /**
+     * Display a specific exchange rate between two currencies.
+     *
+     * @param string $baseId The base currency UUID
+     * @param string $targetId The target currency UUID
+     * @return JsonResponse The exchange rate or 404 error
+     */
     public function show(string $baseId, string $targetId): JsonResponse
     {
         $rate = $this->rateService->getRate($baseId, $targetId);
         return $rate ? $this->success(new ExchangeRateResource($rate)) : $this->notFound('Rate not found');
     }
 
+    /**
+     * Fetch latest exchange rates from external API provider.
+     *
+     * @param Request $request The request containing optional provider name
+     * @return JsonResponse Fetch result with success/error status
+     */
     public function fetch(Request $request): JsonResponse
     {
         $result = $this->rateService->fetchFromApi($request->provider);
@@ -35,6 +76,12 @@ class ExchangeRateController extends BaseController
             : $this->error($result['error'], 500);
     }
 
+    /**
+     * Manually update an exchange rate.
+     *
+     * @param Request $request The request containing currencies and rate value
+     * @return JsonResponse The updated exchange rate
+     */
     public function update(Request $request): JsonResponse
     {
         $request->validate([
@@ -52,6 +99,12 @@ class ExchangeRateController extends BaseController
         return $this->success(new ExchangeRateResource($rate), 'Rate updated');
     }
 
+    /**
+     * Freeze an exchange rate to prevent automatic updates.
+     *
+     * @param string $id The exchange rate UUID
+     * @return JsonResponse The frozen rate or 404 error
+     */
     public function freeze(string $id): JsonResponse
     {
         $rate = ExchangeRate::find($id);
@@ -59,6 +112,12 @@ class ExchangeRateController extends BaseController
         return $this->success(new ExchangeRateResource($this->rateService->freeze($rate)));
     }
 
+    /**
+     * Unfreeze an exchange rate to allow automatic updates.
+     *
+     * @param string $id The exchange rate UUID
+     * @return JsonResponse The unfrozen rate or 404 error
+     */
     public function unfreeze(string $id): JsonResponse
     {
         $rate = ExchangeRate::find($id);
@@ -66,18 +125,38 @@ class ExchangeRateController extends BaseController
         return $this->success(new ExchangeRateResource($this->rateService->unfreeze($rate)));
     }
 
+    /**
+     * Get historical exchange rate data for a currency pair.
+     *
+     * @param Request $request The request containing optional from/to date filters
+     * @param string $baseId The base currency UUID
+     * @param string $targetId The target currency UUID
+     * @return JsonResponse Historical rate data
+     */
     public function history(Request $request, string $baseId, string $targetId): JsonResponse
     {
         $history = $this->rateService->getHistory($baseId, $targetId, $request->from, $request->to);
         return $this->success($history);
     }
 
+    /**
+     * Clean old historical rate data.
+     *
+     * @param Request $request The request containing optional days parameter
+     * @return JsonResponse Count of deleted records
+     */
     public function cleanHistory(Request $request): JsonResponse
     {
         $deleted = $this->rateService->cleanOldHistory($request->integer('days', 365));
         return $this->success(['deleted' => $deleted], 'Old history cleaned');
     }
 
+    /**
+     * Import historical exchange rate data.
+     *
+     * @param Request $request The request containing history data array
+     * @return JsonResponse Import result
+     */
     public function importHistory(Request $request): JsonResponse
     {
         $request->validate(['data' => 'required|array']);
@@ -85,11 +164,24 @@ class ExchangeRateController extends BaseController
         return $this->success($result);
     }
 
+    /**
+     * Export historical exchange rate data for a currency pair.
+     *
+     * @param string $baseId The base currency UUID
+     * @param string $targetId The target currency UUID
+     * @return JsonResponse Exported history data
+     */
     public function exportHistory(string $baseId, string $targetId): JsonResponse
     {
         return $this->success($this->rateService->exportHistory($baseId, $targetId));
     }
 
+    /**
+     * Create a rate alert for notifications when rates meet conditions.
+     *
+     * @param Request $request The request containing alert configuration
+     * @return JsonResponse The created alert (HTTP 201)
+     */
     public function createAlert(Request $request): JsonResponse
     {
         $request->validate([
@@ -102,6 +194,12 @@ class ExchangeRateController extends BaseController
         return $this->created($this->rateService->createAlert($request->all()));
     }
 
+    /**
+     * Deactivate a rate alert.
+     *
+     * @param string $id The alert UUID
+     * @return JsonResponse The deactivated alert or 404 error
+     */
     public function deactivateAlert(string $id): JsonResponse
     {
         $alert = RateAlert::find($id);
@@ -109,6 +207,12 @@ class ExchangeRateController extends BaseController
         return $this->success($this->rateService->deactivateAlert($alert));
     }
 
+    /**
+     * Convert an amount from one currency to another.
+     *
+     * @param Request $request The request containing amount and currency IDs
+     * @return JsonResponse Converted amount
+     */
     public function convert(Request $request): JsonResponse
     {
         $request->validate([
@@ -126,11 +230,22 @@ class ExchangeRateController extends BaseController
         return $this->success(['converted_amount' => $result]);
     }
 
+    /**
+     * Detect conflicting exchange rates.
+     *
+     * @return JsonResponse Array of detected conflicts
+     */
     public function detectConflicts(): JsonResponse
     {
         return $this->success($this->rateService->detectConflicts());
     }
 
+    /**
+     * Update product prices based on exchange rate changes.
+     *
+     * @param Request $request The request containing currency_id
+     * @return JsonResponse Count of updated products
+     */
     public function updateProductPrices(Request $request): JsonResponse
     {
         $request->validate(['currency_id' => 'required|uuid|exists:currencies,id']);

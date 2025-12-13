@@ -10,6 +10,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
+/**
+ * Class PlanFeature
+ *
+ * Eloquent model representing a pricing plan feature
+ * with translations and type-specific behavior.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $plan_id
+ * @property string $feature_key
+ * @property string|null $value
+ * @property string $type
+ * @property bool $is_highlighted
+ * @property int $sort_order
+ *
+ * @property-read PricingPlan $plan
+ * @property-read \Illuminate\Database\Eloquent\Collection|PlanFeatureTranslation[] $translations
+ * @property-read PlanFeatureTranslation|null $translation
+ * @property-read string|null $label
+ */
 class PlanFeature extends Model
 {
     use HasUuids;

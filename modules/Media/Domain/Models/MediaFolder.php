@@ -9,6 +9,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class MediaFolder
+ *
+ * Eloquent model representing a media folder
+ * with hierarchy and media organization.
+ *
+ * @package Modules\Media\Domain\Models
+ *
+ * @property string $id
+ * @property string|null $parent_id
+ * @property string $name
+ * @property string $slug
+ *
+ * @property-read MediaFolder|null $parent
+ * @property-read \Illuminate\Database\Eloquent\Collection|MediaFolder[] $children
+ * @property-read \Illuminate\Database\Eloquent\Collection|Media[] $media
+ * @property-read string $path
+ */
 class MediaFolder extends Model
 {
     use HasUuids;

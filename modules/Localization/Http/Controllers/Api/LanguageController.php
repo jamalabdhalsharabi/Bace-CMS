@@ -11,12 +11,38 @@ use Modules\Localization\Http\Requests\CreateLanguageRequest;
 use Modules\Localization\Http\Requests\UpdateLanguageRequest;
 use Modules\Localization\Http\Resources\LanguageResource;
 
+/**
+ * Class LanguageController
+ * 
+ * API controller for managing languages and translations.
+ * 
+ * @package Modules\Localization\Http\Controllers\Api
+ */
 class LanguageController extends BaseController
 {
-    public function __construct(
-        protected LanguageServiceContract $languageService
-    ) {}
+    /**
+     * The language service instance for handling language-related business logic.
+     *
+     * @var LanguageServiceContract
+     */
+    protected LanguageServiceContract $languageService;
 
+    /**
+     * Create a new LanguageController instance.
+     *
+     * @param LanguageServiceContract $languageService The language service contract implementation
+     */
+    public function __construct(
+        LanguageServiceContract $languageService
+    ) {
+        $this->languageService = $languageService;
+    }
+
+    /**
+     * Display a listing of active languages.
+     *
+     * @return JsonResponse Collection of active languages
+     */
     public function index(): JsonResponse
     {
         $languages = $this->languageService->getActive();
@@ -24,6 +50,11 @@ class LanguageController extends BaseController
         return $this->success(LanguageResource::collection($languages));
     }
 
+    /**
+     * Display all languages including inactive ones.
+     *
+     * @return JsonResponse Collection of all languages
+     */
     public function all(): JsonResponse
     {
         $languages = $this->languageService->all();
@@ -31,6 +62,12 @@ class LanguageController extends BaseController
         return $this->success(LanguageResource::collection($languages));
     }
 
+    /**
+     * Display the specified language by its UUID.
+     *
+     * @param string $id The UUID of the language to retrieve
+     * @return JsonResponse The language data or 404 error
+     */
     public function show(string $id): JsonResponse
     {
         $language = $this->languageService->find($id);
@@ -42,6 +79,12 @@ class LanguageController extends BaseController
         return $this->success(new LanguageResource($language));
     }
 
+    /**
+     * Store a newly created language in the database.
+     *
+     * @param CreateLanguageRequest $request The validated request containing language data
+     * @return JsonResponse The newly created language (HTTP 201)
+     */
     public function store(CreateLanguageRequest $request): JsonResponse
     {
         $language = $this->languageService->create($request->validated());
@@ -49,6 +92,13 @@ class LanguageController extends BaseController
         return $this->created(new LanguageResource($language));
     }
 
+    /**
+     * Update the specified language in the database.
+     *
+     * @param UpdateLanguageRequest $request The validated request containing updated data
+     * @param string $id The UUID of the language to update
+     * @return JsonResponse The updated language or 404 error
+     */
     public function update(UpdateLanguageRequest $request, string $id): JsonResponse
     {
         $language = $this->languageService->find($id);
@@ -62,6 +112,13 @@ class LanguageController extends BaseController
         return $this->success(new LanguageResource($language));
     }
 
+    /**
+     * Delete the specified language.
+     *
+     * @param string $id The UUID of the language to delete
+     * @return JsonResponse Success message or error
+     * @throws \RuntimeException If the language cannot be deleted
+     */
     public function destroy(string $id): JsonResponse
     {
         $language = $this->languageService->find($id);

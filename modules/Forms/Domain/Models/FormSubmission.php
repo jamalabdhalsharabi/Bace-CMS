@@ -8,6 +8,28 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class FormSubmission
+ *
+ * Eloquent model representing a form submission
+ * with user data, status, and processing information.
+ *
+ * @package Modules\Forms\Domain\Models
+ *
+ * @property string $id
+ * @property string $form_id
+ * @property string|null $user_id
+ * @property array $data
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property string|null $referrer
+ * @property string $status
+ * @property string|null $notes
+ * @property \Carbon\Carbon|null $processed_at
+ *
+ * @property-read Form $form
+ * @property-read \Modules\Users\Domain\Models\User|null $user
+ */
 class FormSubmission extends Model
 {
     use HasUuids;

@@ -8,6 +8,31 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class Coupon
+ *
+ * Eloquent model representing a discount coupon
+ * with usage limits, validity, and plan restrictions.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $code
+ * @property string $type
+ * @property float $value
+ * @property array|null $applies_to_plans
+ * @property array|null $applies_to_periods
+ * @property int|null $usage_limit
+ * @property int $per_user_limit
+ * @property int $used_count
+ * @property \Carbon\Carbon|null $starts_at
+ * @property \Carbon\Carbon|null $expires_at
+ * @property bool $first_payment_only
+ * @property bool $is_active
+ * @property array|null $meta
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|CouponUsage[] $usages
+ */
 class Coupon extends Model
 {
     use HasUuids;

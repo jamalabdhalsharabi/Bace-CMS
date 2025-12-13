@@ -9,6 +9,29 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Currency\Domain\Models\Currency;
 
+/**
+ * Class ExchangeRate
+ *
+ * Eloquent model representing an exchange rate between currencies
+ * with freeze capability and conversion methods.
+ *
+ * @package Modules\ExchangeRates\Domain\Models
+ *
+ * @property string $id
+ * @property string $base_currency_id
+ * @property string $target_currency_id
+ * @property float $rate
+ * @property float $inverse_rate
+ * @property string $provider
+ * @property bool $is_frozen
+ * @property \Carbon\Carbon|null $frozen_at
+ * @property string|null $frozen_by
+ * @property \Carbon\Carbon|null $valid_from
+ * @property \Carbon\Carbon|null $valid_until
+ *
+ * @property-read Currency $baseCurrency
+ * @property-read Currency $targetCurrency
+ */
 class ExchangeRate extends Model
 {
     use HasUuids;

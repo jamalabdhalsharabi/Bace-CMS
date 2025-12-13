@@ -7,12 +7,37 @@ namespace Modules\Search\Services;
 use Modules\Search\Contracts\SearchEngineContract;
 use Modules\Search\Contracts\SearchServiceContract;
 
+/**
+ * Class SearchService
+ *
+ * Service class for search functionality including
+ * global search, index-specific search, and reindexing.
+ *
+ * @package Modules\Search\Services
+ */
 class SearchService implements SearchServiceContract
 {
-    public function __construct(
-        protected SearchEngineContract $engine
-    ) {}
+    /**
+     * The search engine instance.
+     *
+     * @var SearchEngineContract
+     */
+    protected SearchEngineContract $engine;
 
+    /**
+     * Create a new SearchService instance.
+     *
+     * @param SearchEngineContract $engine The search engine
+     */
+    public function __construct(
+        SearchEngineContract $engine
+    ) {
+        $this->engine = $engine;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function search(string $query, array $options = []): array
     {
         $indices = $options['indices'] ?? array_keys(config('search.indices', []));
@@ -30,6 +55,9 @@ class SearchService implements SearchServiceContract
         ];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function searchIndex(string $index, string $query, array $options = []): array
     {
         $searchOptions = [
@@ -49,6 +77,9 @@ class SearchService implements SearchServiceContract
         return $this->engine->search($index, $searchOptions);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function indexModel(object $model): bool
     {
         if (!method_exists($model, 'toSearchableArray')) {
@@ -64,6 +95,9 @@ class SearchService implements SearchServiceContract
         return $this->engine->index($index, (string) $model->getKey(), $model->toSearchableArray());
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function removeModel(object $model): bool
     {
         $index = $this->getIndexForModel($model);
@@ -75,6 +109,9 @@ class SearchService implements SearchServiceContract
         return $this->engine->delete($index, (string) $model->getKey());
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function reindex(string $index): int
     {
         $config = config("search.indices.{$index}");
@@ -102,6 +139,9 @@ class SearchService implements SearchServiceContract
         return $count;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function reindexAll(): array
     {
         $results = [];

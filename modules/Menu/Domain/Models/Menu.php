@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class Menu
+ *
+ * Eloquent model representing a navigation menu
+ * with hierarchical menu items.
+ *
+ * @package Modules\Menu\Domain\Models
+ *
+ * @property string $id
+ * @property string $slug
+ * @property string $name
+ * @property string|null $location
+ * @property bool $is_active
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|MenuItem[] $items
+ * @property-read \Illuminate\Database\Eloquent\Collection|MenuItem[] $allItems
+ */
 class Menu extends Model
 {
     use HasUuids;

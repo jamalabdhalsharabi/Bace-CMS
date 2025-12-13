@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * Class Permission
+ *
+ * Eloquent model representing a system permission
+ * that can be assigned to roles.
+ *
+ * @package Modules\Auth\Domain\Models
+ *
+ * @property string $id
+ * @property string $slug
+ * @property string $name
+ * @property string|null $description
+ * @property string $module
+ * @property string $group
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|Role[] $roles
+ */
 class Permission extends Model
 {
     use HasUuids;
