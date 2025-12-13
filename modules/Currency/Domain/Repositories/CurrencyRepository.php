@@ -24,7 +24,8 @@ final class CurrencyRepository extends BaseRepository
     {
         return $this->query()
             ->where('is_active', true)
-            ->orderBy('name')
+            ->orderBy('sort_order')
+            ->orderBy('code')
             ->get();
     }
 

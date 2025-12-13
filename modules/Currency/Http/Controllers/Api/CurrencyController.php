@@ -11,6 +11,8 @@ use Modules\Currency\Application\Services\CurrencyQueryService;
 use Modules\Currency\Http\Requests\ConvertCurrencyRequest;
 use Modules\Currency\Http\Requests\CreateCurrencyRequest;
 use Modules\Currency\Http\Requests\UpdateCurrencyRequest;
+use Modules\Currency\Http\Requests\UpdateRateRequest;
+use Modules\Currency\Http\Requests\FormatAmountRequest;
 use Modules\Currency\Http\Resources\CurrencyResource;
 
 class CurrencyController extends BaseController
@@ -107,24 +109,16 @@ class CurrencyController extends BaseController
         }
     }
 
-    /**
-     * Convert an amount from one currency to another.
-     *
-     * @param ConvertCurrencyRequest $request The request with amount, from, and to
-     * @return JsonResponse Converted amount and formatted value
-     * @throws \RuntimeException If conversion fails
-     */
+    /** Convert an amount from one currency to another. */
     public function convert(ConvertCurrencyRequest $request): JsonResponse
     {
         $validated = $request->validated();
-
         try {
             $converted = $this->queryService->convert(
                 (float) $validated['amount'],
                 $validated['from'],
                 $validated['to']
             );
-
             return $this->success([
                 'amount' => $validated['amount'],
                 'from' => $validated['from'],
@@ -135,5 +129,69 @@ class CurrencyController extends BaseController
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 400);
         }
+    }
+
+    /** Get all currencies including inactive. */
+    public function all(): JsonResponse
+    {
+        $currencies = $this->queryService->getAll();
+        return $this->success(CurrencyResource::collection($currencies));
+    }
+
+    /** Activate currency. */
+    public function activate(string $id): JsonResponse
+    {
+        $currency = $this->queryService->find($id);
+        if (!$currency) return $this->notFound('Currency not found');
+        $currency = $this->commandService->activate($id);
+        return $this->success(new CurrencyResource($currency), 'Currency activated');
+    }
+
+    /** Deactivate currency. */
+    public function deactivate(string $id): JsonResponse
+    {
+        $currency = $this->queryService->find($id);
+        if (!$currency) return $this->notFound('Currency not found');
+        $currency = $this->commandService->deactivate($id);
+        return $this->success(new CurrencyResource($currency), 'Currency deactivated');
+    }
+
+    /** Set default currency. */
+    public function setDefault(string $id): JsonResponse
+    {
+        $currency = $this->queryService->find($id);
+        if (!$currency) return $this->notFound('Currency not found');
+        $currency = $this->commandService->setDefault($id);
+        return $this->success(new CurrencyResource($currency), 'Default currency set');
+    }
+
+    /** Update exchange rate. */
+    public function updateRate(UpdateRateRequest $request, string $id): JsonResponse
+    {
+        $currency = $this->queryService->find($id);
+        if (!$currency) return $this->notFound('Currency not found');
+        $currency = $this->commandService->updateRate($id, $request->rate);
+        return $this->success(new CurrencyResource($currency), 'Exchange rate updated');
+    }
+
+    /** Sync rates from external API. */
+    public function syncRates(): JsonResponse
+    {
+        $result = $this->commandService->syncRatesFromApi();
+        return $this->success($result, 'Exchange rates synced');
+    }
+
+    /** Format amount in currency. */
+    public function format(FormatAmountRequest $request): JsonResponse
+    {
+        $formatted = $this->queryService->format($request->amount, $request->currency_code);
+        return $this->success(['formatted' => $formatted]);
+    }
+
+    /** Get supported currencies from API. */
+    public function supported(): JsonResponse
+    {
+        $currencies = $this->queryService->getSupportedCurrencies();
+        return $this->success($currencies);
     }
 }
