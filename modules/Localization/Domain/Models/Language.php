@@ -7,6 +7,24 @@ namespace Modules\Localization\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class Language
+ *
+ * Eloquent model representing a system language
+ * with localization settings and default handling.
+ *
+ * @package Modules\Localization\Domain\Models
+ *
+ * @property string $id
+ * @property string $code
+ * @property string $name
+ * @property string $native_name
+ * @property string $direction
+ * @property string|null $flag
+ * @property bool $is_default
+ * @property bool $is_active
+ * @property int $ordering
+ */
 class Language extends Model
 {
     use HasUuids;

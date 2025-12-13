@@ -11,16 +11,50 @@ use Modules\Pricing\Contracts\SubscriptionServiceContract;
 use Modules\Pricing\Http\Requests\CreateSubscriptionRequest;
 use Modules\Pricing\Http\Resources\SubscriptionResource;
 
+/**
+ * Class SubscriptionController
+ *
+ * API controller for managing user subscriptions including
+ * CRUD, upgrades, downgrades, cancellation, and refunds.
+ *
+ * @package Modules\Pricing\Http\Controllers\Api
+ */
 class SubscriptionController extends BaseController
 {
-    public function __construct(protected SubscriptionServiceContract $subscriptionService) {}
+    /**
+     * The subscription service instance.
+     *
+     * @var SubscriptionServiceContract
+     */
+    protected SubscriptionServiceContract $subscriptionService;
 
+    /**
+     * Create a new SubscriptionController instance.
+     *
+     * @param SubscriptionServiceContract $subscriptionService The subscription service
+     */
+    public function __construct(SubscriptionServiceContract $subscriptionService)
+    {
+        $this->subscriptionService = $subscriptionService;
+    }
+
+    /**
+     * Display subscriptions for the authenticated user.
+     *
+     * @return JsonResponse Collection of user subscriptions
+     */
     public function index(): JsonResponse
     {
         $subscriptions = $this->subscriptionService->getForUser(auth()->id());
         return $this->success(SubscriptionResource::collection($subscriptions));
     }
 
+    /**
+     * Display the specified subscription.
+     *
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The subscription or 404 error
+     */
     public function show(string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
@@ -30,6 +64,12 @@ class SubscriptionController extends BaseController
         return $this->success(new SubscriptionResource($subscription));
     }
 
+    /**
+     * Create a new subscription for the authenticated user.
+     *
+     * @param CreateSubscriptionRequest $request The validated subscription data
+     * @return JsonResponse The created subscription (HTTP 201)
+     */
     public function store(CreateSubscriptionRequest $request): JsonResponse
     {
         $subscription = $this->subscriptionService->create(
@@ -40,6 +80,13 @@ class SubscriptionController extends BaseController
         return $this->created(new SubscriptionResource($subscription));
     }
 
+    /**
+     * Upgrade a subscription to a higher plan.
+     *
+     * @param Request $request The request containing new_plan_id
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The upgraded subscription or 404 error
+     */
     public function upgrade(Request $request, string $id): JsonResponse
     {
         $request->validate(['new_plan_id' => 'required|uuid|exists:pricing_plans,id']);
@@ -51,6 +98,13 @@ class SubscriptionController extends BaseController
         return $this->success(new SubscriptionResource($subscription), 'Subscription upgraded');
     }
 
+    /**
+     * Downgrade a subscription to a lower plan.
+     *
+     * @param Request $request The request containing new_plan_id
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The downgraded subscription or 404 error
+     */
     public function downgrade(Request $request, string $id): JsonResponse
     {
         $request->validate(['new_plan_id' => 'required|uuid|exists:pricing_plans,id']);
@@ -62,6 +116,13 @@ class SubscriptionController extends BaseController
         return $this->success(new SubscriptionResource($subscription), 'Downgrade scheduled');
     }
 
+    /**
+     * Cancel a subscription.
+     *
+     * @param Request $request The request with optional cancellation reason
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The cancelled subscription or 404 error
+     */
     public function cancel(Request $request, string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
@@ -72,6 +133,12 @@ class SubscriptionController extends BaseController
         return $this->success(new SubscriptionResource($subscription), 'Subscription cancelled');
     }
 
+    /**
+     * Pause a subscription temporarily.
+     *
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The paused subscription or 404 error
+     */
     public function pause(string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
@@ -82,6 +149,12 @@ class SubscriptionController extends BaseController
         return $this->success(new SubscriptionResource($subscription), 'Subscription paused');
     }
 
+    /**
+     * Resume a paused subscription.
+     *
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The resumed subscription or 404 error
+     */
     public function resume(string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
@@ -92,6 +165,13 @@ class SubscriptionController extends BaseController
         return $this->success(new SubscriptionResource($subscription), 'Subscription resumed');
     }
 
+    /**
+     * Process a refund for a subscription.
+     *
+     * @param Request $request The request with refund type, amount, and reason
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse Refund result or 404 error
+     */
     public function refund(Request $request, string $id): JsonResponse
     {
         $request->validate([
@@ -107,6 +187,13 @@ class SubscriptionController extends BaseController
         return $this->success($result, 'Refund processed');
     }
 
+    /**
+     * Extend a subscription by a specified number of days.
+     *
+     * @param Request $request The request with days, reason, and notify_user flag
+     * @param string $id The UUID of the subscription
+     * @return JsonResponse The extended subscription or 404 error
+     */
     public function extend(Request $request, string $id): JsonResponse
     {
         $request->validate([

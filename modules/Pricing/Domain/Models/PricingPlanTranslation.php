@@ -8,6 +8,25 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class PricingPlanTranslation
+ *
+ * Eloquent model representing a pricing plan translation
+ * for multi-language support.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $plan_id
+ * @property string $locale
+ * @property string $name
+ * @property string|null $description
+ * @property string|null $short_description
+ * @property string|null $cta_text
+ * @property string|null $badge_text
+ *
+ * @property-read PricingPlan $plan
+ */
 class PricingPlanTranslation extends Model
 {
     use HasUuids;

@@ -7,6 +7,21 @@ namespace Modules\Settings\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class Setting
+ *
+ * Eloquent model representing a system setting
+ * with type casting and group organization.
+ *
+ * @package Modules\Settings\Domain\Models
+ *
+ * @property string $id
+ * @property string $group
+ * @property string $key
+ * @property mixed $value
+ * @property string $type
+ * @property bool $is_public
+ */
 class Setting extends Model
 {
     use HasUuids;

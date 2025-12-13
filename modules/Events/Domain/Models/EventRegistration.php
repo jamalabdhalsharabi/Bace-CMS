@@ -8,6 +8,31 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class EventRegistration
+ *
+ * Eloquent model representing an event registration
+ * with attendee info, ticket, and check-in status.
+ *
+ * @package Modules\Events\Domain\Models
+ *
+ * @property string $id
+ * @property string $event_id
+ * @property string|null $ticket_type_id
+ * @property string|null $user_id
+ * @property string $attendee_name
+ * @property string $attendee_email
+ * @property string|null $attendee_phone
+ * @property int $quantity
+ * @property float $total_amount
+ * @property string $status
+ * @property string|null $notes
+ * @property \Carbon\Carbon|null $checked_in_at
+ * @property string $confirmation_code
+ *
+ * @property-read Event $event
+ * @property-read EventTicketType|null $ticketType
+ */
 class EventRegistration extends Model
 {
     use HasUuids;

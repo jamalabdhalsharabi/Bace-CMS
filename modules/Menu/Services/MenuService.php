@@ -10,18 +10,45 @@ use Modules\Menu\Contracts\MenuServiceContract;
 use Modules\Menu\Domain\Models\Menu;
 use Modules\Menu\Domain\Models\MenuItem;
 
+/**
+ * Class MenuService
+ *
+ * Service class for managing navigation menus
+ * including items, tree structure, and reordering.
+ *
+ * @package Modules\Menu\Services
+ */
 class MenuService implements MenuServiceContract
 {
+    /**
+     * Get all menus.
+     *
+     * @return Collection Collection of Menu models
+     */
     public function all(): Collection
     {
         return Menu::all();
     }
 
+    /**
+     * Find a menu by its UUID.
+     *
+     * @param string $id The menu UUID
+     *
+     * @return Menu|null The found menu or null
+     */
     public function find(string $id): ?Menu
     {
         return Menu::with('items.children')->find($id);
     }
 
+    /**
+     * Find a menu by its slug with caching.
+     *
+     * @param string $slug The menu slug
+     *
+     * @return Menu|null The found menu or null
+     */
     public function findBySlug(string $slug): ?Menu
     {
         return $this->cached("slug.{$slug}", fn () => 
@@ -29,6 +56,13 @@ class MenuService implements MenuServiceContract
         );
     }
 
+    /**
+     * Find a menu by its location with caching.
+     *
+     * @param string $location The menu location identifier
+     *
+     * @return Menu|null The found menu or null
+     */
     public function findByLocation(string $location): ?Menu
     {
         return $this->cached("location.{$location}", fn () => 
@@ -36,12 +70,26 @@ class MenuService implements MenuServiceContract
         );
     }
 
+    /**
+     * Get menu items as a tree structure.
+     *
+     * @param string $menuId The menu UUID
+     *
+     * @return Collection Hierarchical menu items
+     */
     public function getTree(string $menuId): Collection
     {
         $menu = Menu::find($menuId);
         return $menu ? $menu->getTree() : collect();
     }
 
+    /**
+     * Create a new menu.
+     *
+     * @param array $data Menu data: 'slug', 'name', 'location'
+     *
+     * @return Menu The created menu
+     */
     public function create(array $data): Menu
     {
         $menu = Menu::create([
@@ -56,6 +104,14 @@ class MenuService implements MenuServiceContract
         return $menu;
     }
 
+    /**
+     * Update an existing menu.
+     *
+     * @param Menu $menu The menu to update
+     * @param array $data Updated data
+     *
+     * @return Menu The updated menu
+     */
     public function update(Menu $menu, array $data): Menu
     {
         $menu->update([
@@ -69,6 +125,13 @@ class MenuService implements MenuServiceContract
         return $menu->fresh();
     }
 
+    /**
+     * Delete a menu and all its items.
+     *
+     * @param Menu $menu The menu to delete
+     *
+     * @return bool True if successful
+     */
     public function delete(Menu $menu): bool
     {
         $menu->allItems()->delete();
@@ -78,6 +141,14 @@ class MenuService implements MenuServiceContract
         return $result;
     }
 
+    /**
+     * Add an item to a menu.
+     *
+     * @param Menu $menu The menu
+     * @param array $data Item data
+     *
+     * @return MenuItem The created menu item
+     */
     public function addItem(Menu $menu, array $data): MenuItem
     {
         $item = $menu->allItems()->create([
@@ -99,6 +170,14 @@ class MenuService implements MenuServiceContract
         return $item;
     }
 
+    /**
+     * Update a menu item.
+     *
+     * @param MenuItem $item The item to update
+     * @param array $data Updated data
+     *
+     * @return MenuItem The updated item
+     */
     public function updateItem(MenuItem $item, array $data): MenuItem
     {
         $updateData = [];
@@ -141,6 +220,13 @@ class MenuService implements MenuServiceContract
         return $item->fresh();
     }
 
+    /**
+     * Delete a menu item and reassign children.
+     *
+     * @param MenuItem $item The item to delete
+     *
+     * @return bool True if successful
+     */
     public function deleteItem(MenuItem $item): bool
     {
         MenuItem::where('parent_id', $item->id)->update(['parent_id' => $item->parent_id]);
@@ -150,6 +236,13 @@ class MenuService implements MenuServiceContract
         return $result;
     }
 
+    /**
+     * Reorder menu items by their IDs.
+     *
+     * @param array $order Array of item UUIDs in order
+     *
+     * @return void
+     */
     public function reorderItems(array $order): void
     {
         foreach ($order as $index => $id) {
@@ -159,6 +252,14 @@ class MenuService implements MenuServiceContract
         $this->clearCache();
     }
 
+    /**
+     * Get cached data or execute callback.
+     *
+     * @param string $key Cache key
+     * @param callable $callback Callback to execute if not cached
+     *
+     * @return mixed Cached or fresh data
+     */
     protected function cached(string $key, callable $callback): mixed
     {
         if (!config('menu.cache.enabled', true)) {
@@ -170,6 +271,11 @@ class MenuService implements MenuServiceContract
         return Cache::remember("menu.{$key}", $ttl, $callback);
     }
 
+    /**
+     * Clear all menu-related cache.
+     *
+     * @return void
+     */
     public function clearCache(): void
     {
         Cache::forget('menu.slug.*');

@@ -6,8 +6,22 @@ namespace Modules\Core\Traits;
 
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Trait HasBulkOperations
+ * 
+ * Provides bulk operation functionality for Eloquent models.
+ * Supports bulk publish, unpublish, archive, delete, restore, and category assignment.
+ * 
+ * @package Modules\Core\Traits
+ */
 trait HasBulkOperations
 {
+    /**
+     * Bulk publish multiple models by their IDs.
+     *
+     * @param array $ids Array of model IDs to publish
+     * @return int Number of affected records
+     */
     public static function bulkPublish(array $ids): int
     {
         return static::whereIn('id', $ids)->update([
@@ -16,6 +30,12 @@ trait HasBulkOperations
         ]);
     }
 
+    /**
+     * Bulk unpublish multiple models by their IDs.
+     *
+     * @param array $ids Array of model IDs to unpublish
+     * @return int Number of affected records
+     */
     public static function bulkUnpublish(array $ids): int
     {
         return static::whereIn('id', $ids)->update([
@@ -24,6 +44,12 @@ trait HasBulkOperations
         ]);
     }
 
+    /**
+     * Bulk archive multiple models by their IDs.
+     *
+     * @param array $ids Array of model IDs to archive
+     * @return int Number of affected records
+     */
     public static function bulkArchive(array $ids): int
     {
         return static::whereIn('id', $ids)->update([
@@ -32,26 +58,60 @@ trait HasBulkOperations
         ]);
     }
 
+    /**
+     * Bulk soft delete multiple models by their IDs.
+     *
+     * @param array $ids Array of model IDs to delete
+     * @return int Number of affected records
+     */
     public static function bulkDelete(array $ids): int
     {
         return static::whereIn('id', $ids)->delete();
     }
 
+    /**
+     * Bulk restore soft-deleted models by their IDs.
+     *
+     * @param array $ids Array of model IDs to restore
+     * @return int Number of affected records
+     */
     public static function bulkRestore(array $ids): int
     {
         return static::withTrashed()->whereIn('id', $ids)->restore();
     }
 
+    /**
+     * Bulk permanently delete models by their IDs.
+     *
+     * @param array $ids Array of model IDs to force delete
+     * @return int Number of affected records
+     */
     public static function bulkForceDelete(array $ids): int
     {
         return static::withTrashed()->whereIn('id', $ids)->forceDelete();
     }
 
+    /**
+     * Bulk update a specific field for multiple models.
+     *
+     * @param array $ids Array of model IDs
+     * @param string $field The field name to update
+     * @param mixed $value The new value
+     * @return int Number of affected records
+     */
     public static function bulkUpdateField(array $ids, string $field, mixed $value): int
     {
         return static::whereIn('id', $ids)->update([$field => $value]);
     }
 
+    /**
+     * Bulk assign a category to multiple models.
+     *
+     * @param array $ids Array of model IDs
+     * @param string $categoryId The category ID to assign
+     * @param string|null $pivotTable Optional custom pivot table name
+     * @return int Number of assignments made
+     */
     public static function bulkAssignCategory(array $ids, string $categoryId, string $pivotTable = null): int
     {
         $pivotTable = $pivotTable ?? static::getCategoryPivotTable();
@@ -68,6 +128,14 @@ trait HasBulkOperations
         return $count;
     }
 
+    /**
+     * Bulk remove a category from multiple models.
+     *
+     * @param array $ids Array of model IDs
+     * @param string $categoryId The category ID to remove
+     * @param string|null $pivotTable Optional custom pivot table name
+     * @return int Number of removals made
+     */
     public static function bulkRemoveCategory(array $ids, string $categoryId, string $pivotTable = null): int
     {
         $pivotTable = $pivotTable ?? static::getCategoryPivotTable();
@@ -79,6 +147,11 @@ trait HasBulkOperations
             ->delete();
     }
 
+    /**
+     * Get the category pivot table name for this model.
+     *
+     * @return string
+     */
     protected static function getCategoryPivotTable(): string
     {
         return property_exists(static::class, 'categoryPivotTable') 
@@ -86,6 +159,11 @@ trait HasBulkOperations
             : strtolower(class_basename(static::class)) . '_terms';
     }
 
+    /**
+     * Get the foreign key name for this model.
+     *
+     * @return string
+     */
     protected static function getForeignKeyName(): string
     {
         return strtolower(class_basename(static::class)) . '_id';

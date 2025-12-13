@@ -8,6 +8,28 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class Currency
+ *
+ * Eloquent model representing a currency
+ * with formatting and exchange rate support.
+ *
+ * @package Modules\Currency\Domain\Models
+ *
+ * @property string $id
+ * @property string $code
+ * @property string $name
+ * @property string $symbol
+ * @property string $symbol_position
+ * @property string $decimal_separator
+ * @property string $thousand_separator
+ * @property int $decimal_places
+ * @property bool $is_default
+ * @property bool $is_active
+ * @property int $ordering
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|ExchangeRate[] $exchangeRates
+ */
 class Currency extends Model
 {
     use HasUuids;

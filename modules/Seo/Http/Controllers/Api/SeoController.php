@@ -12,8 +12,22 @@ use Modules\Seo\Domain\Models\SeoMeta;
 use Modules\Seo\Http\Resources\RedirectResource;
 use Modules\Seo\Http\Resources\SeoMetaResource;
 
+/**
+ * Class SeoController
+ *
+ * API controller for SEO management including meta tags
+ * and URL redirects.
+ *
+ * @package Modules\Seo\Http\Controllers\Api
+ */
 class SeoController extends BaseController
 {
+    /**
+     * Get SEO meta for a specific model.
+     *
+     * @param Request $request The request with type, id, and optional locale
+     * @return JsonResponse The SEO meta or 404 error
+     */
     public function getSeoMeta(Request $request): JsonResponse
     {
         $request->validate([
@@ -29,6 +43,12 @@ class SeoController extends BaseController
         return $meta ? $this->success(new SeoMetaResource($meta)) : $this->notFound();
     }
 
+    /**
+     * Save or update SEO meta for a model.
+     *
+     * @param Request $request The request with SEO meta fields
+     * @return JsonResponse The saved SEO meta
+     */
     public function saveSeoMeta(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -57,12 +77,24 @@ class SeoController extends BaseController
         return $this->success(new SeoMetaResource($meta));
     }
 
+    /**
+     * Display paginated list of URL redirects.
+     *
+     * @param Request $request The request with pagination options
+     * @return JsonResponse Paginated list of redirects
+     */
     public function redirects(Request $request): JsonResponse
     {
         $redirects = Redirect::orderByDesc('created_at')->paginate($request->integer('per_page', 20));
         return $this->paginated(RedirectResource::collection($redirects)->resource);
     }
 
+    /**
+     * Create a new URL redirect.
+     *
+     * @param Request $request The request with redirect data
+     * @return JsonResponse The created redirect (HTTP 201)
+     */
     public function storeRedirect(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -85,6 +117,13 @@ class SeoController extends BaseController
         return $this->created(new RedirectResource($redirect));
     }
 
+    /**
+     * Update an existing redirect.
+     *
+     * @param Request $request The request with updated redirect data
+     * @param string $id The UUID of the redirect
+     * @return JsonResponse The updated redirect or 404 error
+     */
     public function updateRedirect(Request $request, string $id): JsonResponse
     {
         $redirect = Redirect::find($id);
@@ -94,6 +133,12 @@ class SeoController extends BaseController
         return $this->success(new RedirectResource($redirect->fresh()));
     }
 
+    /**
+     * Delete a redirect.
+     *
+     * @param string $id The UUID of the redirect
+     * @return JsonResponse Success message or 404 error
+     */
     public function destroyRedirect(string $id): JsonResponse
     {
         $redirect = Redirect::find($id);

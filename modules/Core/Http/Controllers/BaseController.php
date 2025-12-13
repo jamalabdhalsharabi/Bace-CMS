@@ -9,6 +9,14 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
 
+/**
+ * Class BaseController
+ * 
+ * Abstract base controller providing common JSON response methods
+ * for all API controllers in the application.
+ * 
+ * @package Modules\Core\Http\Controllers
+ */
 abstract class BaseController extends Controller
 {
     use AuthorizesRequests;
@@ -16,6 +24,11 @@ abstract class BaseController extends Controller
 
     /**
      * Return success JSON response.
+     *
+     * @param mixed $data Response data
+     * @param string $message Success message
+     * @param int $code HTTP status code
+     * @return JsonResponse
      */
     protected function success(mixed $data = null, string $message = 'Success', int $code = 200): JsonResponse
     {
@@ -27,7 +40,11 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return created JSON response.
+     * Return created JSON response (HTTP 201).
+     *
+     * @param mixed $data Response data
+     * @param string $message Success message
+     * @return JsonResponse
      */
     protected function created(mixed $data = null, string $message = 'Created successfully'): JsonResponse
     {
@@ -36,6 +53,11 @@ abstract class BaseController extends Controller
 
     /**
      * Return error JSON response.
+     *
+     * @param string $message Error message
+     * @param int $code HTTP status code
+     * @param mixed $errors Additional error details
+     * @return JsonResponse
      */
     protected function error(string $message = 'Error', int $code = 400, mixed $errors = null): JsonResponse
     {
@@ -52,7 +74,10 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return not found JSON response.
+     * Return not found JSON response (HTTP 404).
+     *
+     * @param string $message Error message
+     * @return JsonResponse
      */
     protected function notFound(string $message = 'Resource not found'): JsonResponse
     {
@@ -60,7 +85,10 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return unauthorized JSON response.
+     * Return unauthorized JSON response (HTTP 401).
+     *
+     * @param string $message Error message
+     * @return JsonResponse
      */
     protected function unauthorized(string $message = 'Unauthorized'): JsonResponse
     {
@@ -68,7 +96,10 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return forbidden JSON response.
+     * Return forbidden JSON response (HTTP 403).
+     *
+     * @param string $message Error message
+     * @return JsonResponse
      */
     protected function forbidden(string $message = 'Forbidden'): JsonResponse
     {
@@ -76,7 +107,11 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return validation error JSON response.
+     * Return validation error JSON response (HTTP 422).
+     *
+     * @param array $errors Validation errors
+     * @param string $message Error message
+     * @return JsonResponse
      */
     protected function validationError(array $errors, string $message = 'Validation failed'): JsonResponse
     {
@@ -84,7 +119,11 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return paginated JSON response.
+     * Return paginated JSON response with meta and links.
+     *
+     * @param mixed $paginator Laravel paginator instance
+     * @param string $message Success message
+     * @return JsonResponse
      */
     protected function paginated(mixed $paginator, string $message = 'Success'): JsonResponse
     {
@@ -110,7 +149,9 @@ abstract class BaseController extends Controller
     }
 
     /**
-     * Return no content response.
+     * Return no content response (HTTP 204).
+     *
+     * @return JsonResponse
      */
     protected function noContent(): JsonResponse
     {

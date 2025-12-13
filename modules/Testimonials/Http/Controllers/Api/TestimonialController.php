@@ -12,8 +12,22 @@ use Modules\Core\Http\Controllers\BaseController;
 use Modules\Testimonials\Domain\Models\Testimonial;
 use Modules\Testimonials\Http\Resources\TestimonialResource;
 
+/**
+ * Class TestimonialController
+ *
+ * API controller for managing customer testimonials
+ * including CRUD operations, translations, and featured items.
+ *
+ * @package Modules\Testimonials\Http\Controllers\Api
+ */
 class TestimonialController extends BaseController
 {
+    /**
+     * Display a paginated listing of active testimonials.
+     *
+     * @param Request $request The request with optional featured filter
+     * @return JsonResponse Paginated list of testimonials
+     */
     public function index(Request $request): JsonResponse
     {
         $query = Testimonial::with(['translation', 'avatar'])->active();
@@ -22,12 +36,24 @@ class TestimonialController extends BaseController
         return $this->paginated(TestimonialResource::collection($testimonials)->resource);
     }
 
+    /**
+     * Display the specified testimonial.
+     *
+     * @param string $id The UUID of the testimonial
+     * @return JsonResponse The testimonial or 404 error
+     */
     public function show(string $id): JsonResponse
     {
         $testimonial = Testimonial::with(['translations', 'avatar'])->find($id);
         return $testimonial ? $this->success(new TestimonialResource($testimonial)) : $this->notFound();
     }
 
+    /**
+     * Store a newly created testimonial.
+     *
+     * @param Request $request The request with testimonial data
+     * @return JsonResponse The created testimonial (HTTP 201)
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -61,6 +87,13 @@ class TestimonialController extends BaseController
         return $this->created(new TestimonialResource($testimonial));
     }
 
+    /**
+     * Update the specified testimonial.
+     *
+     * @param Request $request The request with updated data
+     * @param string $id The UUID of the testimonial
+     * @return JsonResponse The updated testimonial or 404 error
+     */
     public function update(Request $request, string $id): JsonResponse
     {
         $testimonial = Testimonial::find($id);
@@ -69,6 +102,12 @@ class TestimonialController extends BaseController
         return $this->success(new TestimonialResource($testimonial->fresh()));
     }
 
+    /**
+     * Delete the specified testimonial.
+     *
+     * @param string $id The UUID of the testimonial
+     * @return JsonResponse Success message or 404 error
+     */
     public function destroy(string $id): JsonResponse
     {
         $testimonial = Testimonial::find($id);

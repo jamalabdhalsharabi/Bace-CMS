@@ -7,13 +7,59 @@ namespace Modules\Pricing\Contracts;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Modules\Pricing\Domain\Models\PricingPlan;
 
+/**
+ * Interface PlanServiceContract
+ * 
+ * Defines the contract for pricing plan management services.
+ * Handles CRUD, activation, defaults, comparisons, cloning,
+ * analytics, import/export, and entity linking.
+ * 
+ * @package Modules\Pricing\Contracts
+ */
 interface PlanServiceContract
 {
+    /**
+     * Retrieves a list of pricing plans based on the given filters.
+     * 
+     * @param array $filters
+     * @param int $perPage
+     * @return LengthAwarePaginator
+     */
     public function list(array $filters = [], int $perPage = 20): LengthAwarePaginator;
+    /**
+     * Retrieves a collection of active pricing plans.
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
     public function getActive(): \Illuminate\Database\Eloquent\Collection;
+    /**
+     * Finds a pricing plan by its ID.
+     * 
+     * @param string $id
+     * @return ?PricingPlan
+     */
     public function find(string $id): ?PricingPlan;
+    /**
+     * Finds a pricing plan by its slug.
+     * 
+     * @param string $slug
+     * @return ?PricingPlan
+     */
     public function findBySlug(string $slug): ?PricingPlan;
+    /**
+     * Creates a new pricing plan.
+     * 
+     * @param array $data
+     * @return PricingPlan
+     */
     public function create(array $data): PricingPlan;
+    /**
+     * Updates an existing pricing plan.
+     * 
+     * @param PricingPlan $plan
+     * @param array $data
+     * @return PricingPlan
+     */
     public function update(PricingPlan $plan, array $data): PricingPlan;
     public function delete(PricingPlan $plan): bool;
     public function activate(PricingPlan $plan): PricingPlan;

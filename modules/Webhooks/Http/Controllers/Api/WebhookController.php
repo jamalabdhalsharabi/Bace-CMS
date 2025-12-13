@@ -13,13 +13,32 @@ use Modules\Webhooks\Domain\Models\Webhook;
 use Modules\Webhooks\Http\Resources\EmailLogResource;
 use Modules\Webhooks\Http\Resources\WebhookResource;
 
+/**
+ * Class WebhookController
+ *
+ * API controller for managing webhooks including
+ * CRUD operations, secret regeneration, and email logs.
+ *
+ * @package Modules\Webhooks\Http\Controllers\Api
+ */
 class WebhookController extends BaseController
 {
+    /**
+     * Display a listing of all webhooks.
+     *
+     * @return JsonResponse Collection of webhooks with logs
+     */
     public function index(): JsonResponse
     {
         return $this->success(WebhookResource::collection(Webhook::with('logs')->get()));
     }
 
+    /**
+     * Store a newly created webhook.
+     *
+     * @param Request $request The request with webhook configuration
+     * @return JsonResponse The created webhook (HTTP 201)
+     */
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
@@ -43,12 +62,25 @@ class WebhookController extends BaseController
         return $this->created(new WebhookResource($webhook));
     }
 
+    /**
+     * Display the specified webhook.
+     *
+     * @param string $id The UUID of the webhook
+     * @return JsonResponse The webhook with logs or 404 error
+     */
     public function show(string $id): JsonResponse
     {
         $webhook = Webhook::with('logs')->find($id);
         return $webhook ? $this->success(new WebhookResource($webhook)) : $this->notFound();
     }
 
+    /**
+     * Update the specified webhook.
+     *
+     * @param Request $request The request with updated data
+     * @param string $id The UUID of the webhook
+     * @return JsonResponse The updated webhook or 404 error
+     */
     public function update(Request $request, string $id): JsonResponse
     {
         $webhook = Webhook::find($id);
@@ -58,6 +90,12 @@ class WebhookController extends BaseController
         return $this->success(new WebhookResource($webhook->fresh()));
     }
 
+    /**
+     * Delete the specified webhook and its logs.
+     *
+     * @param string $id The UUID of the webhook
+     * @return JsonResponse Success message or 404 error
+     */
     public function destroy(string $id): JsonResponse
     {
         $webhook = Webhook::find($id);
@@ -67,6 +105,12 @@ class WebhookController extends BaseController
         return $this->success(null, 'Webhook deleted');
     }
 
+    /**
+     * Regenerate the webhook secret key.
+     *
+     * @param string $id The UUID of the webhook
+     * @return JsonResponse The new secret or 404 error
+     */
     public function regenerateSecret(string $id): JsonResponse
     {
         $webhook = Webhook::find($id);
@@ -75,6 +119,12 @@ class WebhookController extends BaseController
         return $this->success(['secret' => $webhook->secret]);
     }
 
+    /**
+     * Display paginated email logs.
+     *
+     * @param Request $request The request with pagination options
+     * @return JsonResponse Paginated list of email logs
+     */
     public function emailLogs(Request $request): JsonResponse
     {
         $logs = EmailLog::latest('created_at')->paginate($request->integer('per_page', 20));

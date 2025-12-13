@@ -9,8 +9,21 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * Class BaseRepository
+ *
+ * Abstract base repository providing common CRUD operations
+ * and query building functionality for all repositories.
+ *
+ * @package Modules\Core\Repositories
+ */
 abstract class BaseRepository
 {
+    /**
+     * The Eloquent model instance.
+     *
+     * @var Model
+     */
     protected Model $model;
 
     public function __construct(Model $model)

@@ -13,18 +13,62 @@ use Modules\Forms\Domain\Models\Form;
 use Modules\Forms\Domain\Models\FormSubmission;
 use Modules\Forms\Jobs\ProcessSubmission;
 
+/**
+ * Class FormService
+ *
+ * Service class for managing dynamic forms including
+ * CRUD, submissions, and spam detection.
+ *
+ * @package Modules\Forms\Services
+ */
 class FormService implements FormServiceContract
 {
-    public function __construct(
-        protected SpamDetector $spamDetector,
-        protected FormValidator $formValidator
-    ) {}
+    /**
+     * The spam detector instance.
+     *
+     * @var SpamDetector
+     */
+    protected SpamDetector $spamDetector;
 
+    /**
+     * The form validator instance.
+     *
+     * @var FormValidator
+     */
+    protected FormValidator $formValidator;
+
+    /**
+     * Create a new FormService instance.
+     *
+     * @param SpamDetector $spamDetector The spam detector
+     * @param FormValidator $formValidator The form validator
+     */
+    public function __construct(
+        SpamDetector $spamDetector,
+        FormValidator $formValidator
+    ) {
+        $this->spamDetector = $spamDetector;
+        $this->formValidator = $formValidator;
+    }
+
+    /**
+     * Get all forms with their fields.
+     *
+     * @return Collection Collection of Form models
+     */
     public function all(): Collection
     {
         return Form::with('fields')->get();
     }
 
+    /**
+     * Get a paginated list of forms with optional filtering.
+     *
+     * @param array $filters Optional filters: 'type', 'active', 'search'
+     * @param int $perPage Results per page
+     *
+     * @return LengthAwarePaginator Paginated forms
+     */
     public function list(array $filters = [], int $perPage = 15): LengthAwarePaginator
     {
         $query = Form::withCount('submissions');
@@ -44,16 +88,39 @@ class FormService implements FormServiceContract
         return $query->latest()->paginate($perPage);
     }
 
+    /**
+     * Find a form by its UUID.
+     *
+     * @param string $id The form UUID
+     *
+     * @return Form|null The found form or null
+     */
     public function find(string $id): ?Form
     {
         return Form::with('fields')->find($id);
     }
 
+    /**
+     * Find an active form by its slug.
+     *
+     * @param string $slug The form slug
+     *
+     * @return Form|null The found form or null
+     */
     public function findBySlug(string $slug): ?Form
     {
         return Form::with('fields')->where('slug', $slug)->active()->first();
     }
 
+    /**
+     * Create a new form with fields.
+     *
+     * @param array $data Form data including fields
+     *
+     * @return Form The created form
+     *
+     * @throws \Throwable If transaction fails
+     */
     public function create(array $data): Form
     {
         return DB::transaction(function () use ($data) {
@@ -91,6 +158,16 @@ class FormService implements FormServiceContract
         });
     }
 
+    /**
+     * Update an existing form and its fields.
+     *
+     * @param Form $form The form to update
+     * @param array $data Updated data
+     *
+     * @return Form The updated form
+     *
+     * @throws \Throwable If transaction fails
+     */
     public function update(Form $form, array $data): Form
     {
         return DB::transaction(function () use ($form, $data) {
@@ -128,11 +205,29 @@ class FormService implements FormServiceContract
         });
     }
 
+    /**
+     * Delete a form.
+     *
+     * @param Form $form The form to delete
+     *
+     * @return bool True if successful
+     */
     public function delete(Form $form): bool
     {
         return $form->delete();
     }
 
+    /**
+     * Submit data to a form.
+     *
+     * @param Form $form The form being submitted
+     * @param array $data Submitted form data
+     * @param array $meta Additional metadata (ip, user_agent, referrer)
+     *
+     * @return FormSubmission The created submission
+     *
+     * @throws \Illuminate\Validation\ValidationException If validation fails
+     */
     public function submit(Form $form, array $data, array $meta = []): FormSubmission
     {
         $this->formValidator->validate($form, $data);
@@ -158,6 +253,15 @@ class FormService implements FormServiceContract
         return $submission;
     }
 
+    /**
+     * Get paginated submissions for a form.
+     *
+     * @param string $formId The form UUID
+     * @param array $filters Optional filters: 'status', 'exclude_spam'
+     * @param int $perPage Results per page
+     *
+     * @return LengthAwarePaginator Paginated submissions
+     */
     public function getSubmissions(string $formId, array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = FormSubmission::where('form_id', $formId)->with('user');
@@ -173,6 +277,14 @@ class FormService implements FormServiceContract
         return $query->latest()->paginate($perPage);
     }
 
+    /**
+     * Update a submission's status.
+     *
+     * @param FormSubmission $submission The submission to update
+     * @param string $status New status
+     *
+     * @return FormSubmission The updated submission
+     */
     public function updateSubmissionStatus(FormSubmission $submission, string $status): FormSubmission
     {
         $submission->update(['status' => $status]);

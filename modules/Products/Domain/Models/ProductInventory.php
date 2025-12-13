@@ -9,6 +9,25 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * Class ProductInventory
+ *
+ * Eloquent model representing product inventory
+ * with stock tracking, reservations, and movements.
+ *
+ * @package Modules\Products\Domain\Models
+ *
+ * @property string $id
+ * @property string $product_id
+ * @property string|null $variant_id
+ * @property int $quantity
+ * @property int $reserved_quantity
+ * @property int|null $low_stock_threshold
+ *
+ * @property-read Product $product
+ * @property-read ProductVariant|null $variant
+ * @property-read \Illuminate\Database\Eloquent\Collection|InventoryMovement[] $movements
+ */
 class ProductInventory extends Model
 {
     use HasUuids;

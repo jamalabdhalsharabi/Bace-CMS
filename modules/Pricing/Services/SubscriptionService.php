@@ -11,8 +11,27 @@ use Modules\Pricing\Domain\Models\Coupon;
 use Modules\Pricing\Domain\Models\PricingPlan;
 use Modules\Pricing\Domain\Models\Subscription;
 
+/**
+ * Class SubscriptionService
+ *
+ * Service class for managing subscriptions including
+ * creation, upgrades, downgrades, cancellation, and renewal.
+ *
+ * @package Modules\Pricing\Services
+ */
 class SubscriptionService implements SubscriptionServiceContract
 {
+    /**
+     * Create a new subscription for a user.
+     *
+     * @param string $userId The user UUID
+     * @param string $planId The plan UUID
+     * @param array $data Subscription data including billing_period, payment_method, coupon_code
+     *
+     * @return Subscription The created subscription
+     *
+     * @throws \Throwable If transaction fails
+     */
     public function create(string $userId, string $planId, array $data): Subscription
     {
         $plan = PricingPlan::findOrFail($planId);
@@ -44,11 +63,25 @@ class SubscriptionService implements SubscriptionServiceContract
         });
     }
 
+    /**
+     * Find a subscription by its UUID.
+     *
+     * @param string $id The subscription UUID
+     *
+     * @return Subscription|null The found subscription or null
+     */
     public function find(string $id): ?Subscription
     {
         return Subscription::with(['plan.translation', 'usages'])->find($id);
     }
 
+    /**
+     * Get all subscriptions for a user.
+     *
+     * @param string $userId The user UUID
+     *
+     * @return Collection User's subscriptions
+     */
     public function getForUser(string $userId): Collection
     {
         return Subscription::where('user_id', $userId)
@@ -57,6 +90,15 @@ class SubscriptionService implements SubscriptionServiceContract
             ->get();
     }
 
+    /**
+     * Upgrade a subscription to a higher plan.
+     *
+     * @param Subscription $subscription The subscription to upgrade
+     * @param string $newPlanId The new plan UUID
+     * @param bool $prorate Whether to prorate the upgrade
+     *
+     * @return Subscription The upgraded subscription
+     */
     public function upgrade(Subscription $subscription, string $newPlanId, bool $prorate = true): Subscription
     {
         return DB::transaction(function () use ($subscription, $newPlanId) {
@@ -68,22 +110,52 @@ class SubscriptionService implements SubscriptionServiceContract
         });
     }
 
+    /**
+     * Schedule a downgrade to a lower plan at period end.
+     *
+     * @param Subscription $subscription The subscription to downgrade
+     * @param string $newPlanId The new plan UUID
+     *
+     * @return Subscription The subscription with pending downgrade
+     */
     public function downgrade(Subscription $subscription, string $newPlanId): Subscription
     {
         $subscription->update(['pending_plan_id' => $newPlanId]);
         return $subscription->fresh();
     }
 
+    /**
+     * Cancel a subscription.
+     *
+     * @param Subscription $subscription The subscription to cancel
+     * @param string|null $reason Cancellation reason
+     *
+     * @return Subscription The cancelled subscription
+     */
     public function cancel(Subscription $subscription, ?string $reason = null): Subscription
     {
         return $subscription->cancel($reason);
     }
 
+    /**
+     * Resume a cancelled or paused subscription.
+     *
+     * @param Subscription $subscription The subscription to resume
+     *
+     * @return Subscription The resumed subscription
+     */
     public function resume(Subscription $subscription): Subscription
     {
         return $subscription->resume();
     }
 
+    /**
+     * Renew a subscription for another period.
+     *
+     * @param Subscription $subscription The subscription to renew
+     *
+     * @return Subscription The renewed subscription
+     */
     public function renew(Subscription $subscription): Subscription
     {
         return DB::transaction(function () use ($subscription) {
@@ -101,11 +173,28 @@ class SubscriptionService implements SubscriptionServiceContract
         });
     }
 
+    /**
+     * Pause a subscription temporarily.
+     *
+     * @param Subscription $subscription The subscription to pause
+     * @param string|null $resumeAt Optional date to auto-resume
+     *
+     * @return Subscription The paused subscription
+     */
     public function pause(Subscription $subscription, ?string $resumeAt = null): Subscription
     {
         return $subscription->pause($resumeAt);
     }
 
+    /**
+     * Process a refund for a subscription.
+     *
+     * @param Subscription $subscription The subscription to refund
+     * @param string $type Refund type: 'full', 'prorated', 'partial'
+     * @param float|null $amount Amount for partial refunds
+     *
+     * @return array Refund result with success status and amount
+     */
     public function refund(Subscription $subscription, string $type = 'full', ?float $amount = null): array
     {
         $lastPaymentAmount = 100.00; // Placeholder - would come from payment system
@@ -133,6 +222,15 @@ class SubscriptionService implements SubscriptionServiceContract
         });
     }
 
+    /**
+     * Extend a subscription by additional days.
+     *
+     * @param Subscription $subscription The subscription to extend
+     * @param int $days Number of days to add
+     * @param string|null $reason Extension reason
+     *
+     * @return Subscription The extended subscription
+     */
     public function extend(Subscription $subscription, int $days, ?string $reason = null): Subscription
     {
         return DB::transaction(function () use ($subscription, $days, $reason) {
@@ -150,6 +248,14 @@ class SubscriptionService implements SubscriptionServiceContract
         });
     }
 
+    /**
+     * Calculate prorated refund amount.
+     *
+     * @param Subscription $subscription The subscription
+     * @param float $totalAmount Total payment amount
+     *
+     * @return float Prorated refund amount
+     */
     protected function calculateProratedRefund(Subscription $subscription, float $totalAmount): float
     {
         $totalDays = $subscription->starts_at->diffInDays($subscription->ends_at);
@@ -159,6 +265,14 @@ class SubscriptionService implements SubscriptionServiceContract
         return round(($remainingDays / $totalDays) * $totalAmount, 2);
     }
 
+    /**
+     * Calculate subscription end date based on period.
+     *
+     * @param mixed $startDate Start date
+     * @param string $period Billing period
+     *
+     * @return \Carbon\Carbon Calculated end date
+     */
     protected function calculateEndDate($startDate, string $period): \Carbon\Carbon
     {
         return match ($period) {

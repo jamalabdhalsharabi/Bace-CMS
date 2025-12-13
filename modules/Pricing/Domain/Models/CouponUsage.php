@@ -8,6 +8,23 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class CouponUsage
+ *
+ * Eloquent model representing a coupon usage record
+ * linking a coupon to a user and subscription.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $coupon_id
+ * @property string $user_id
+ * @property string $subscription_id
+ *
+ * @property-read Coupon $coupon
+ * @property-read \Modules\Users\Domain\Models\User $user
+ * @property-read Subscription $subscription
+ */
 class CouponUsage extends Model
 {
     use HasUuids;

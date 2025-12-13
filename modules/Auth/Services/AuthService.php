@@ -16,8 +16,26 @@ use Modules\Auth\Contracts\AuthServiceContract;
 use Modules\Auth\Domain\Models\Role;
 use Modules\Users\Domain\Models\User;
 
+/**
+ * Class AuthService
+ *
+ * Service class for handling authentication operations including
+ * login, registration, password reset, and email verification.
+ *
+ * @package Modules\Auth\Services
+ */
 class AuthService implements AuthServiceContract
 {
+    /**
+     * Authenticate a user and return access token.
+     *
+     * @param string $email User email
+     * @param string $password User password
+     *
+     * @return array User data and token
+     *
+     * @throws ValidationException If credentials are invalid
+     */
     public function login(string $email, string $password): array
     {
         $user = User::where('email', $email)->first();
@@ -45,6 +63,13 @@ class AuthService implements AuthServiceContract
         ];
     }
 
+    /**
+     * Register a new user.
+     *
+     * @param array $data Registration data: email, password, first_name, last_name
+     *
+     * @return User The created user
+     */
     public function register(array $data): User
     {
         $user = User::create([
@@ -68,22 +93,56 @@ class AuthService implements AuthServiceContract
         return $user->fresh(['profile', 'roles']);
     }
 
+    /**
+     * Log out a user by revoking their current token.
+     *
+     * @param User $user The user to log out
+     *
+     * @return void
+     */
     public function logout(User $user): void
     {
         $user->currentAccessToken()->delete();
     }
 
+    /**
+     * Refresh an access token.
+     *
+     * @param string $refreshToken The refresh token
+     *
+     * @return array New token data
+     *
+     * @throws \RuntimeException Not implemented
+     */
     public function refreshToken(string $refreshToken): array
     {
         // Implementation depends on your token strategy
         throw new \RuntimeException('Refresh token not implemented');
     }
 
+    /**
+     * Send a password reset link.
+     *
+     * @param string $email User email
+     *
+     * @return void
+     */
     public function forgotPassword(string $email): void
     {
         Password::sendResetLink(['email' => $email]);
     }
 
+    /**
+     * Reset a user's password.
+     *
+     * @param string $token Reset token
+     * @param string $email User email
+     * @param string $password New password
+     *
+     * @return void
+     *
+     * @throws ValidationException If reset fails
+     */
     public function resetPassword(string $token, string $email, string $password): void
     {
         $status = Password::reset(
@@ -110,6 +169,16 @@ class AuthService implements AuthServiceContract
         }
     }
 
+    /**
+     * Verify a user's email address.
+     *
+     * @param string $id User ID
+     * @param string $hash Verification hash
+     *
+     * @return void
+     *
+     * @throws ValidationException If verification fails
+     */
     public function verifyEmail(string $id, string $hash): void
     {
         $user = User::findOrFail($id);
@@ -126,6 +195,15 @@ class AuthService implements AuthServiceContract
         }
     }
 
+    /**
+     * Resend email verification notification.
+     *
+     * @param User $user The user
+     *
+     * @return void
+     *
+     * @throws ValidationException If already verified
+     */
     public function resendVerification(User $user): void
     {
         if ($user->hasVerifiedEmail()) {

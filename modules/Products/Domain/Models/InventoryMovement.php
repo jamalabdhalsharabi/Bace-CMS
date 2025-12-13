@@ -8,6 +8,30 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class InventoryMovement
+ *
+ * Eloquent model representing an inventory movement record
+ * for stock change tracking and auditing.
+ *
+ * @package Modules\Products\Domain\Models
+ *
+ * @property string $id
+ * @property string $inventory_id
+ * @property string $type
+ * @property int $quantity
+ * @property int $quantity_before
+ * @property int $quantity_after
+ * @property string|null $reference_type
+ * @property string|null $reference_id
+ * @property string|null $reason
+ * @property string|null $notes
+ * @property string|null $created_by
+ * @property \Carbon\Carbon $created_at
+ *
+ * @property-read ProductInventory $inventory
+ * @property-read \Modules\Users\Domain\Models\User|null $createdBy
+ */
 class InventoryMovement extends Model
 {
     use HasUuids;

@@ -9,6 +9,24 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * Class PlanLink
+ *
+ * Eloquent model representing a link between a pricing plan
+ * and a product or service entity.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $plan_id
+ * @property string $linkable_type
+ * @property string $linkable_id
+ * @property bool $is_required
+ * @property array|null $meta
+ *
+ * @property-read PricingPlan $plan
+ * @property-read Model $linkable
+ */
 class PlanLink extends Model
 {
     use HasUuids;

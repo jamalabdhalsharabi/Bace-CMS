@@ -13,6 +13,36 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Media\Domain\Models\Media;
 use Modules\Taxonomy\Traits\HasTaxonomies;
 
+/**
+ * Class Project
+ *
+ * Eloquent model representing a portfolio project with translations,
+ * client info, gallery, and case studies.
+ *
+ * @package Modules\Projects\Domain\Models
+ *
+ * @property string $id
+ * @property string $status
+ * @property bool $is_featured
+ * @property string|null $client_name
+ * @property string|null $client_logo_id
+ * @property string|null $client_website
+ * @property bool $client_permission
+ * @property string|null $project_type
+ * @property \Carbon\Carbon|null $start_date
+ * @property \Carbon\Carbon|null $end_date
+ * @property array|null $metrics
+ * @property \Carbon\Carbon|null $published_at
+ * @property int $sort_order
+ * @property array|null $meta
+ * @property array|null $settings
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|ProjectTranslation[] $translations
+ * @property-read ProjectTranslation|null $translation
+ * @property-read Media|null $clientLogo
+ * @property-read string|null $title
+ * @property-read string|null $slug
+ */
 class Project extends Model
 {
     use HasUuids;

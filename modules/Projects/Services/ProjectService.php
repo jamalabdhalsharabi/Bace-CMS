@@ -10,8 +10,19 @@ use Illuminate\Support\Str;
 use Modules\Projects\Contracts\ProjectServiceContract;
 use Modules\Projects\Domain\Models\Project;
 
+/**
+ * Class ProjectService
+ *
+ * Service class for managing projects including CRUD,
+ * workflow, gallery, case studies, and related projects.
+ *
+ * @package Modules\Projects\Services
+ */
 class ProjectService implements ProjectServiceContract
 {
+    /**
+     * {@inheritdoc}
+     */
     public function list(array $filters = [], int $perPage = 12): LengthAwarePaginator
     {
         $query = Project::with(['translation', 'clientLogo']);
@@ -29,16 +40,25 @@ class ProjectService implements ProjectServiceContract
         return $query->orderBy('sort_order')->latest()->paginate($perPage);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function find(string $id): ?Project
     {
         return Project::with(['translations', 'clientLogo'])->find($id);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function findBySlug(string $slug): ?Project
     {
         return Project::findBySlug($slug)?->load(['translations', 'clientLogo']);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function create(array $data): Project
     {
         return DB::transaction(function () use ($data) {
@@ -78,6 +98,9 @@ class ProjectService implements ProjectServiceContract
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function update(Project $project, array $data): Project
     {
         return DB::transaction(function () use ($project, $data) {
@@ -96,59 +119,89 @@ class ProjectService implements ProjectServiceContract
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function delete(Project $project): bool
     {
         return $project->delete();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function publish(Project $project): Project
     {
         $project->update(['status' => 'published', 'published_at' => now()]);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function saveDraft(Project $project, array $data): Project
     {
         $data['status'] = 'draft';
         return $this->update($project, $data);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function submitForReview(Project $project): Project
     {
         $project->update(['status' => 'pending_review']);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function approve(Project $project): Project
     {
         $project->update(['status' => 'approved']);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function reject(Project $project, ?string $reason = null): Project
     {
         $project->update(['status' => 'rejected', 'rejection_reason' => $reason]);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function schedule(Project $project, \DateTime $date): Project
     {
         $project->update(['status' => 'scheduled', 'scheduled_at' => $date]);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function unpublish(Project $project): Project
     {
         $project->update(['status' => 'draft']);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function archive(Project $project): Project
     {
         $project->update(['status' => 'archived', 'archived_at' => now()]);
         return $project->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function addGalleryImages(Project $project, array $mediaIds): Project
     {
         $project->gallery()->syncWithoutDetaching($mediaIds);

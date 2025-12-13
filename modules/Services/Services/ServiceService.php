@@ -10,8 +10,19 @@ use Illuminate\Support\Facades\DB;
 use Modules\Services\Contracts\ServiceServiceContract;
 use Modules\Services\Domain\Models\Service;
 
+/**
+ * Class ServiceService
+ *
+ * Service class for managing business services including CRUD,
+ * workflow, translations, media, categories, and revisions.
+ *
+ * @package Modules\Services\Services
+ */
 class ServiceService implements ServiceServiceContract
 {
+    /**
+     * {@inheritdoc}
+     */
     public function list(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = Service::with(['translation', 'categories']);
@@ -31,11 +42,17 @@ class ServiceService implements ServiceServiceContract
         return $query->ordered()->paginate($perPage);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function find(string $id): ?Service
     {
         return Service::with(['translations', 'categories', 'media', 'relatedServices'])->find($id);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function findBySlug(string $slug): ?Service
     {
         return Service::whereHas('translations', fn($q) => $q->where('slug', $slug))
@@ -43,6 +60,9 @@ class ServiceService implements ServiceServiceContract
             ->first();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function create(array $data): Service
     {
         return DB::transaction(function () use ($data) {
@@ -71,6 +91,9 @@ class ServiceService implements ServiceServiceContract
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function update(Service $service, array $data): Service
     {
         return DB::transaction(function () use ($service, $data) {
@@ -98,16 +121,25 @@ class ServiceService implements ServiceServiceContract
         });
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function delete(Service $service): bool
     {
         return $service->delete();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function forceDelete(Service $service): bool
     {
         return $service->forceDelete();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function restore(string $id): ?Service
     {
         $service = Service::withTrashed()->find($id);
@@ -115,7 +147,9 @@ class ServiceService implements ServiceServiceContract
         return $service;
     }
 
-    // Workflow
+    /**
+     * {@inheritdoc}
+     */
     public function saveDraft(Service $service, array $data): Service
     {
         $service->update(['status' => 'draft', ...$data]);
@@ -123,30 +157,45 @@ class ServiceService implements ServiceServiceContract
         return $service->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function submitForReview(Service $service): Service
     {
         $service->submitForReview();
         return $service;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function startReview(Service $service, string $reviewerId): Service
     {
         $service->startReview($reviewerId);
         return $service;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function approve(Service $service, ?string $notes = null): Service
     {
         $service->approve($notes);
         return $service;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function reject(Service $service, ?string $notes = null): Service
     {
         $service->reject($notes);
         return $service;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function publish(Service $service): Service
     {
         $service->publish();
@@ -154,6 +203,9 @@ class ServiceService implements ServiceServiceContract
         return $service;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function schedule(Service $service, \DateTime $date): Service
     {
         $service->schedule($date);

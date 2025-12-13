@@ -12,6 +12,34 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Class Service
+ *
+ * Eloquent model representing a business service offering
+ * with translations, workflow, media, and categories.
+ *
+ * @package Modules\Services\Domain\Models
+ *
+ * @property string $id
+ * @property string $slug
+ * @property string $status
+ * @property bool $is_featured
+ * @property int $sort_order
+ * @property string|null $icon
+ * @property string|null $color
+ * @property \Carbon\Carbon|null $published_at
+ * @property \Carbon\Carbon|null $scheduled_at
+ * @property \Carbon\Carbon|null $archived_at
+ * @property string|null $created_by
+ * @property string|null $updated_by
+ * @property string|null $reviewed_by
+ * @property string|null $review_notes
+ *
+ * @property-read \Illuminate\Database\Eloquent\Collection|ServiceTranslation[] $translations
+ * @property-read ServiceTranslation|null $translation
+ * @property-read string|null $name
+ * @property-read string|null $description
+ */
 class Service extends Model
 {
     use HasUuids, SoftDeletes;

@@ -10,8 +10,24 @@ use Illuminate\Support\Facades\DB;
 use Modules\Pricing\Contracts\PlanServiceContract;
 use Modules\Pricing\Domain\Models\PricingPlan;
 
+/**
+ * Class PlanService
+ *
+ * Service class for managing pricing plans including CRUD,
+ * activation, comparison, cloning, analytics, and linking.
+ *
+ * @package Modules\Pricing\Services
+ */
 class PlanService implements PlanServiceContract
 {
+    /**
+     * Get a paginated list of pricing plans.
+     *
+     * @param array $filters Optional filters: 'status', 'type'
+     * @param int $perPage Results per page
+     *
+     * @return LengthAwarePaginator Paginated plans
+     */
     public function list(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = PricingPlan::with(['translation', 'prices', 'features.translation']);
@@ -22,6 +38,11 @@ class PlanService implements PlanServiceContract
         return $query->ordered()->paginate($perPage);
     }
 
+    /**
+     * Get all active pricing plans.
+     *
+     * @return Collection Collection of active PricingPlan models
+     */
     public function getActive(): Collection
     {
         return PricingPlan::active()
@@ -30,11 +51,25 @@ class PlanService implements PlanServiceContract
             ->get();
     }
 
+    /**
+     * Find a pricing plan by its UUID.
+     *
+     * @param string $id The plan UUID
+     *
+     * @return PricingPlan|null The found plan or null
+     */
     public function find(string $id): ?PricingPlan
     {
         return PricingPlan::with(['translations', 'prices.currency', 'features.translations', 'limits'])->find($id);
     }
 
+    /**
+     * Find a pricing plan by its slug.
+     *
+     * @param string $slug The plan slug
+     *
+     * @return PricingPlan|null The found plan or null
+     */
     public function findBySlug(string $slug): ?PricingPlan
     {
         return PricingPlan::where('slug', $slug)
@@ -42,6 +77,15 @@ class PlanService implements PlanServiceContract
             ->first();
     }
 
+    /**
+     * Create a new pricing plan with translations, prices, features and limits.
+     *
+     * @param array $data Plan data
+     *
+     * @return PricingPlan The created plan
+     *
+     * @throws \Throwable If transaction fails
+     */
     public function create(array $data): PricingPlan
     {
         return DB::transaction(function () use ($data) {
@@ -105,6 +149,16 @@ class PlanService implements PlanServiceContract
         });
     }
 
+    /**
+     * Update an existing pricing plan.
+     *
+     * @param PricingPlan $plan The plan to update
+     * @param array $data Updated data
+     *
+     * @return PricingPlan The updated plan
+     *
+     * @throws \Throwable If transaction fails
+     */
     public function update(PricingPlan $plan, array $data): PricingPlan
     {
         return DB::transaction(function () use ($plan, $data) {
@@ -120,6 +174,15 @@ class PlanService implements PlanServiceContract
         });
     }
 
+    /**
+     * Delete a pricing plan.
+     *
+     * @param PricingPlan $plan The plan to delete
+     *
+     * @return bool True if successful
+     *
+     * @throws \Exception If plan has active subscriptions
+     */
     public function delete(PricingPlan $plan): bool
     {
         if ($plan->subscriptions()->active()->exists()) {
@@ -128,18 +191,39 @@ class PlanService implements PlanServiceContract
         return $plan->delete();
     }
 
+    /**
+     * Activate a pricing plan.
+     *
+     * @param PricingPlan $plan The plan to activate
+     *
+     * @return PricingPlan The activated plan
+     */
     public function activate(PricingPlan $plan): PricingPlan
     {
         $plan->update(['status' => 'active']);
         return $plan->fresh();
     }
 
+    /**
+     * Deactivate a pricing plan.
+     *
+     * @param PricingPlan $plan The plan to deactivate
+     *
+     * @return PricingPlan The deactivated plan
+     */
     public function deactivate(PricingPlan $plan): PricingPlan
     {
         $plan->update(['status' => 'inactive']);
         return $plan->fresh();
     }
 
+    /**
+     * Set a plan as the default.
+     *
+     * @param PricingPlan $plan The plan to set as default
+     *
+     * @return PricingPlan The updated plan
+     */
     public function setAsDefault(PricingPlan $plan): PricingPlan
     {
         DB::transaction(function () use ($plan) {
@@ -149,6 +233,13 @@ class PlanService implements PlanServiceContract
         return $plan->fresh();
     }
 
+    /**
+     * Set a plan as the recommended option.
+     *
+     * @param PricingPlan $plan The plan to recommend
+     *
+     * @return PricingPlan The updated plan
+     */
     public function setAsRecommended(PricingPlan $plan): PricingPlan
     {
         DB::transaction(function () use ($plan) {
@@ -158,6 +249,13 @@ class PlanService implements PlanServiceContract
         return $plan->fresh();
     }
 
+    /**
+     * Compare multiple plans side by side.
+     *
+     * @param array $planIds Array of plan UUIDs to compare
+     *
+     * @return array Comparison data with plans and features matrix
+     */
     public function compare(array $planIds): array
     {
         $plans = PricingPlan::whereIn('id', $planIds)
@@ -179,6 +277,14 @@ class PlanService implements PlanServiceContract
         return ['plans' => $plans, 'features_matrix' => $matrix];
     }
 
+    /**
+     * Clone a plan with a new slug.
+     *
+     * @param PricingPlan $plan The plan to clone
+     * @param string $newSlug The slug for the new plan
+     *
+     * @return PricingPlan The cloned plan
+     */
     public function clone(PricingPlan $plan, string $newSlug): PricingPlan
     {
         return DB::transaction(function () use ($plan, $newSlug) {
@@ -212,6 +318,13 @@ class PlanService implements PlanServiceContract
         });
     }
 
+    /**
+     * Reorder plans by their IDs.
+     *
+     * @param array $order Array of plan UUIDs in order
+     *
+     * @return bool True if successful
+     */
     public function reorder(array $order): bool
     {
         return DB::transaction(function () use ($order) {
@@ -222,6 +335,13 @@ class PlanService implements PlanServiceContract
         });
     }
 
+    /**
+     * Get analytics for a plan.
+     *
+     * @param PricingPlan $plan The plan
+     *
+     * @return array Analytics data including subscriber counts and MRR
+     */
     public function getAnalytics(PricingPlan $plan): array
     {
         $subscriptions = $plan->subscriptions();
@@ -249,6 +369,13 @@ class PlanService implements PlanServiceContract
         ];
     }
 
+    /**
+     * Export plans to array format.
+     *
+     * @param array $options Export options
+     *
+     * @return array Exported plan data
+     */
     public function export(array $options = []): array
     {
         $query = PricingPlan::with(['translations', 'prices', 'features.translations', 'limits']);
@@ -274,6 +401,14 @@ class PlanService implements PlanServiceContract
         ])->toArray();
     }
 
+    /**
+     * Import plans from array data.
+     *
+     * @param array $data Plan data to import
+     * @param string $mode Import mode: 'merge' or 'replace'
+     *
+     * @return array Import results
+     */
     public function import(array $data, string $mode = 'merge'): array
     {
         $results = ['created' => 0, 'updated' => 0, 'errors' => []];
@@ -297,6 +432,16 @@ class PlanService implements PlanServiceContract
         return $results;
     }
 
+    /**
+     * Link a plan to an entity.
+     *
+     * @param PricingPlan $plan The plan
+     * @param string $entityType Entity type (product, service, event, project)
+     * @param string $entityId Entity UUID
+     * @param bool $isRequired Whether the plan is required
+     *
+     * @return \Modules\Pricing\Domain\Models\PlanLink The created link
+     */
     public function link(PricingPlan $plan, string $entityType, string $entityId, bool $isRequired = false): \Modules\Pricing\Domain\Models\PlanLink
     {
         $linkableType = $this->resolveLinkableType($entityType);
@@ -307,6 +452,15 @@ class PlanService implements PlanServiceContract
         );
     }
 
+    /**
+     * Remove a link from a plan.
+     *
+     * @param PricingPlan $plan The plan
+     * @param string $entityType Entity type
+     * @param string $entityId Entity UUID
+     *
+     * @return bool True if successful
+     */
     public function unlink(PricingPlan $plan, string $entityType, string $entityId): bool
     {
         $linkableType = $this->resolveLinkableType($entityType);
@@ -317,11 +471,25 @@ class PlanService implements PlanServiceContract
             ->delete() > 0;
     }
 
+    /**
+     * Get all links for a plan.
+     *
+     * @param PricingPlan $plan The plan
+     *
+     * @return \Illuminate\Database\Eloquent\Collection Plan links
+     */
     public function getLinks(PricingPlan $plan): \Illuminate\Database\Eloquent\Collection
     {
         return $plan->links()->with('linkable')->get();
     }
 
+    /**
+     * Resolve entity type to fully qualified class name.
+     *
+     * @param string $entityType Short entity type
+     *
+     * @return string Fully qualified class name
+     */
     protected function resolveLinkableType(string $entityType): string
     {
         return match ($entityType) {

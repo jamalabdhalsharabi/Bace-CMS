@@ -9,8 +9,19 @@ use Illuminate\Support\Facades\DB;
 use Modules\Pricing\Contracts\CouponServiceContract;
 use Modules\Pricing\Domain\Models\Coupon;
 
+/**
+ * Class CouponService
+ *
+ * Service class for managing discount coupons including
+ * CRUD, validation, and application to subscriptions.
+ *
+ * @package Modules\Pricing\Services
+ */
 class CouponService implements CouponServiceContract
 {
+    /**
+     * {@inheritdoc}
+     */
     public function list(array $filters = [], int $perPage = 20): LengthAwarePaginator
     {
         $query = Coupon::query();
@@ -19,16 +30,25 @@ class CouponService implements CouponServiceContract
         return $query->latest()->paginate($perPage);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function find(string $id): ?Coupon
     {
         return Coupon::find($id);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function findByCode(string $code): ?Coupon
     {
         return Coupon::findByCode($code);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function create(array $data): Coupon
     {
         return Coupon::create([
@@ -46,29 +66,44 @@ class CouponService implements CouponServiceContract
         ]);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function update(Coupon $coupon, array $data): Coupon
     {
         $coupon->update(array_filter($data, fn($v) => $v !== null));
         return $coupon->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function delete(Coupon $coupon): bool
     {
         return $coupon->delete();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function activate(Coupon $coupon): Coupon
     {
         $coupon->update(['is_active' => true]);
         return $coupon->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function deactivate(Coupon $coupon): Coupon
     {
         $coupon->update(['is_active' => false]);
         return $coupon->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function validate(string $code, string $userId, string $planId): array
     {
         $coupon = $this->findByCode($code);
@@ -97,6 +132,9 @@ class CouponService implements CouponServiceContract
         ];
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function apply(string $code, string $userId, string $subscriptionId): array
     {
         $coupon = $this->findByCode($code);

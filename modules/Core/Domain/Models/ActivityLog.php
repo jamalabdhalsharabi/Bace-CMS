@@ -9,6 +9,28 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * Class ActivityLog
+ *
+ * Eloquent model representing a system activity log entry
+ * for audit trails and user action tracking.
+ *
+ * @package Modules\Core\Domain\Models
+ *
+ * @property string $id
+ * @property string|null $user_id
+ * @property string $action
+ * @property string|null $subject_type
+ * @property string|null $subject_id
+ * @property string|null $description
+ * @property array|null $properties
+ * @property string|null $ip_address
+ * @property string|null $user_agent
+ * @property \Carbon\Carbon $created_at
+ *
+ * @property-read \Modules\Users\Domain\Models\User|null $user
+ * @property-read Model|null $subject
+ */
 class ActivityLog extends Model
 {
     use HasUuids;

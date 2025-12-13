@@ -10,6 +10,22 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
 
+/**
+ * Class BaseModel
+ *
+ * Abstract base model providing common functionality
+ * for all domain models including UUIDs, soft deletes, and scopes.
+ *
+ * @package Modules\Core\Domain\Models
+ *
+ * @property string $id
+ * @property \Carbon\Carbon $created_at
+ * @property \Carbon\Carbon $updated_at
+ * @property \Carbon\Carbon|null $deleted_at
+ *
+ * @property-read string $created_at_human
+ * @property-read string $updated_at_human
+ */
 abstract class BaseModel extends Model
 {
     use HasFactory;

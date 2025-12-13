@@ -8,6 +8,22 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Class PlanLimit
+ *
+ * Eloquent model representing a pricing plan resource limit
+ * for quota enforcement.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $plan_id
+ * @property string $resource
+ * @property int|null $limit_value
+ * @property string|null $period
+ *
+ * @property-read PricingPlan $plan
+ */
 class PlanLimit extends Model
 {
     use HasUuids;

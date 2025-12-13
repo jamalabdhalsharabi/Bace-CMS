@@ -9,33 +9,77 @@ use Illuminate\Support\Facades\Cache;
 use Modules\Localization\Contracts\LanguageServiceContract;
 use Modules\Localization\Domain\Models\Language;
 
+/**
+ * Class LanguageService
+ *
+ * Service class for managing languages and translations
+ * including CRUD, file management, and synchronization.
+ *
+ * @package Modules\Localization\Services
+ */
 class LanguageService implements LanguageServiceContract
 {
+    /**
+     * Get all languages.
+     *
+     * @return Collection Collection of Language models
+     */
     public function all(): Collection
     {
         return $this->cached('all', fn () => Language::ordered()->get());
     }
 
+    /**
+     * Get all active languages.
+     *
+     * @return Collection Collection of active Language models
+     */
     public function getActive(): Collection
     {
         return $this->cached('active', fn () => Language::active()->ordered()->get());
     }
 
+    /**
+     * Find a language by its UUID.
+     *
+     * @param string $id The language UUID
+     *
+     * @return Language|null The found language or null
+     */
     public function find(string $id): ?Language
     {
         return Language::find($id);
     }
 
+    /**
+     * Find a language by its code.
+     *
+     * @param string $code The language code (e.g., 'en', 'ar')
+     *
+     * @return Language|null The found language or null
+     */
     public function findByCode(string $code): ?Language
     {
         return $this->cached("code.{$code}", fn () => Language::findByCode($code));
     }
 
+    /**
+     * Get the default language.
+     *
+     * @return Language|null The default language or null
+     */
     public function getDefault(): ?Language
     {
         return $this->cached('default', fn () => Language::getDefault());
     }
 
+    /**
+     * Create a new language.
+     *
+     * @param array $data Language data
+     *
+     * @return Language The created language
+     */
     public function create(array $data): Language
     {
         $language = Language::create([
@@ -58,6 +102,14 @@ class LanguageService implements LanguageServiceContract
         return $language;
     }
 
+    /**
+     * Update an existing language.
+     *
+     * @param Language $language The language to update
+     * @param array $data Updated data
+     *
+     * @return Language The updated language
+     */
     public function update(Language $language, array $data): Language
     {
         $language->update($data);
@@ -71,6 +123,15 @@ class LanguageService implements LanguageServiceContract
         return $language->fresh();
     }
 
+    /**
+     * Delete a language.
+     *
+     * @param Language $language The language to delete
+     *
+     * @return bool True if successful
+     *
+     * @throws \RuntimeException If trying to delete default language
+     */
     public function delete(Language $language): bool
     {
         if ($language->is_default) {
@@ -83,6 +144,13 @@ class LanguageService implements LanguageServiceContract
         return $result;
     }
 
+    /**
+     * Set a language as the default.
+     *
+     * @param Language $language The language to set as default
+     *
+     * @return Language The updated language
+     */
     public function setDefault(Language $language): Language
     {
         $language->setAsDefault();
@@ -91,6 +159,13 @@ class LanguageService implements LanguageServiceContract
         return $language->fresh();
     }
 
+    /**
+     * Reorder languages by their IDs.
+     *
+     * @param array $order Array of language UUIDs in order
+     *
+     * @return void
+     */
     public function reorder(array $order): void
     {
         foreach ($order as $index => $id) {
@@ -100,6 +175,14 @@ class LanguageService implements LanguageServiceContract
         $this->clearCache();
     }
 
+    /**
+     * Get cached data or execute callback.
+     *
+     * @param string $key Cache key
+     * @param callable $callback Callback to execute if not cached
+     *
+     * @return mixed Cached or fresh data
+     */
     protected function cached(string $key, callable $callback): mixed
     {
         if (!config('localization.cache.enabled', true)) {
@@ -112,6 +195,11 @@ class LanguageService implements LanguageServiceContract
         return Cache::remember($prefix . $key, $ttl, $callback);
     }
 
+    /**
+     * Clear all language-related cache.
+     *
+     * @return void
+     */
     public function clearCache(): void
     {
         $prefix = config('localization.cache.prefix', 'lang_');
@@ -126,6 +214,13 @@ class LanguageService implements LanguageServiceContract
         }
     }
 
+    /**
+     * Activate a language.
+     *
+     * @param Language $language The language to activate
+     *
+     * @return Language The activated language
+     */
     public function activate(Language $language): Language
     {
         $language->update(['is_active' => true]);
@@ -133,6 +228,15 @@ class LanguageService implements LanguageServiceContract
         return $language->fresh();
     }
 
+    /**
+     * Deactivate a language.
+     *
+     * @param Language $language The language to deactivate
+     *
+     * @return Language The deactivated language
+     *
+     * @throws \RuntimeException If trying to deactivate default language
+     */
     public function deactivate(Language $language): Language
     {
         if ($language->is_default) {
@@ -143,12 +247,29 @@ class LanguageService implements LanguageServiceContract
         return $language->fresh();
     }
 
+    /**
+     * Get translations from a file.
+     *
+     * @param string $locale The locale code
+     * @param string $group The translation group
+     *
+     * @return array Translation key-value pairs
+     */
     public function getTranslationFile(string $locale, string $group): array
     {
         $path = lang_path("{$locale}/{$group}.php");
         return file_exists($path) ? include $path : [];
     }
 
+    /**
+     * Update a translation file.
+     *
+     * @param string $locale The locale code
+     * @param string $group The translation group
+     * @param array $translations New translations
+     *
+     * @return bool True if successful
+     */
     public function updateTranslationFile(string $locale, string $group, array $translations): bool
     {
         $path = lang_path("{$locale}/{$group}.php");
@@ -156,6 +277,14 @@ class LanguageService implements LanguageServiceContract
         return file_put_contents($path, $content) !== false;
     }
 
+    /**
+     * Import translations from array data.
+     *
+     * @param string $locale The locale code
+     * @param array $data Translation data by group
+     *
+     * @return array Import results
+     */
     public function importTranslations(string $locale, array $data): array
     {
         $results = ['imported' => 0, 'errors' => []];
@@ -169,6 +298,13 @@ class LanguageService implements LanguageServiceContract
         return $results;
     }
 
+    /**
+     * Export all translations for a locale.
+     *
+     * @param string $locale The locale code
+     *
+     * @return array All translations by group
+     */
     public function exportTranslations(string $locale): array
     {
         $path = lang_path($locale);
@@ -182,6 +318,14 @@ class LanguageService implements LanguageServiceContract
         return $translations;
     }
 
+    /**
+     * Sync translations from one locale to another.
+     *
+     * @param string $fromLocale Source locale
+     * @param string $toLocale Target locale
+     *
+     * @return int Number of groups synced
+     */
     public function syncTranslations(string $fromLocale, string $toLocale): int
     {
         $source = $this->exportTranslations($fromLocale);
@@ -195,12 +339,28 @@ class LanguageService implements LanguageServiceContract
         return $count;
     }
 
+    /**
+     * Auto-translate using external provider.
+     *
+     * @param string $fromLocale Source locale
+     * @param string $toLocale Target locale
+     * @param string $provider Translation provider
+     *
+     * @return array Job status
+     */
     public function autoTranslate(string $fromLocale, string $toLocale, string $provider = 'google'): array
     {
         // Implementation depends on translation provider
         return ['status' => 'queued', 'provider' => $provider];
     }
 
+    /**
+     * Get translation progress for a locale.
+     *
+     * @param string $locale The locale code
+     *
+     * @return array Progress statistics
+     */
     public function getContentTranslationProgress(string $locale): array
     {
         return [
@@ -211,6 +371,13 @@ class LanguageService implements LanguageServiceContract
         ];
     }
 
+    /**
+     * Get missing translations for a locale.
+     *
+     * @param string $locale The locale code
+     *
+     * @return array Missing translation keys
+     */
     public function getMissingTranslations(string $locale): array
     {
         $default = $this->getDefault();
@@ -231,6 +398,14 @@ class LanguageService implements LanguageServiceContract
         return $missing;
     }
 
+    /**
+     * Set fallback locale for a language.
+     *
+     * @param Language $language The language
+     * @param string $fallbackCode Fallback locale code
+     *
+     * @return Language The updated language
+     */
     public function setFallback(Language $language, string $fallbackCode): Language
     {
         $language->update(['fallback_locale' => $fallbackCode]);

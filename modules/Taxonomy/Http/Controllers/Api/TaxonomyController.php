@@ -14,12 +14,39 @@ use Modules\Taxonomy\Http\Requests\UpdateTaxonomyRequest;
 use Modules\Taxonomy\Http\Resources\TaxonomyResource;
 use Modules\Taxonomy\Http\Resources\TaxonomyTypeResource;
 
+/**
+ * Class TaxonomyController
+ * 
+ * API controller for managing taxonomies (categories, tags)
+ * including CRUD, tree structure, and reordering.
+ * 
+ * @package Modules\Taxonomy\Http\Controllers\Api
+ */
 class TaxonomyController extends BaseController
 {
-    public function __construct(
-        protected TaxonomyServiceContract $taxonomyService
-    ) {}
+    /**
+     * The taxonomy service instance for handling taxonomy-related business logic.
+     *
+     * @var TaxonomyServiceContract
+     */
+    protected TaxonomyServiceContract $taxonomyService;
 
+    /**
+     * Create a new TaxonomyController instance.
+     *
+     * @param TaxonomyServiceContract $taxonomyService The taxonomy service contract implementation
+     */
+    public function __construct(
+        TaxonomyServiceContract $taxonomyService
+    ) {
+        $this->taxonomyService = $taxonomyService;
+    }
+
+    /**
+     * Get all available taxonomy types.
+     *
+     * @return JsonResponse Collection of taxonomy types
+     */
     public function types(): JsonResponse
     {
         $types = $this->taxonomyService->getTypes();
@@ -27,6 +54,13 @@ class TaxonomyController extends BaseController
         return $this->success(TaxonomyTypeResource::collection($types));
     }
 
+    /**
+     * Display taxonomies of a specific type.
+     *
+     * @param Request $request The request containing optional parent_id filter
+     * @param string $type The taxonomy type (e.g., 'category', 'tag')
+     * @return JsonResponse Collection of taxonomies
+     */
     public function index(Request $request, string $type): JsonResponse
     {
         $taxonomies = $this->taxonomyService->getTaxonomies(
@@ -37,6 +71,12 @@ class TaxonomyController extends BaseController
         return $this->success(TaxonomyResource::collection($taxonomies));
     }
 
+    /**
+     * Get the hierarchical tree structure of taxonomies.
+     *
+     * @param string $type The taxonomy type
+     * @return JsonResponse Taxonomies organized in tree structure
+     */
     public function tree(string $type): JsonResponse
     {
         $taxonomies = $this->taxonomyService->getTree($type);
@@ -44,6 +84,12 @@ class TaxonomyController extends BaseController
         return $this->success(TaxonomyResource::collection($taxonomies));
     }
 
+    /**
+     * Display the specified taxonomy by its UUID.
+     *
+     * @param string $id The UUID of the taxonomy to retrieve
+     * @return JsonResponse The taxonomy data or 404 error
+     */
     public function show(string $id): JsonResponse
     {
         $taxonomy = $this->taxonomyService->find($id);
@@ -55,6 +101,13 @@ class TaxonomyController extends BaseController
         return $this->success(new TaxonomyResource($taxonomy));
     }
 
+    /**
+     * Display the specified taxonomy by its type and slug.
+     *
+     * @param string $type The taxonomy type
+     * @param string $slug The URL-friendly slug
+     * @return JsonResponse The taxonomy data or 404 error
+     */
     public function showBySlug(string $type, string $slug): JsonResponse
     {
         $taxonomy = $this->taxonomyService->findBySlug($slug, $type);
@@ -66,6 +119,12 @@ class TaxonomyController extends BaseController
         return $this->success(new TaxonomyResource($taxonomy));
     }
 
+    /**
+     * Store a newly created taxonomy in the database.
+     *
+     * @param CreateTaxonomyRequest $request The validated request containing taxonomy data
+     * @return JsonResponse The newly created taxonomy (HTTP 201)
+     */
     public function store(CreateTaxonomyRequest $request): JsonResponse
     {
         $taxonomy = $this->taxonomyService->create($request->validated());
@@ -73,6 +132,13 @@ class TaxonomyController extends BaseController
         return $this->created(new TaxonomyResource($taxonomy));
     }
 
+    /**
+     * Update the specified taxonomy in the database.
+     *
+     * @param UpdateTaxonomyRequest $request The validated request containing updated data
+     * @param string $id The UUID of the taxonomy to update
+     * @return JsonResponse The updated taxonomy or 404 error
+     */
     public function update(UpdateTaxonomyRequest $request, string $id): JsonResponse
     {
         $taxonomy = $this->taxonomyService->find($id);
@@ -86,6 +152,12 @@ class TaxonomyController extends BaseController
         return $this->success(new TaxonomyResource($taxonomy));
     }
 
+    /**
+     * Delete the specified taxonomy.
+     *
+     * @param string $id The UUID of the taxonomy to delete
+     * @return JsonResponse Success message or 404 error
+     */
     public function destroy(string $id): JsonResponse
     {
         $taxonomy = $this->taxonomyService->find($id);
@@ -99,6 +171,12 @@ class TaxonomyController extends BaseController
         return $this->success(null, 'Taxonomy deleted');
     }
 
+    /**
+     * Reorder taxonomies based on the provided order array.
+     *
+     * @param ReorderTaxonomyRequest $request The validated request containing order array
+     * @return JsonResponse Success message
+     */
     public function reorder(ReorderTaxonomyRequest $request): JsonResponse
     {
         $this->taxonomyService->reorder($request->validated()['order']);

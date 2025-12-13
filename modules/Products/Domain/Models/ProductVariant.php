@@ -11,6 +11,31 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * Class ProductVariant
+ *
+ * Eloquent model representing a product variant
+ * with options, pricing, and inventory.
+ *
+ * @package Modules\Products\Domain\Models
+ *
+ * @property string $id
+ * @property string $product_id
+ * @property string $sku
+ * @property string|null $barcode
+ * @property bool $is_active
+ * @property bool $is_default
+ * @property string $stock_status
+ * @property float|null $weight
+ * @property int $sort_order
+ * @property array|null $options
+ * @property array|null $meta
+ *
+ * @property-read Product $product
+ * @property-read \Illuminate\Database\Eloquent\Collection|ProductPrice[] $prices
+ * @property-read ProductInventory|null $inventory
+ * @property-read float|null $price
+ */
 class ProductVariant extends Model
 {
     use HasUuids;

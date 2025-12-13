@@ -12,12 +12,35 @@ use Modules\Comments\Http\Requests\ReplyCommentRequest;
 use Modules\Comments\Http\Resources\CommentResource;
 use Modules\Core\Http\Controllers\BaseController;
 
+/**
+ * Class CommentController
+ * 
+ * API controller for managing comments including CRUD operations,
+ * moderation (approve, reject, spam), and replies.
+ * 
+ * @package Modules\Comments\Http\Controllers\Api
+ */
 class CommentController extends BaseController
 {
-    public function __construct(
-        protected CommentServiceContract $commentService
-    ) {}
+    /**
+     * The comment service instance for handling comment-related business logic.
+     *
+     * @var CommentServiceContract
+     */
+    protected CommentServiceContract $commentService;
 
+    /**
+     * Create a new CommentController instance.
+     *
+     * @param CommentServiceContract $commentService The comment service contract implementation
+     */
+    public function __construct(
+        CommentServiceContract $commentService
+    ) {
+        $this->commentService = $commentService;
+    }
+
+    /** Get comments for a specific commentable model. */
     public function index(Request $request): JsonResponse
     {
         $request->validate([
@@ -34,6 +57,7 @@ class CommentController extends BaseController
         return $this->paginated(CommentResource::collection($comments)->resource);
     }
 
+    /** Get pending comments for moderation. */
     public function pending(Request $request): JsonResponse
     {
         $comments = $this->commentService->getPending($request->integer('per_page', 20));
@@ -41,6 +65,7 @@ class CommentController extends BaseController
         return $this->paginated(CommentResource::collection($comments)->resource);
     }
 
+    /** Get a single comment by ID. */
     public function show(string $id): JsonResponse
     {
         $comment = $this->commentService->find($id);
@@ -52,6 +77,7 @@ class CommentController extends BaseController
         return $this->success(new CommentResource($comment));
     }
 
+    /** Create a new comment. */
     public function store(CreateCommentRequest $request): JsonResponse
     {
         $comment = $this->commentService->create($request->validated());
@@ -59,6 +85,7 @@ class CommentController extends BaseController
         return $this->created(new CommentResource($comment), 'Comment submitted successfully');
     }
 
+    /** Reply to an existing comment. */
     public function reply(ReplyCommentRequest $request, string $parentId): JsonResponse
     {
         $parent = $this->commentService->find($parentId);
@@ -72,6 +99,7 @@ class CommentController extends BaseController
         return $this->created(new CommentResource($comment), 'Reply submitted successfully');
     }
 
+    /** Delete a comment. */
     public function destroy(string $id): JsonResponse
     {
         $comment = $this->commentService->find($id);
@@ -85,6 +113,7 @@ class CommentController extends BaseController
         return $this->success(null, 'Comment deleted successfully');
     }
 
+    /** Approve a pending comment. */
     public function approve(string $id): JsonResponse
     {
         $comment = $this->commentService->find($id);
@@ -98,6 +127,7 @@ class CommentController extends BaseController
         return $this->success(new CommentResource($comment), 'Comment approved');
     }
 
+    /** Reject a pending comment. */
     public function reject(string $id): JsonResponse
     {
         $comment = $this->commentService->find($id);
@@ -111,6 +141,7 @@ class CommentController extends BaseController
         return $this->success(new CommentResource($comment), 'Comment rejected');
     }
 
+    /** Mark a comment as spam. */
     public function spam(string $id): JsonResponse
     {
         $comment = $this->commentService->find($id);

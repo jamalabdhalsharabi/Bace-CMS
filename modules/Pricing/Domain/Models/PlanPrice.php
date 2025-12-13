@@ -9,6 +9,27 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Modules\Currency\Domain\Models\Currency;
 
+/**
+ * Class PlanPrice
+ *
+ * Eloquent model representing a pricing plan price
+ * with currency, billing period, and validity.
+ *
+ * @package Modules\Pricing\Domain\Models
+ *
+ * @property string $id
+ * @property string $plan_id
+ * @property string $currency_id
+ * @property string $billing_period
+ * @property float $amount
+ * @property float|null $compare_amount
+ * @property float|null $setup_fee
+ * @property \Carbon\Carbon|null $effective_from
+ * @property \Carbon\Carbon|null $effective_until
+ *
+ * @property-read PricingPlan $plan
+ * @property-read \Modules\Currency\Domain\Models\Currency $currency
+ */
 class PlanPrice extends Model
 {
     use HasUuids;

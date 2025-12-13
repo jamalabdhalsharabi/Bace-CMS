@@ -14,12 +14,40 @@ use Modules\Forms\Http\Requests\UpdateFormRequest;
 use Modules\Forms\Http\Resources\FormResource;
 use Modules\Forms\Http\Resources\FormSubmissionResource;
 
+/**
+ * Class FormController
+ *
+ * API controller for managing dynamic forms, form submissions,
+ * and submission status management.
+ *
+ * @package Modules\Forms\Http\Controllers\Api
+ */
 class FormController extends BaseController
 {
-    public function __construct(
-        protected FormServiceContract $formService
-    ) {}
+    /**
+     * The form service instance.
+     *
+     * @var FormServiceContract
+     */
+    protected FormServiceContract $formService;
 
+    /**
+     * Create a new FormController instance.
+     *
+     * @param FormServiceContract $formService The form service implementation
+     */
+    public function __construct(
+        FormServiceContract $formService
+    ) {
+        $this->formService = $formService;
+    }
+
+    /**
+     * Display a paginated listing of forms.
+     *
+     * @param Request $request The request with optional filters
+     * @return JsonResponse Paginated list of forms
+     */
     public function index(Request $request): JsonResponse
     {
         $forms = $this->formService->list(
@@ -30,6 +58,12 @@ class FormController extends BaseController
         return $this->paginated(FormResource::collection($forms)->resource);
     }
 
+    /**
+     * Display the specified form by its UUID.
+     *
+     * @param string $id The UUID of the form
+     * @return JsonResponse The form data or 404 error
+     */
     public function show(string $id): JsonResponse
     {
         $form = $this->formService->find($id);
@@ -41,6 +75,12 @@ class FormController extends BaseController
         return $this->success(new FormResource($form));
     }
 
+    /**
+     * Display the specified form by its slug.
+     *
+     * @param string $slug The URL-friendly slug
+     * @return JsonResponse The form data or 404 error
+     */
     public function showBySlug(string $slug): JsonResponse
     {
         $form = $this->formService->findBySlug($slug);
@@ -52,6 +92,12 @@ class FormController extends BaseController
         return $this->success(new FormResource($form));
     }
 
+    /**
+     * Store a newly created form.
+     *
+     * @param CreateFormRequest $request The validated form data
+     * @return JsonResponse The created form (HTTP 201)
+     */
     public function store(CreateFormRequest $request): JsonResponse
     {
         $form = $this->formService->create($request->validated());
@@ -59,6 +105,13 @@ class FormController extends BaseController
         return $this->created(new FormResource($form), 'Form created successfully');
     }
 
+    /**
+     * Update the specified form.
+     *
+     * @param UpdateFormRequest $request The validated form data
+     * @param string $id The UUID of the form
+     * @return JsonResponse The updated form or 404 error
+     */
     public function update(UpdateFormRequest $request, string $id): JsonResponse
     {
         $form = $this->formService->find($id);
@@ -72,6 +125,12 @@ class FormController extends BaseController
         return $this->success(new FormResource($form), 'Form updated successfully');
     }
 
+    /**
+     * Delete the specified form.
+     *
+     * @param string $id The UUID of the form
+     * @return JsonResponse Success message or 404 error
+     */
     public function destroy(string $id): JsonResponse
     {
         $form = $this->formService->find($id);
@@ -85,6 +144,14 @@ class FormController extends BaseController
         return $this->success(null, 'Form deleted successfully');
     }
 
+    /**
+     * Submit a form response.
+     *
+     * @param SubmitFormRequest $request The form submission data
+     * @param string $slug The form slug
+     * @return JsonResponse Success message with redirect URL or validation error
+     * @throws \Illuminate\Validation\ValidationException If validation fails
+     */
     public function submit(SubmitFormRequest $request, string $slug): JsonResponse
     {
         $form = $this->formService->findBySlug($slug);
@@ -109,6 +176,13 @@ class FormController extends BaseController
         }
     }
 
+    /**
+     * Get paginated submissions for a form.
+     *
+     * @param Request $request The request with optional filters
+     * @param string $id The UUID of the form
+     * @return JsonResponse Paginated list of submissions
+     */
     public function submissions(Request $request, string $id): JsonResponse
     {
         $submissions = $this->formService->getSubmissions(
@@ -120,6 +194,13 @@ class FormController extends BaseController
         return $this->paginated(FormSubmissionResource::collection($submissions)->resource);
     }
 
+    /**
+     * Update the status of a form submission.
+     *
+     * @param Request $request The request containing new status
+     * @param string $submissionId The UUID of the submission
+     * @return JsonResponse The updated submission or 404 error
+     */
     public function updateSubmissionStatus(Request $request, string $submissionId): JsonResponse
     {
         $request->validate(['status' => 'required|in:new,read,spam,processed']);

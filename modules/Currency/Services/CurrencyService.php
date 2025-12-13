@@ -10,33 +10,59 @@ use Modules\Currency\Contracts\CurrencyServiceContract;
 use Modules\Currency\Domain\Models\Currency;
 use Modules\Currency\Domain\Models\ExchangeRate;
 
+/**
+ * Class CurrencyService
+ *
+ * Service class for managing currencies including CRUD,
+ * conversion, formatting, and exchange rates.
+ *
+ * @package Modules\Currency\Services
+ */
 class CurrencyService implements CurrencyServiceContract
 {
+    /**
+     * {@inheritdoc}
+     */
     public function all(): Collection
     {
         return $this->cached('all', fn () => Currency::ordered()->get());
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getActive(): Collection
     {
         return $this->cached('active', fn () => Currency::active()->ordered()->get());
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function find(string $id): ?Currency
     {
         return Currency::find($id);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function findByCode(string $code): ?Currency
     {
         return $this->cached("code.{$code}", fn () => Currency::findByCode($code));
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function getDefault(): ?Currency
     {
         return $this->cached('default', fn () => Currency::getDefault());
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function create(array $data): Currency
     {
         $currency = Currency::create([
@@ -61,6 +87,9 @@ class CurrencyService implements CurrencyServiceContract
         return $currency;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function update(Currency $currency, array $data): Currency
     {
         if (isset($data['code'])) {
@@ -78,6 +107,9 @@ class CurrencyService implements CurrencyServiceContract
         return $currency->fresh();
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function delete(Currency $currency): bool
     {
         if ($currency->is_default) {
@@ -90,6 +122,9 @@ class CurrencyService implements CurrencyServiceContract
         return $result;
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function convert(float $amount, string $from, string $to): float
     {
         if ($from === $to) {
@@ -105,6 +140,9 @@ class CurrencyService implements CurrencyServiceContract
         return $rate->convert($amount);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function format(float $amount, ?string $currencyCode = null): string
     {
         $currency = $currencyCode
@@ -118,6 +156,9 @@ class CurrencyService implements CurrencyServiceContract
         return $currency->format($amount);
     }
 
+    /**
+     * {@inheritdoc}
+     */
     public function updateExchangeRate(string $from, string $to, float $rate, string $source = 'manual'): ExchangeRate
     {
         $fromCurrency = Currency::findByCode($from);
