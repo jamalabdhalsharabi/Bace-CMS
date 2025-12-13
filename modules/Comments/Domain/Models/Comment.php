@@ -12,33 +12,50 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Class Comment
+ * Comment Model - Represents user comments on various content types.
  *
- * Eloquent model representing a comment on any commentable entity
- * with moderation, replies, and user attribution.
+ * This model handles polymorphic comments with threading support,
+ * moderation workflow, spam detection, and voting capabilities.
  *
- * @package Modules\Comments\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $commentable_type Polymorphic model type (e.g., 'Article', 'Product')
+ * @property string $commentable_id UUID of the commented entity
+ * @property string|null $parent_id Foreign key to parent comment (for replies)
+ * @property int $depth Nesting depth (0 = top-level)
+ * @property string $content Comment text content
+ * @property string|null $user_id Foreign key to user (null for guests)
+ * @property string|null $author_name Guest author name
+ * @property string|null $author_email Guest author email
+ * @property string $status Moderation status (pending, approved, rejected, spam, hidden)
+ * @property bool $is_spam Whether flagged as spam
+ * @property float|null $spam_score Spam detection score (0-100)
+ * @property int $upvotes Number of upvotes
+ * @property int $downvotes Number of downvotes
+ * @property int $report_count Number of user reports
+ * @property bool $is_pinned Whether pinned to top
+ * @property string|null $ip_address Commenter's IP address
+ * @property string|null $user_agent Commenter's browser user agent
+ * @property \Carbon\Carbon|null $approved_at When comment was approved
+ * @property string|null $approved_by UUID of approving moderator
+ * @property \Carbon\Carbon|null $edited_at When comment was last edited
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ * @property \Carbon\Carbon|null $deleted_at Soft delete timestamp
  *
- * @property string $id
- * @property string $commentable_id
- * @property string $commentable_type
- * @property string|null $parent_id
- * @property string|null $user_id
- * @property string|null $author_name
- * @property string|null $author_email
- * @property string $content
- * @property string $status
- * @property string|null $ip_address
- * @property string|null $user_agent
- * @property int $likes_count
- * @property bool $is_pinned
- * @property \Carbon\Carbon|null $approved_at
- * @property string|null $approved_by
+ * @property-read Model $commentable The commented entity (polymorphic)
+ * @property-read Comment|null $parent Parent comment (if reply)
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Comment> $replies Direct replies
+ * @property-read \App\Models\User|null $user Comment author (if authenticated)
+ * @property-read \App\Models\User|null $approver Moderator who approved
  *
- * @property-read Model $commentable
- * @property-read Comment|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection|Comment[] $replies
- * @property-read \Modules\Users\Domain\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment approved() Filter approved comments
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment pending() Filter pending comments
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment root() Filter top-level comments
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment pinned() Filter pinned comments
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment forModel(string $type, string $id) Filter by entity
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Comment query()
  */
 class Comment extends Model
 {
@@ -48,27 +65,42 @@ class Comment extends Model
     protected $table = 'comments';
 
     protected $fillable = [
-        'commentable_id',
         'commentable_type',
+        'commentable_id',
         'parent_id',
+        'depth',
+        'content',
         'user_id',
         'author_name',
         'author_email',
-        'content',
         'status',
+        'is_spam',
+        'spam_score',
+        'upvotes',
+        'downvotes',
+        'report_count',
+        'is_pinned',
         'ip_address',
         'user_agent',
-        'likes_count',
-        'is_pinned',
         'approved_at',
         'approved_by',
+        'edited_at',
     ];
 
-    protected $casts = [
-        'likes_count' => 'integer',
-        'is_pinned' => 'boolean',
-        'approved_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'depth' => 'integer',
+            'is_spam' => 'boolean',
+            'spam_score' => 'decimal:2',
+            'upvotes' => 'integer',
+            'downvotes' => 'integer',
+            'report_count' => 'integer',
+            'is_pinned' => 'boolean',
+            'approved_at' => 'datetime',
+            'edited_at' => 'datetime',
+        ];
+    }
 
     /**
      * Define the polymorphic relationship to the commentable entity.
@@ -123,14 +155,11 @@ class Comment extends Model
     }
 
     /**
-     * Define the belongs-to relationship with the moderator who approved.
+     * Get the moderator who approved this comment.
      *
-     * Retrieves the User model who approved this comment.
-     * Used for moderation audit trails.
-     *
-     * @return BelongsTo The belongs-to relationship instance to User
+     * @return BelongsTo<\App\Models\User, Comment>
      */
-    public function approvedBy(): BelongsTo
+    public function approver(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'approved_by');
     }

@@ -10,26 +10,30 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 /**
- * Class Revision
+ * Revision Model - Tracks version history for content entities.
  *
- * Eloquent model representing a content revision
- * for version history and change tracking.
+ * This model stores snapshots of content at different points in time,
+ * enabling version history, rollback, and change comparison.
  *
- * @package Modules\Content\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $revisionable_id UUID of the versioned entity
+ * @property string $revisionable_type Polymorphic model type
+ * @property string|null $user_id UUID of user who made the change
+ * @property int $revision_number Sequential version number
+ * @property array $data Complete entity data snapshot
+ * @property array|null $changes Field-level change details
+ * @property string|null $summary Human-readable change summary
+ * @property bool $is_auto Whether revision was auto-generated
+ * @property \Carbon\Carbon $created_at Revision creation timestamp
  *
- * @property string $id
- * @property string $revisionable_id
- * @property string $revisionable_type
- * @property string|null $user_id
- * @property int $revision_number
- * @property array $data
- * @property array|null $changes
- * @property string|null $summary
- * @property bool $is_auto
- * @property \Carbon\Carbon $created_at
+ * @property-read Model $revisionable The versioned entity (polymorphic)
+ * @property-read \App\Models\User|null $user User who created this revision
  *
- * @property-read Model $revisionable
- * @property-read \Modules\Users\Domain\Models\User|null $user
+ * @method static \Illuminate\Database\Eloquent\Builder|Revision forModel(string $type, string $id) Filter by entity
+ * @method static \Illuminate\Database\Eloquent\Builder|Revision manual() Filter manual revisions only
+ * @method static \Illuminate\Database\Eloquent\Builder|Revision newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Revision newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Revision query()
  */
 class Revision extends Model
 {
@@ -67,26 +71,56 @@ class Revision extends Model
         });
     }
 
+    /**
+     * Get the versioned entity.
+     *
+     * @return MorphTo<Model, Revision>
+     */
     public function revisionable(): MorphTo
     {
         return $this->morphTo();
     }
 
+    /**
+     * Get the user who created this revision.
+     *
+     * @return BelongsTo<\App\Models\User, Revision>
+     */
     public function user(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'user_id');
     }
 
+    /**
+     * Get change details for a specific field.
+     *
+     * @param string $field The field name to check
+     * @return array|null Change array with 'old' and 'new' values, or null
+     */
     public function getFieldChange(string $field): ?array
     {
         return $this->changes[$field] ?? null;
     }
 
+    /**
+     * Scope to filter revisions for a specific entity.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Revision> $query
+     * @param string $type The model class name
+     * @param string $id The entity UUID
+     * @return \Illuminate\Database\Eloquent\Builder<Revision>
+     */
     public function scopeForModel($query, string $type, string $id)
     {
         return $query->where('revisionable_type', $type)->where('revisionable_id', $id);
     }
 
+    /**
+     * Scope to filter only manual (non-auto) revisions.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Revision> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Revision>
+     */
     public function scopeManual($query)
     {
         return $query->where('is_auto', false);

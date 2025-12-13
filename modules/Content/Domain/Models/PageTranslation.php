@@ -9,29 +9,38 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Class PageTranslation
+ * PageTranslation Model - Stores localized content for pages.
  *
- * Eloquent model representing a page translation
- * for multi-language support.
+ * This model holds translated content for pages including title, slug,
+ * content body, and SEO metadata for each supported locale.
  *
- * @package Modules\Content\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $page_id Foreign key to pages table
+ * @property string $locale Language code (e.g., 'en', 'ar')
+ * @property string $title Translated page title
+ * @property string $slug URL-friendly slug for this locale
+ * @property string|null $excerpt Short summary or teaser
+ * @property string|null $content Full page content (HTML)
+ * @property string|null $meta_title SEO meta title
+ * @property string|null $meta_description SEO meta description
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
  *
- * @property string $id
- * @property string $page_id
- * @property string $locale
- * @property string $title
- * @property string $slug
- * @property string|null $content
- * @property string|null $meta_title
- * @property string|null $meta_description
- * @property string|null $meta_keywords
+ * @property-read Page $page The parent page
  *
- * @property-read Page $page
+ * @method static \Illuminate\Database\Eloquent\Builder|PageTranslation newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PageTranslation newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|PageTranslation query()
  */
 class PageTranslation extends Model
 {
     use HasUuids;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'page_translations';
 
     protected $fillable = [
@@ -39,12 +48,17 @@ class PageTranslation extends Model
         'locale',
         'title',
         'slug',
+        'excerpt',
         'content',
         'meta_title',
         'meta_description',
-        'meta_keywords',
     ];
 
+    /**
+     * Get the page that owns this translation.
+     *
+     * @return BelongsTo<Page, PageTranslation>
+     */
     public function page(): BelongsTo
     {
         return $this->belongsTo(Page::class);

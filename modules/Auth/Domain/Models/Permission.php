@@ -9,38 +9,50 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 /**
- * Class Permission
+ * Permission Model - Defines granular access permissions.
  *
- * Eloquent model representing a system permission
- * that can be assigned to roles.
+ * This model represents individual permissions in the RBAC system.
+ * Permissions are assigned to roles, which are then assigned to users.
  *
- * @package Modules\Auth\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $slug Unique permission identifier (e.g., 'articles.create', 'users.delete')
+ * @property string $name Human-readable permission name
+ * @property string|null $group_name Group for organizing permissions (e.g., 'Articles', 'Users')
+ * @property string|null $description Permission description for documentation
+ * @property string $guard_name Authentication guard name (default: 'web')
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
  *
- * @property string $id
- * @property string $slug
- * @property string $name
- * @property string|null $description
- * @property string $module
- * @property string $group
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Role> $roles Roles that have this permission
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|Role[] $roles
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission forGroup(string $group) Filter by group name
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Permission query()
  */
 class Permission extends Model
 {
     use HasUuids;
 
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
     protected $table = 'permissions';
 
     protected $fillable = [
         'slug',
         'name',
+        'group_name',
         'description',
-        'module',
-        'group',
+        'guard_name',
     ];
 
     /**
-     * Get roles with this permission.
+     * Get all roles that have this permission.
+     *
+     * @return BelongsToMany<Role>
      */
     public function roles(): BelongsToMany
     {
@@ -48,34 +60,35 @@ class Permission extends Model
     }
 
     /**
-     * Scope: Filter by module.
-     */
-    public function scopeForModule($query, string $module)
-    {
-        return $query->where('module', $module);
-    }
-
-    /**
-     * Scope: Filter by group.
+     * Scope to filter permissions by group name.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Permission> $query
+     * @param string $group The group name to filter by
+     * @return \Illuminate\Database\Eloquent\Builder<Permission>
      */
     public function scopeForGroup($query, string $group)
     {
-        return $query->where('group', $group);
+        return $query->where('group_name', $group);
     }
 
     /**
-     * Get permissions grouped by module.
+     * Get all permissions grouped by their group_name.
+     *
+     * Useful for displaying permissions in admin interfaces
+     * organized by functional area.
+     *
+     * @return array<string, array<int, array<string, mixed>>> Permissions grouped by group_name
      */
-    public static function getGroupedByModule(): array
+    public static function getGrouped(): array
     {
-        return static::all()
-            ->groupBy('module')
-            ->map(fn ($perms) => $perms->groupBy('group'))
-            ->toArray();
+        return static::all()->groupBy('group_name')->toArray();
     }
 
     /**
-     * Find permission by slug.
+     * Find a permission by its unique slug.
+     *
+     * @param string $slug The permission slug to search for
+     * @return self|null The permission or null if not found
      */
     public static function findBySlug(string $slug): ?self
     {

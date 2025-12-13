@@ -15,29 +15,38 @@ use Modules\Core\Traits\HasMedia;
 use Modules\Core\Traits\HasOrdering;
 
 /**
- * Class Taxonomy
+ * Taxonomy Model - Represents categories, tags, and other taxonomies.
  *
- * Eloquent model representing a taxonomy term (category, tag)
- * with translations, hierarchy, and polymorphic relationships.
+ * This model provides hierarchical classification for content
+ * with multi-language support and polymorphic tagging.
  *
- * @package Modules\Taxonomy\Domain\Models
+ * @property string $id UUID primary key
+ * @property string $type_id Foreign key to taxonomy_types
+ * @property string|null $parent_id Foreign key to parent taxonomy
+ * @property string|null $featured_image_id Foreign key to featured image
+ * @property int $ordering Sort order
+ * @property bool $is_active Whether taxonomy is active
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ * @property \Carbon\Carbon|null $deleted_at Soft delete timestamp
  *
- * @property string $id
- * @property string $type_id
- * @property string|null $parent_id
- * @property string|null $featured_image_id
- * @property int $ordering
- * @property bool $is_active
+ * @property-read TaxonomyType $type Taxonomy type definition
+ * @property-read Taxonomy|null $parent Parent taxonomy
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, Taxonomy> $children Child taxonomies
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, TaxonomyTranslation> $translations All translations
+ * @property-read TaxonomyTranslation|null $translation Current locale translation
+ * @property-read \Modules\Media\Domain\Models\Media|null $featuredImage Featured image
+ * @property-read string|null $name Localized name (accessor)
+ * @property-read string|null $slug Localized slug (accessor)
+ * @property-read string|null $description Localized description (accessor)
+ * @property-read array<int, Taxonomy> $path Ancestor path from root
  *
- * @property-read TaxonomyType $type
- * @property-read Taxonomy|null $parent
- * @property-read \Illuminate\Database\Eloquent\Collection|Taxonomy[] $children
- * @property-read \Illuminate\Database\Eloquent\Collection|TaxonomyTranslation[] $translations
- * @property-read TaxonomyTranslation|null $translation
- * @property-read string|null $name
- * @property-read string|null $slug
- * @property-read string|null $description
- * @property-read array $path
+ * @method static \Illuminate\Database\Eloquent\Builder|Taxonomy active() Filter active taxonomies
+ * @method static \Illuminate\Database\Eloquent\Builder|Taxonomy root() Filter root-level taxonomies
+ * @method static \Illuminate\Database\Eloquent\Builder|Taxonomy ofType(string $typeSlug) Filter by type
+ * @method static \Illuminate\Database\Eloquent\Builder|Taxonomy newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Taxonomy newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Taxonomy query()
  */
 class Taxonomy extends Model
 {
