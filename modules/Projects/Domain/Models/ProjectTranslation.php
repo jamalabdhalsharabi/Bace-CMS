@@ -51,6 +51,11 @@ class ProjectTranslation extends Model
         'meta_description',
     ];
 
+    /**
+     * Get the parent project.
+     *
+     * @return BelongsTo<Project, ProjectTranslation>
+     */
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

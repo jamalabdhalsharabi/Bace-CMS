@@ -7,8 +7,7 @@ namespace Modules\Pricing\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Class PlanFeature
@@ -34,6 +33,10 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class PlanFeature extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['label', 'description'];
+    public string $translationForeignKey = 'feature_id';
 
     protected $table = 'plan_features';
 
@@ -46,28 +49,43 @@ class PlanFeature extends Model
         'sort_order' => 'integer',
     ];
 
+    /**
+     * Get the parent pricing plan.
+     *
+     * @return BelongsTo<PricingPlan, PlanFeature>
+     */
     public function plan(): BelongsTo
     {
         return $this->belongsTo(PricingPlan::class, 'plan_id');
     }
 
-    public function translations(): HasMany
+    /**
+     * Check if this is a boolean feature (included/not included).
+     *
+     * @return bool True if feature type is boolean
+     */
+    public function isBoolean(): bool
     {
-        return $this->hasMany(PlanFeatureTranslation::class, 'feature_id');
+        return $this->type === 'boolean';
     }
 
-    public function translation(): HasOne
+    /**
+     * Check if this is a limit feature (e.g., "10 users").
+     *
+     * @return bool True if feature type is limit
+     */
+    public function isLimit(): bool
     {
-        return $this->hasOne(PlanFeatureTranslation::class, 'feature_id')
-            ->where('locale', app()->getLocale());
+        return $this->type === 'limit';
     }
 
-    public function getLabelAttribute(): ?string
+    /**
+     * Check if this is a text feature (custom description).
+     *
+     * @return bool True if feature type is text
+     */
+    public function isText(): bool
     {
-        return $this->translation?->label ?? $this->translations->first()?->label;
+        return $this->type === 'text';
     }
-
-    public function isBoolean(): bool { return $this->type === 'boolean'; }
-    public function isLimit(): bool { return $this->type === 'limit'; }
-    public function isText(): bool { return $this->type === 'text'; }
 }

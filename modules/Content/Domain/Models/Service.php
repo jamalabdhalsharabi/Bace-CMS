@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Service Model - Represents services offered by the organization.
@@ -57,6 +57,14 @@ class Service extends Model
 {
     use HasUuids;
     use SoftDeletes;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['title', 'slug', 'description', 'content', 'meta_title', 'meta_description'];
 
     /**
      * The table associated with the model.
@@ -130,67 +138,6 @@ class Service extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
-    }
-
-    /**
-     * Get all translations for this service.
-     *
-     * @return HasMany<ServiceTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ServiceTranslation::class);
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<ServiceTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(ServiceTranslation::class)
-            ->where('locale', app()->getLocale());
-    }
-
-    /**
-     * Get the localized title.
-     *
-     * @return string|null The service title
-     */
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    /**
-     * Get the localized slug.
-     *
-     * @return string|null The service slug
-     */
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
-    }
-
-    /**
-     * Get the localized description.
-     *
-     * @return string|null The service description
-     */
-    public function getDescriptionAttribute(): ?string
-    {
-        return $this->translation?->description;
-    }
-
-    /**
-     * Get the localized content.
-     *
-     * @return string|null The service content
-     */
-    public function getContentAttribute(): ?string
-    {
-        return $this->translation?->content;
     }
 
     /**

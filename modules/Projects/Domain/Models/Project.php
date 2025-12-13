@@ -7,9 +7,8 @@ namespace Modules\Projects\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 use Modules\Media\Domain\Models\Media;
 use Modules\Taxonomy\Traits\HasTaxonomies;
 
@@ -40,14 +39,32 @@ use Modules\Taxonomy\Traits\HasTaxonomies;
  * @property-read \Illuminate\Database\Eloquent\Collection|ProjectTranslation[] $translations
  * @property-read ProjectTranslation|null $translation
  * @property-read Media|null $clientLogo
- * @property-read string|null $title
- * @property-read string|null $slug
+ * @property-read string|null $title Localized title (accessor)
+ * @property-read string|null $slug Localized slug (accessor)
+ * @property-read \App\Models\User|null $author User who created the project
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ * @property \Carbon\Carbon|null $deleted_at Soft delete timestamp
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Project published() Filter published projects
+ * @method static \Illuminate\Database\Eloquent\Builder|Project featured() Filter featured projects
+ * @method static \Illuminate\Database\Eloquent\Builder|Project newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Project newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Project query()
  */
 class Project extends Model
 {
     use HasUuids;
     use SoftDeletes;
     use HasTaxonomies;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['title', 'slug', 'description', 'content', 'case_study', 'meta_title', 'meta_description'];
 
     protected $table = 'projects';
 
@@ -82,52 +99,59 @@ class Project extends Model
         'settings' => 'array',
     ];
 
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ProjectTranslation::class);
-    }
-
-    public function translation(): HasOne
-    {
-        return $this->hasOne(ProjectTranslation::class)
-            ->where('locale', app()->getLocale());
-    }
-
+    /**
+     * Get the client's logo media.
+     *
+     * @return BelongsTo<Media, Project>
+     */
     public function clientLogo(): BelongsTo
     {
         return $this->belongsTo(Media::class, 'client_logo_id');
     }
 
+    /**
+     * Get the user who created this project.
+     *
+     * @return BelongsTo<\App\Models\User, Project>
+     */
     public function author(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
     }
 
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
-    }
-
+    /**
+     * Scope to filter only published projects.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Project> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Project>
+     */
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
     }
 
+    /**
+     * Scope to filter only featured projects.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Project> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Project>
+     */
     public function scopeFeatured($query)
     {
         return $query->where('is_featured', true);
     }
 
+    /**
+     * Find a project by its localized slug.
+     *
+     * @param string $slug The slug to search for
+     * @param string|null $locale The locale (defaults to current)
+     * @return self|null The project or null if not found
+     */
     public static function findBySlug(string $slug, ?string $locale = null): ?self
     {
         $locale = $locale ?? app()->getLocale();
-        return static::whereHas('translations', fn($q) => 
-            $q->where('slug', $slug)->where('locale', $locale)
-        )->first();
+
+        return static::whereHas('translations', fn ($q) => $q->where('slug', $slug)->where('locale', $locale))->first();
     }
 }

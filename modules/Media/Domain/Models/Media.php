@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Storage;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Media Model - Represents uploaded files and media assets.
@@ -57,6 +58,9 @@ class Media extends Model
 {
     use HasUuids;
     use SoftDeletes;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['title', 'alt_text', 'caption', 'description'];
 
     protected $table = 'media';
 

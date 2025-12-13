@@ -30,8 +30,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property \Carbon\Carbon|null $checked_in_at
  * @property string $confirmation_code
  *
- * @property-read Event $event
- * @property-read EventTicketType|null $ticketType
+ * @property-read Event $event Parent event
+ * @property-read EventTicketType|null $ticketType Ticket type definition
+ * @property-read \App\Models\User|null $user Registered user
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|EventRegistration confirmed() Filter confirmed registrations
+ * @method static \Illuminate\Database\Eloquent\Builder|EventRegistration newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|EventRegistration newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|EventRegistration query()
  */
 class EventRegistration extends Model
 {
@@ -59,15 +67,56 @@ class EventRegistration extends Model
         });
     }
 
-    public function event(): BelongsTo { return $this->belongsTo(Event::class); }
-    public function ticketType(): BelongsTo { return $this->belongsTo(EventTicketType::class, 'ticket_type_id'); }
-    public function user(): BelongsTo { return $this->belongsTo(config('auth.providers.users.model')); }
+    /**
+     * Get the parent event.
+     *
+     * @return BelongsTo<Event, EventRegistration>
+     */
+    public function event(): BelongsTo
+    {
+        return $this->belongsTo(Event::class);
+    }
 
+    /**
+     * Get the ticket type for this registration.
+     *
+     * @return BelongsTo<EventTicketType, EventRegistration>
+     */
+    public function ticketType(): BelongsTo
+    {
+        return $this->belongsTo(EventTicketType::class, 'ticket_type_id');
+    }
+
+    /**
+     * Get the registered user.
+     *
+     * @return BelongsTo<\App\Models\User, EventRegistration>
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(config('auth.providers.users.model'));
+    }
+
+    /**
+     * Mark this registration as checked in.
+     *
+     * @return self Returns self for method chaining
+     */
     public function checkIn(): self
     {
         $this->update(['checked_in_at' => now(), 'status' => 'checked_in']);
+
         return $this;
     }
 
-    public function scopeConfirmed($query) { return $query->where('status', 'confirmed'); }
+    /**
+     * Scope to filter only confirmed registrations.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<EventRegistration> $query
+     * @return \Illuminate\Database\Eloquent\Builder<EventRegistration>
+     */
+    public function scopeConfirmed($query)
+    {
+        return $query->where('status', 'confirmed');
+    }
 }
