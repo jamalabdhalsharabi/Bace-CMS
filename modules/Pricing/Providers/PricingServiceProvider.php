@@ -11,7 +11,7 @@ use Modules\Pricing\Application\Actions\TogglePlanAction;
 use Modules\Pricing\Application\Actions\UpdatePlanAction;
 use Modules\Pricing\Application\Services\PlanCommandService;
 use Modules\Pricing\Application\Services\PlanQueryService;
-use Modules\Pricing\Domain\Models\Plan;
+use Modules\Pricing\Domain\Models\PricingPlan;
 use Modules\Pricing\Domain\Repositories\PlanRepository;
 
 class PricingServiceProvider extends ServiceProvider
@@ -36,7 +36,7 @@ class PricingServiceProvider extends ServiceProvider
     protected function registerRepositories(): void
     {
         $this->app->singleton(PlanRepository::class, fn ($app) => 
-            new PlanRepository(new Plan())
+            new PlanRepository(new PricingPlan())
         );
     }
 

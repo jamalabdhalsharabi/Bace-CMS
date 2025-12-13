@@ -7,7 +7,8 @@ namespace Modules\Menu\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Menu\Contracts\MenuServiceContract;
+use Modules\Menu\Application\Services\MenuCommandService;
+use Modules\Menu\Application\Services\MenuQueryService;
 use Modules\Menu\Domain\Models\MenuItem;
 use Modules\Menu\Http\Requests\CreateMenuItemRequest;
 use Modules\Menu\Http\Requests\CreateMenuRequest;
@@ -16,54 +17,18 @@ use Modules\Menu\Http\Requests\UpdateMenuItemRequest;
 use Modules\Menu\Http\Requests\UpdateMenuRequest;
 use Modules\Menu\Http\Resources\MenuItemResource;
 use Modules\Menu\Http\Resources\MenuResource;
-use Modules\Menu\Services\MenuBuilder;
 
-/**
- * Class MenuController
- * 
- * API controller for managing navigation menus
- * including items, tree structure, and reordering.
- * 
- * @package Modules\Menu\Http\Controllers\Api
- */
 class MenuController extends BaseController
 {
-    /**
-     * The menu service instance for handling menu-related business logic.
-     *
-     * @var MenuServiceContract
-     */
-    protected MenuServiceContract $menuService;
-
-    /**
-     * The menu builder instance for constructing menu trees.
-     *
-     * @var MenuBuilder
-     */
-    protected MenuBuilder $menuBuilder;
-
-    /**
-     * Create a new MenuController instance.
-     *
-     * @param MenuServiceContract $menuService The menu service contract implementation
-     * @param MenuBuilder $menuBuilder The menu builder service
-     */
     public function __construct(
-        MenuServiceContract $menuService,
-        MenuBuilder $menuBuilder
+        protected MenuQueryService $queryService,
+        protected MenuCommandService $commandService
     ) {
-        $this->menuService = $menuService;
-        $this->menuBuilder = $menuBuilder;
     }
 
-    /**
-     * Display a listing of all menus.
-     *
-     * @return JsonResponse Collection of menus
-     */
     public function index(): JsonResponse
     {
-        $menus = $this->menuService->all();
+        $menus = $this->queryService->getAll();
 
         return $this->success(MenuResource::collection($menus));
     }
@@ -76,7 +41,7 @@ class MenuController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $menu = $this->menuService->find($id);
+        $menu = $this->queryService->find($id);
 
         if (!$menu) {
             return $this->notFound('Menu not found');
@@ -93,7 +58,7 @@ class MenuController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
-        $menu = $this->menuService->findBySlug($slug);
+        $menu = $this->queryService->findBySlug($slug);
 
         if (!$menu) {
             return $this->notFound('Menu not found');
@@ -110,7 +75,7 @@ class MenuController extends BaseController
      */
     public function showByLocation(string $location): JsonResponse
     {
-        $menu = $this->menuService->findByLocation($location);
+        $menu = $this->queryService->findByLocation($location);
 
         if (!$menu) {
             return $this->notFound('Menu not found');
@@ -140,7 +105,7 @@ class MenuController extends BaseController
      */
     public function store(CreateMenuRequest $request): JsonResponse
     {
-        $menu = $this->menuService->create($request->validated());
+        $menu = $this->queryService->create($request->validated());
 
         return $this->created(new MenuResource($menu));
     }
@@ -154,13 +119,13 @@ class MenuController extends BaseController
      */
     public function update(UpdateMenuRequest $request, string $id): JsonResponse
     {
-        $menu = $this->menuService->find($id);
+        $menu = $this->queryService->find($id);
 
         if (!$menu) {
             return $this->notFound('Menu not found');
         }
 
-        $menu = $this->menuService->update($menu, $request->validated());
+        $menu = $this->queryService->update($menu, $request->validated());
 
         return $this->success(new MenuResource($menu));
     }
@@ -173,13 +138,13 @@ class MenuController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $menu = $this->menuService->find($id);
+        $menu = $this->queryService->find($id);
 
         if (!$menu) {
             return $this->notFound('Menu not found');
         }
 
-        $this->menuService->delete($menu);
+        $this->queryService->delete($menu);
 
         return $this->success(null, 'Menu deleted');
     }
@@ -193,13 +158,13 @@ class MenuController extends BaseController
      */
     public function addItem(CreateMenuItemRequest $request, string $menuId): JsonResponse
     {
-        $menu = $this->menuService->find($menuId);
+        $menu = $this->queryService->find($menuId);
 
         if (!$menu) {
             return $this->notFound('Menu not found');
         }
 
-        $item = $this->menuService->addItem($menu, $request->validated());
+        $item = $this->queryService->addItem($menu, $request->validated());
 
         return $this->created(new MenuItemResource($item));
     }
@@ -219,7 +184,7 @@ class MenuController extends BaseController
             return $this->notFound('Menu item not found');
         }
 
-        $item = $this->menuService->updateItem($item, $request->validated());
+        $item = $this->queryService->updateItem($item, $request->validated());
 
         return $this->success(new MenuItemResource($item));
     }
@@ -238,7 +203,7 @@ class MenuController extends BaseController
             return $this->notFound('Menu item not found');
         }
 
-        $this->menuService->deleteItem($item);
+        $this->queryService->deleteItem($item);
 
         return $this->success(null, 'Menu item deleted');
     }
@@ -251,7 +216,7 @@ class MenuController extends BaseController
      */
     public function reorderItems(ReorderMenuItemsRequest $request): JsonResponse
     {
-        $this->menuService->reorderItems($request->validated()['order']);
+        $this->queryService->reorderItems($request->validated()['order']);
 
         return $this->success(null, 'Items reordered');
     }

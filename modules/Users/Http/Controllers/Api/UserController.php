@@ -7,21 +7,12 @@ namespace Modules\Users\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Users\Contracts\UserServiceContract;
-use Modules\Users\Http\DTOs\CreateUserDTO;
-use Modules\Users\Http\DTOs\UpdateUserDTO;
+use Modules\Users\Application\Services\UserCommandService;
+use Modules\Users\Application\Services\UserQueryService;
 use Modules\Users\Http\Requests\CreateUserRequest;
 use Modules\Users\Http\Requests\UpdateUserRequest;
 use Modules\Users\Http\Resources\UserResource;
 
-/**
- * Class UserController
- * 
- * API controller for managing users including CRUD,
- * activation, and suspension.
- * 
- * @package Modules\Users\Http\Controllers\Api
- */
 class UserController extends BaseController
 {
     /**
@@ -37,9 +28,9 @@ class UserController extends BaseController
      * @param UserServiceContract $userService The user service contract implementation
      */
     public function __construct(
-        UserServiceContract $userService
+        protected UserQueryService $queryService,
+        protected UserCommandService $commandService
     ) {
-        $this->userService = $userService;
     }
 
     /**
@@ -52,7 +43,7 @@ class UserController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $users = $this->userService->list(
+        $users = $this->queryService->list(
             filters: $request->only(['search', 'status', 'verified']),
             perPage: $request->integer('per_page', 15)
         );

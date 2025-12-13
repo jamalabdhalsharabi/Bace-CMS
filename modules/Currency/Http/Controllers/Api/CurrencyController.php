@@ -6,38 +6,19 @@ namespace Modules\Currency\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Currency\Contracts\CurrencyServiceContract;
+use Modules\Currency\Application\Services\CurrencyCommandService;
+use Modules\Currency\Application\Services\CurrencyQueryService;
 use Modules\Currency\Http\Requests\ConvertCurrencyRequest;
 use Modules\Currency\Http\Requests\CreateCurrencyRequest;
 use Modules\Currency\Http\Requests\UpdateCurrencyRequest;
 use Modules\Currency\Http\Resources\CurrencyResource;
 
-/**
- * Class CurrencyController
- *
- * API controller for managing currencies including CRUD
- * operations and currency conversion.
- *
- * @package Modules\Currency\Http\Controllers\Api
- */
 class CurrencyController extends BaseController
 {
-    /**
-     * The currency service instance.
-     *
-     * @var CurrencyServiceContract
-     */
-    protected CurrencyServiceContract $currencyService;
-
-    /**
-     * Create a new CurrencyController instance.
-     *
-     * @param CurrencyServiceContract $currencyService The currency service implementation
-     */
     public function __construct(
-        CurrencyServiceContract $currencyService
+        protected CurrencyQueryService $queryService,
+        protected CurrencyCommandService $commandService
     ) {
-        $this->currencyService = $currencyService;
     }
 
     /**
@@ -47,7 +28,7 @@ class CurrencyController extends BaseController
      */
     public function index(): JsonResponse
     {
-        $currencies = $this->currencyService->getActive();
+        $currencies = $this->queryService->getActive();
 
         return $this->success(CurrencyResource::collection($currencies));
     }
@@ -60,7 +41,7 @@ class CurrencyController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $currency = $this->currencyService->find($id);
+        $currency = $this->queryService->find($id);
 
         if (!$currency) {
             return $this->notFound('Currency not found');
@@ -77,7 +58,7 @@ class CurrencyController extends BaseController
      */
     public function store(CreateCurrencyRequest $request): JsonResponse
     {
-        $currency = $this->currencyService->create($request->validated());
+        $currency = $this->queryService->create($request->validated());
 
         return $this->created(new CurrencyResource($currency));
     }
@@ -91,13 +72,13 @@ class CurrencyController extends BaseController
      */
     public function update(UpdateCurrencyRequest $request, string $id): JsonResponse
     {
-        $currency = $this->currencyService->find($id);
+        $currency = $this->queryService->find($id);
 
         if (!$currency) {
             return $this->notFound('Currency not found');
         }
 
-        $currency = $this->currencyService->update($currency, $request->validated());
+        $currency = $this->queryService->update($currency, $request->validated());
 
         return $this->success(new CurrencyResource($currency));
     }
@@ -111,14 +92,14 @@ class CurrencyController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $currency = $this->currencyService->find($id);
+        $currency = $this->queryService->find($id);
 
         if (!$currency) {
             return $this->notFound('Currency not found');
         }
 
         try {
-            $this->currencyService->delete($currency);
+            $this->queryService->delete($currency);
 
             return $this->success(null, 'Currency deleted');
         } catch (\RuntimeException $e) {
@@ -138,7 +119,7 @@ class CurrencyController extends BaseController
         $validated = $request->validated();
 
         try {
-            $converted = $this->currencyService->convert(
+            $converted = $this->queryService->convert(
                 (float) $validated['amount'],
                 $validated['from'],
                 $validated['to']
@@ -149,7 +130,7 @@ class CurrencyController extends BaseController
                 'from' => $validated['from'],
                 'to' => $validated['to'],
                 'converted' => $converted,
-                'formatted' => $this->currencyService->format($converted, $validated['to']),
+                'formatted' => $this->queryService->format($converted, $validated['to']),
             ]);
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 400);

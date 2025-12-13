@@ -7,36 +7,18 @@ namespace Modules\Pricing\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Pricing\Contracts\PlanServiceContract;
+use Modules\Pricing\Application\Services\PlanCommandService;
+use Modules\Pricing\Application\Services\PlanQueryService;
 use Modules\Pricing\Http\Requests\CreatePlanRequest;
 use Modules\Pricing\Http\Requests\UpdatePlanRequest;
 use Modules\Pricing\Http\Resources\PlanResource;
 
-/**
- * Class PlanController
- * 
- * API controller for managing pricing plans including CRUD,
- * comparison, cloning, analytics, and entity linking.
- * 
- * @package Modules\Pricing\Http\Controllers\Api
- */
 class PlanController extends BaseController
 {
-    /**
-     * The plan service instance for handling pricing plan business logic.
-     *
-     * @var PlanServiceContract
-     */
-    protected PlanServiceContract $planService;
-
-    /**
-     * Create a new PlanController instance.
-     *
-     * @param PlanServiceContract $planService The plan service contract implementation
-     */
-    public function __construct(PlanServiceContract $planService)
-    {
-        $this->planService = $planService;
+    public function __construct(
+        protected PlanQueryService $queryService,
+        protected PlanCommandService $commandService
+    ) {
     }
 
     /**
@@ -47,7 +29,7 @@ class PlanController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $plans = $this->planService->list($request->only(['status', 'type']), $request->integer('per_page', 20));
+        $plans = $this->queryService->list($request->only(['status', 'type']), $request->integer('per_page', 20));
         return $this->paginated(PlanResource::collection($plans)->resource);
     }
 
@@ -58,7 +40,7 @@ class PlanController extends BaseController
      */
     public function active(): JsonResponse
     {
-        return $this->success(PlanResource::collection($this->planService->getActive()));
+        return $this->success(PlanResource::collection($this->queryService->getActive()));
     }
 
     /**
@@ -69,7 +51,7 @@ class PlanController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         return $plan ? $this->success(new PlanResource($plan)) : $this->notFound('Plan not found');
     }
 
@@ -81,7 +63,7 @@ class PlanController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
-        $plan = $this->planService->findBySlug($slug);
+        $plan = $this->queryService->findBySlug($slug);
         return $plan ? $this->success(new PlanResource($plan)) : $this->notFound('Plan not found');
     }
 
@@ -93,7 +75,7 @@ class PlanController extends BaseController
      */
     public function store(CreatePlanRequest $request): JsonResponse
     {
-        return $this->created(new PlanResource($this->planService->create($request->validated())));
+        return $this->created(new PlanResource($this->queryService->create($request->validated())));
     }
 
     /**
@@ -105,9 +87,9 @@ class PlanController extends BaseController
      */
     public function update(UpdatePlanRequest $request, string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->planService->update($plan, $request->validated())));
+        return $this->success(new PlanResource($this->queryService->update($plan, $request->validated())));
     }
 
     /**
@@ -119,10 +101,10 @@ class PlanController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         try {
-            $this->planService->delete($plan);
+            $this->queryService->delete($plan);
             return $this->success(null, 'Plan deleted');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 422);
@@ -137,9 +119,9 @@ class PlanController extends BaseController
      */
     public function activate(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->planService->activate($plan)));
+        return $this->success(new PlanResource($this->queryService->activate($plan)));
     }
 
     /**
@@ -150,9 +132,9 @@ class PlanController extends BaseController
      */
     public function deactivate(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->planService->deactivate($plan)));
+        return $this->success(new PlanResource($this->queryService->deactivate($plan)));
     }
 
     /**
@@ -163,9 +145,9 @@ class PlanController extends BaseController
      */
     public function setDefault(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->planService->setAsDefault($plan)));
+        return $this->success(new PlanResource($this->queryService->setAsDefault($plan)));
     }
 
     /**
@@ -176,9 +158,9 @@ class PlanController extends BaseController
      */
     public function setRecommended(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->planService->setAsRecommended($plan)));
+        return $this->success(new PlanResource($this->queryService->setAsRecommended($plan)));
     }
 
     /**
@@ -192,7 +174,7 @@ class PlanController extends BaseController
         $request->validate(['plans' => 'required|string']);
         $planSlugs = explode(',', $request->plans);
         $plans = \Modules\Pricing\Domain\Models\PricingPlan::whereIn('slug', $planSlugs)->pluck('id')->toArray();
-        return $this->success($this->planService->compare($plans));
+        return $this->success($this->queryService->compare($plans));
     }
 
     /**
@@ -205,9 +187,9 @@ class PlanController extends BaseController
     public function clone(Request $request, string $id): JsonResponse
     {
         $request->validate(['new_slug' => 'required|string|max:50|unique:pricing_plans,slug']);
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->created(new PlanResource($this->planService->clone($plan, $request->new_slug)));
+        return $this->created(new PlanResource($this->queryService->clone($plan, $request->new_slug)));
     }
 
     /**
@@ -219,7 +201,7 @@ class PlanController extends BaseController
     public function reorder(Request $request): JsonResponse
     {
         $request->validate(['order' => 'required|array', 'order.*' => 'uuid']);
-        $this->planService->reorder($request->order);
+        $this->queryService->reorder($request->order);
         return $this->success(null, 'Plans reordered');
     }
 
@@ -231,9 +213,9 @@ class PlanController extends BaseController
      */
     public function analytics(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success($this->planService->getAnalytics($plan));
+        return $this->success($this->queryService->getAnalytics($plan));
     }
 
     /**
@@ -244,7 +226,7 @@ class PlanController extends BaseController
      */
     public function export(Request $request): JsonResponse
     {
-        return $this->success($this->planService->export($request->only(['status', 'format'])));
+        return $this->success($this->queryService->export($request->only(['status', 'format'])));
     }
 
     /**
@@ -259,7 +241,7 @@ class PlanController extends BaseController
             'data' => 'required|array',
             'mode' => 'nullable|in:merge,skip',
         ]);
-        return $this->success($this->planService->import($request->data, $request->mode ?? 'merge'));
+        return $this->success($this->queryService->import($request->data, $request->mode ?? 'merge'));
     }
 
     /**
@@ -276,10 +258,10 @@ class PlanController extends BaseController
             'entity_id' => 'required|uuid',
             'is_required' => 'nullable|boolean',
         ]);
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         
-        $link = $this->planService->link($plan, $request->entity_type, $request->entity_id, $request->boolean('is_required'));
+        $link = $this->queryService->link($plan, $request->entity_type, $request->entity_id, $request->boolean('is_required'));
         return $this->created(['id' => $link->id, 'message' => 'Link created']);
     }
 
@@ -296,10 +278,10 @@ class PlanController extends BaseController
             'entity_type' => 'required|string|in:product,service,event,project',
             'entity_id' => 'required|uuid',
         ]);
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         
-        $deleted = $this->planService->unlink($plan, $request->entity_type, $request->entity_id);
+        $deleted = $this->queryService->unlink($plan, $request->entity_type, $request->entity_id);
         return $deleted ? $this->success(null, 'Link removed') : $this->notFound('Link not found');
     }
 
@@ -311,9 +293,9 @@ class PlanController extends BaseController
      */
     public function links(string $id): JsonResponse
     {
-        $plan = $this->planService->find($id);
+        $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         
-        return $this->success($this->planService->getLinks($plan));
+        return $this->success($this->queryService->getLinks($plan));
     }
 }

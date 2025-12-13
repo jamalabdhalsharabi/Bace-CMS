@@ -7,39 +7,20 @@ namespace Modules\Taxonomy\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Taxonomy\Contracts\TaxonomyServiceContract;
+use Modules\Taxonomy\Application\Services\TaxonomyCommandService;
+use Modules\Taxonomy\Application\Services\TaxonomyQueryService;
 use Modules\Taxonomy\Http\Requests\CreateTaxonomyRequest;
 use Modules\Taxonomy\Http\Requests\ReorderTaxonomyRequest;
 use Modules\Taxonomy\Http\Requests\UpdateTaxonomyRequest;
 use Modules\Taxonomy\Http\Resources\TaxonomyResource;
 use Modules\Taxonomy\Http\Resources\TaxonomyTypeResource;
 
-/**
- * Class TaxonomyController
- * 
- * API controller for managing taxonomies (categories, tags)
- * including CRUD, tree structure, and reordering.
- * 
- * @package Modules\Taxonomy\Http\Controllers\Api
- */
 class TaxonomyController extends BaseController
 {
-    /**
-     * The taxonomy service instance for handling taxonomy-related business logic.
-     *
-     * @var TaxonomyServiceContract
-     */
-    protected TaxonomyServiceContract $taxonomyService;
-
-    /**
-     * Create a new TaxonomyController instance.
-     *
-     * @param TaxonomyServiceContract $taxonomyService The taxonomy service contract implementation
-     */
     public function __construct(
-        TaxonomyServiceContract $taxonomyService
+        protected TaxonomyQueryService $queryService,
+        protected TaxonomyCommandService $commandService
     ) {
-        $this->taxonomyService = $taxonomyService;
     }
 
     /**
@@ -49,7 +30,7 @@ class TaxonomyController extends BaseController
      */
     public function types(): JsonResponse
     {
-        $types = $this->taxonomyService->getTypes();
+        $types = $this->queryService->getTypes();
 
         return $this->success(TaxonomyTypeResource::collection($types));
     }
@@ -63,7 +44,7 @@ class TaxonomyController extends BaseController
      */
     public function index(Request $request, string $type): JsonResponse
     {
-        $taxonomies = $this->taxonomyService->getTaxonomies(
+        $taxonomies = $this->queryService->getTaxonomies(
             $type,
             $request->input('parent_id')
         );
@@ -79,7 +60,7 @@ class TaxonomyController extends BaseController
      */
     public function tree(string $type): JsonResponse
     {
-        $taxonomies = $this->taxonomyService->getTree($type);
+        $taxonomies = $this->queryService->getTree($type);
 
         return $this->success(TaxonomyResource::collection($taxonomies));
     }
@@ -92,7 +73,7 @@ class TaxonomyController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $taxonomy = $this->taxonomyService->find($id);
+        $taxonomy = $this->queryService->find($id);
 
         if (!$taxonomy) {
             return $this->notFound('Taxonomy not found');
@@ -110,7 +91,7 @@ class TaxonomyController extends BaseController
      */
     public function showBySlug(string $type, string $slug): JsonResponse
     {
-        $taxonomy = $this->taxonomyService->findBySlug($slug, $type);
+        $taxonomy = $this->queryService->findBySlug($slug, $type);
 
         if (!$taxonomy) {
             return $this->notFound('Taxonomy not found');
@@ -127,7 +108,7 @@ class TaxonomyController extends BaseController
      */
     public function store(CreateTaxonomyRequest $request): JsonResponse
     {
-        $taxonomy = $this->taxonomyService->create($request->validated());
+        $taxonomy = $this->queryService->create($request->validated());
 
         return $this->created(new TaxonomyResource($taxonomy));
     }
@@ -141,13 +122,13 @@ class TaxonomyController extends BaseController
      */
     public function update(UpdateTaxonomyRequest $request, string $id): JsonResponse
     {
-        $taxonomy = $this->taxonomyService->find($id);
+        $taxonomy = $this->queryService->find($id);
 
         if (!$taxonomy) {
             return $this->notFound('Taxonomy not found');
         }
 
-        $taxonomy = $this->taxonomyService->update($taxonomy, $request->validated());
+        $taxonomy = $this->queryService->update($taxonomy, $request->validated());
 
         return $this->success(new TaxonomyResource($taxonomy));
     }
@@ -160,13 +141,13 @@ class TaxonomyController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $taxonomy = $this->taxonomyService->find($id);
+        $taxonomy = $this->queryService->find($id);
 
         if (!$taxonomy) {
             return $this->notFound('Taxonomy not found');
         }
 
-        $this->taxonomyService->delete($taxonomy);
+        $this->queryService->delete($taxonomy);
 
         return $this->success(null, 'Taxonomy deleted');
     }
@@ -179,7 +160,7 @@ class TaxonomyController extends BaseController
      */
     public function reorder(ReorderTaxonomyRequest $request): JsonResponse
     {
-        $this->taxonomyService->reorder($request->validated()['order']);
+        $this->queryService->reorder($request->validated()['order']);
 
         return $this->success(null, 'Taxonomies reordered');
     }
