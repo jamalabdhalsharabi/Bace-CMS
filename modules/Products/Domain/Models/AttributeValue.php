@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * AttributeValue Model - Represents possible values for an attribute.
@@ -36,6 +36,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class AttributeValue extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['name'];
+
+    /**
+     * Custom foreign key for translations.
+     *
+     * @var string
+     */
+    public string $translationForeignKey = 'value_id';
 
     protected $table = 'attribute_values';
 
@@ -60,34 +75,4 @@ class AttributeValue extends Model
         return $this->belongsTo(ProductAttribute::class, 'attribute_id');
     }
 
-    /**
-     * Get all translations for this value.
-     *
-     * @return HasMany<AttributeValueTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(AttributeValueTranslation::class, 'value_id');
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<AttributeValueTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(AttributeValueTranslation::class, 'value_id')
-            ->where('locale', app()->getLocale());
-    }
-
-    /**
-     * Get the localized value name.
-     *
-     * @return string
-     */
-    public function getNameAttribute(): string
-    {
-        return $this->translation?->name ?? $this->translations->first()?->name ?? $this->slug;
-    }
 }

@@ -8,9 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * EventSpeaker Model - Represents event speakers/presenters.
@@ -49,6 +48,21 @@ class EventSpeaker extends Model
 {
     use HasUuids;
     use SoftDeletes;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['bio', 'expertise'];
+
+    /**
+     * Custom foreign key for translations.
+     *
+     * @var string
+     */
+    public string $translationForeignKey = 'speaker_id';
 
     protected $table = 'event_speakers';
 
@@ -80,27 +94,6 @@ class EventSpeaker extends Model
     }
 
     /**
-     * Get all translations for this speaker.
-     *
-     * @return HasMany<EventSpeakerTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(EventSpeakerTranslation::class, 'speaker_id');
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<EventSpeakerTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(EventSpeakerTranslation::class, 'speaker_id')
-            ->where('locale', app()->getLocale());
-    }
-
-    /**
      * Get the sessions this speaker is assigned to.
      *
      * @return BelongsToMany<EventSession>
@@ -108,16 +101,6 @@ class EventSpeaker extends Model
     public function sessions(): BelongsToMany
     {
         return $this->belongsToMany(EventSession::class, 'event_session_speakers', 'speaker_id', 'session_id');
-    }
-
-    /**
-     * Get the localized speaker biography.
-     *
-     * @return string|null
-     */
-    public function getBioAttribute(): ?string
-    {
-        return $this->translation?->bio ?? $this->translations->first()?->bio;
     }
 
     /**

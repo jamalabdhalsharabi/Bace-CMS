@@ -7,7 +7,7 @@ namespace Modules\Products\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * ProductAttribute Model - Defines product attributes (size, color, etc.).
@@ -39,6 +39,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class ProductAttribute extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['name'];
+
+    /**
+     * Custom foreign key for translations.
+     *
+     * @var string
+     */
+    public string $translationForeignKey = 'attribute_id';
 
     protected $table = 'product_attributes';
 
@@ -59,27 +74,6 @@ class ProductAttribute extends Model
     ];
 
     /**
-     * Get all translations for this attribute.
-     *
-     * @return HasMany<ProductAttributeTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ProductAttributeTranslation::class, 'attribute_id');
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<ProductAttributeTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(ProductAttributeTranslation::class, 'attribute_id')
-            ->where('locale', app()->getLocale());
-    }
-
-    /**
      * Get all values for this attribute.
      *
      * @return HasMany<AttributeValue>
@@ -87,16 +81,6 @@ class ProductAttribute extends Model
     public function values(): HasMany
     {
         return $this->hasMany(AttributeValue::class, 'attribute_id')->orderBy('sort_order');
-    }
-
-    /**
-     * Get the localized attribute name.
-     *
-     * @return string|null
-     */
-    public function getNameAttribute(): ?string
-    {
-        return $this->translation?->name ?? $this->translations->first()?->name ?? $this->slug;
     }
 
     /**

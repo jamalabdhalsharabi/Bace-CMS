@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * EventSession Model - Represents individual sessions within an event.
@@ -43,6 +43,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class EventSession extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['title', 'description'];
+
+    /**
+     * Custom foreign key for translations.
+     *
+     * @var string
+     */
+    public string $translationForeignKey = 'session_id';
 
     protected $table = 'event_sessions';
 
@@ -76,27 +91,6 @@ class EventSession extends Model
     }
 
     /**
-     * Get all translations for this session.
-     *
-     * @return HasMany<EventSessionTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(EventSessionTranslation::class, 'session_id');
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<EventSessionTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(EventSessionTranslation::class, 'session_id')
-            ->where('locale', app()->getLocale());
-    }
-
-    /**
      * Get the speakers assigned to this session.
      *
      * @return BelongsToMany<EventSpeaker>
@@ -104,26 +98,6 @@ class EventSession extends Model
     public function speakers(): BelongsToMany
     {
         return $this->belongsToMany(EventSpeaker::class, 'event_session_speakers', 'session_id', 'speaker_id');
-    }
-
-    /**
-     * Get the localized session title.
-     *
-     * @return string|null
-     */
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    /**
-     * Get the localized session description.
-     *
-     * @return string|null
-     */
-    public function getDescriptionAttribute(): ?string
-    {
-        return $this->translation?->description ?? $this->translations->first()?->description;
     }
 
     /**

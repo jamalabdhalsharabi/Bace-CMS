@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 use Modules\Taxonomy\Traits\HasTaxonomies;
 
 /**
@@ -55,6 +56,14 @@ class Product extends Model
     use HasUuids;
     use SoftDeletes;
     use HasTaxonomies;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['name', 'slug', 'description', 'short_description', 'meta_title', 'meta_description'];
 
     protected $table = 'products';
 
@@ -91,33 +100,6 @@ class Product extends Model
         'settings' => 'array',
         'dimensions' => 'array',
     ];
-
-    /**
-     * Define the has-many relationship with product translations.
-     *
-     * Retrieves all translation records for this product across
-     * all supported locales including name, description, and SEO fields.
-     *
-     * @return HasMany The has-many relationship instance to ProductTranslation
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ProductTranslation::class);
-    }
-
-    /**
-     * Define the has-one relationship with the current locale translation.
-     *
-     * Retrieves the translation record matching the application's
-     * current locale setting for displaying localized product content.
-     *
-     * @return HasOne The has-one relationship instance to ProductTranslation
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(ProductTranslation::class)
-            ->where('locale', app()->getLocale());
-    }
 
     /**
      * Define the has-many relationship with product variants.
@@ -169,45 +151,6 @@ class Product extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
-    }
-
-    /**
-     * Accessor for the product's localized name.
-     *
-     * Returns the name from the current locale translation if available,
-     * otherwise falls back to the first available translation's name.
-     *
-     * @return string|null The localized product name or null if no translations exist
-     */
-    public function getNameAttribute(): ?string
-    {
-        return $this->translation?->name ?? $this->translations->first()?->name;
-    }
-
-    /**
-     * Accessor for the product's localized URL slug.
-     *
-     * Returns the slug from the current locale translation if available,
-     * otherwise falls back to the first available translation's slug.
-     *
-     * @return string|null The localized slug or null if no translations exist
-     */
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
-    }
-
-    /**
-     * Accessor for the product's localized description.
-     *
-     * Returns the full HTML description from the current locale
-     * translation for displaying on the product detail page.
-     *
-     * @return string|null The localized description or null if not set
-     */
-    public function getDescriptionAttribute(): ?string
-    {
-        return $this->translation?->description;
     }
 
     /**
