@@ -12,6 +12,12 @@ use Modules\Taxonomy\Application\Services\TaxonomyQueryService;
 use Modules\Taxonomy\Http\Requests\CreateTaxonomyRequest;
 use Modules\Taxonomy\Http\Requests\ReorderTaxonomyRequest;
 use Modules\Taxonomy\Http\Requests\UpdateTaxonomyRequest;
+use Modules\Taxonomy\Http\Requests\MergeTaxonomyRequest;
+use Modules\Taxonomy\Http\Requests\ImportTaxonomyRequest;
+use Modules\Taxonomy\Http\Requests\CreateTaxonomyTypeRequest;
+use Modules\Taxonomy\Http\Requests\CreateTaxonomyTranslationRequest;
+use Modules\Taxonomy\Http\Requests\MoveTaxonomyRequest;
+use Modules\Taxonomy\Http\Requests\ChangeParentRequest;
 use Modules\Taxonomy\Http\Resources\TaxonomyResource;
 use Modules\Taxonomy\Http\Resources\TaxonomyTypeResource;
 
@@ -154,14 +160,113 @@ class TaxonomyController extends BaseController
 
     /**
      * Reorder taxonomies based on the provided order array.
-     *
-     * @param ReorderTaxonomyRequest $request The validated request containing order array
-     * @return JsonResponse Success message
      */
     public function reorder(ReorderTaxonomyRequest $request): JsonResponse
     {
-        $this->queryService->reorder($request->validated()['order']);
-
+        $this->commandService->reorder($request->validated()['order']);
         return $this->success(null, 'Taxonomies reordered');
+    }
+
+    /** Create translated version. */
+    public function createTranslation(CreateTaxonomyTranslationRequest $request, string $id): JsonResponse
+    {
+        $taxonomy = $this->queryService->find($id);
+        if (!$taxonomy) return $this->notFound('Taxonomy not found');
+        $translation = $this->commandService->createTranslation($taxonomy, $request->validated());
+        return $this->created($translation);
+    }
+
+    /** Move taxonomy in tree. */
+    public function move(MoveTaxonomyRequest $request, string $id): JsonResponse
+    {
+        $taxonomy = $this->queryService->find($id);
+        if (!$taxonomy) return $this->notFound('Taxonomy not found');
+        $taxonomy = $this->commandService->move($taxonomy, $request->parent_id, $request->integer('position', 0));
+        return $this->success(new TaxonomyResource($taxonomy), 'Taxonomy moved');
+    }
+
+    /** Change parent of taxonomy. */
+    public function changeParent(ChangeParentRequest $request, string $id): JsonResponse
+    {
+        $taxonomy = $this->queryService->find($id);
+        if (!$taxonomy) return $this->notFound('Taxonomy not found');
+        $taxonomy = $this->commandService->changeParent($taxonomy, $request->parent_id);
+        return $this->success(new TaxonomyResource($taxonomy));
+    }
+
+    /** Merge two taxonomies. */
+    public function merge(MergeTaxonomyRequest $request): JsonResponse
+    {
+        $result = $this->commandService->merge($request->source_id, $request->target_id);
+        return $this->success($result, 'Taxonomies merged');
+    }
+
+    /** Activate taxonomy. */
+    public function activate(string $id): JsonResponse
+    {
+        $taxonomy = $this->queryService->find($id);
+        if (!$taxonomy) return $this->notFound('Taxonomy not found');
+        $taxonomy = $this->commandService->activate($taxonomy);
+        return $this->success(new TaxonomyResource($taxonomy), 'Taxonomy activated');
+    }
+
+    /** Deactivate taxonomy. */
+    public function deactivate(string $id): JsonResponse
+    {
+        $taxonomy = $this->queryService->find($id);
+        if (!$taxonomy) return $this->notFound('Taxonomy not found');
+        $taxonomy = $this->commandService->deactivate($taxonomy);
+        return $this->success(new TaxonomyResource($taxonomy), 'Taxonomy deactivated');
+    }
+
+    /** Import taxonomies. */
+    public function import(ImportTaxonomyRequest $request): JsonResponse
+    {
+        $result = $this->commandService->import($request->type, $request->data, $request->input('mode', 'merge'));
+        return $this->success($result, 'Taxonomies imported');
+    }
+
+    /** Export taxonomies. */
+    public function export(Request $request, string $type): JsonResponse
+    {
+        $result = $this->queryService->export($type, $request->input('format', 'json'));
+        return $this->success($result);
+    }
+
+    /** Create custom taxonomy type. */
+    public function createType(CreateTaxonomyTypeRequest $request): JsonResponse
+    {
+        $type = $this->commandService->createType($request->validated());
+        return $this->created(new TaxonomyTypeResource($type));
+    }
+
+    /** Update taxonomy type. */
+    public function updateType(Request $request, string $typeId): JsonResponse
+    {
+        $type = $this->commandService->updateType($typeId, $request->all());
+        return $this->success(new TaxonomyTypeResource($type));
+    }
+
+    /** Delete taxonomy type. */
+    public function destroyType(string $typeId): JsonResponse
+    {
+        $this->commandService->deleteType($typeId);
+        return $this->success(null, 'Taxonomy type deleted');
+    }
+
+    /** Get content statistics for taxonomy. */
+    public function contentStats(string $id): JsonResponse
+    {
+        $taxonomy = $this->queryService->find($id);
+        if (!$taxonomy) return $this->notFound('Taxonomy not found');
+        $stats = $this->queryService->getContentStats($taxonomy);
+        return $this->success($stats);
+    }
+
+    /** Clean empty taxonomies. */
+    public function cleanEmpty(string $type): JsonResponse
+    {
+        $count = $this->commandService->cleanEmpty($type);
+        return $this->success(['deleted' => $count], 'Empty taxonomies cleaned');
     }
 }

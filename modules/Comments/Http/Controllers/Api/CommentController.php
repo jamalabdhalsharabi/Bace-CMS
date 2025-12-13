@@ -10,6 +10,10 @@ use Modules\Comments\Application\Services\CommentCommandService;
 use Modules\Comments\Application\Services\CommentQueryService;
 use Modules\Comments\Http\Requests\CreateCommentRequest;
 use Modules\Comments\Http\Requests\ReplyCommentRequest;
+use Modules\Comments\Http\Requests\ReportCommentRequest;
+use Modules\Comments\Http\Requests\VoteCommentRequest;
+use Modules\Comments\Http\Requests\LockCommentsRequest;
+use Modules\Comments\Http\Requests\BanUserRequest;
 use Modules\Comments\Http\Resources\CommentResource;
 use Modules\Core\Http\Controllers\BaseController;
 
@@ -126,13 +130,151 @@ class CommentController extends BaseController
     public function spam(string $id): JsonResponse
     {
         $comment = $this->queryService->find($id);
-
-        if (!$comment) {
-            return $this->notFound('Comment not found');
-        }
-
-        $comment = $this->queryService->markAsSpam($comment);
-
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->markAsSpam($comment);
         return $this->success(new CommentResource($comment), 'Comment marked as spam');
+    }
+
+    /** Confirm comment is not spam. */
+    public function notSpam(string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->markAsNotSpam($comment);
+        return $this->success(new CommentResource($comment), 'Comment marked as not spam');
+    }
+
+    /** Update a comment. */
+    public function update(Request $request, string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->update($comment, $request->all());
+        return $this->success(new CommentResource($comment));
+    }
+
+    /** Hide a comment. */
+    public function hide(string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->hide($comment);
+        return $this->success(new CommentResource($comment), 'Comment hidden');
+    }
+
+    /** Show a hidden comment. */
+    public function unhide(string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->unhide($comment);
+        return $this->success(new CommentResource($comment), 'Comment visible');
+    }
+
+    /** Report a comment. */
+    public function report(ReportCommentRequest $request, string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $this->commandService->report($comment, $request->reason, auth()->id());
+        return $this->success(null, 'Comment reported');
+    }
+
+    /** Pin a comment to top. */
+    public function pin(string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->pin($comment);
+        return $this->success(new CommentResource($comment), 'Comment pinned');
+    }
+
+    /** Unpin a comment. */
+    public function unpin(string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $comment = $this->commandService->unpin($comment);
+        return $this->success(new CommentResource($comment), 'Comment unpinned');
+    }
+
+    /** Vote/react on a comment. */
+    public function vote(VoteCommentRequest $request, string $id): JsonResponse
+    {
+        $comment = $this->queryService->find($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $this->commandService->vote($comment, $request->type, auth()->id());
+        return $this->success(null, 'Vote recorded');
+    }
+
+    /** Force delete a comment permanently. */
+    public function forceDestroy(string $id): JsonResponse
+    {
+        $comment = $this->queryService->findWithTrashed($id);
+        if (!$comment) return $this->notFound('Comment not found');
+        $this->commandService->forceDelete($comment);
+        return $this->success(null, 'Comment permanently deleted');
+    }
+
+    /** Lock comments on content. */
+    public function lockComments(LockCommentsRequest $request): JsonResponse
+    {
+        $this->commandService->lockComments($request->model_type, $request->model_id);
+        return $this->success(null, 'Comments locked');
+    }
+
+    /** Unlock comments on content. */
+    public function unlockComments(LockCommentsRequest $request): JsonResponse
+    {
+        $this->commandService->unlockComments($request->model_type, $request->model_id);
+        return $this->success(null, 'Comments unlocked');
+    }
+
+    /** Ban a user from commenting. */
+    public function banUser(BanUserRequest $request): JsonResponse
+    {
+        $this->commandService->banUser($request->user_id, $request->reason, $request->duration);
+        return $this->success(null, 'User banned from commenting');
+    }
+
+    /** Unban a user. */
+    public function unbanUser(Request $request): JsonResponse
+    {
+        $request->validate(['user_id' => 'required|uuid']);
+        $this->commandService->unbanUser($request->user_id);
+        return $this->success(null, 'User unbanned');
+    }
+
+    /** Bulk approve comments. */
+    public function bulkApprove(Request $request): JsonResponse
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'uuid']);
+        $count = $this->commandService->bulkApprove($request->ids);
+        return $this->success(['approved' => $count], 'Comments approved');
+    }
+
+    /** Bulk reject comments. */
+    public function bulkReject(Request $request): JsonResponse
+    {
+        $request->validate(['ids' => 'required|array', 'ids.*' => 'uuid']);
+        $count = $this->commandService->bulkReject($request->ids);
+        return $this->success(['rejected' => $count], 'Comments rejected');
+    }
+
+    /** Clean spam comments. */
+    public function cleanSpam(): JsonResponse
+    {
+        $count = $this->commandService->cleanSpam();
+        return $this->success(['deleted' => $count], 'Spam comments cleaned');
+    }
+
+    /** Get comment statistics. */
+    public function stats(Request $request): JsonResponse
+    {
+        $stats = $this->queryService->getStats(
+            $request->commentable_type,
+            $request->commentable_id
+        );
+        return $this->success($stats);
     }
 }

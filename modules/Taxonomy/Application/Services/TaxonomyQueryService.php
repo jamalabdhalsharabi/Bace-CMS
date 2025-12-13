@@ -35,6 +35,15 @@ final class TaxonomyQueryService
             ->getByType($typeId, $parentId);
     }
 
+    public function getTaxonomies(string $type, ?string $parentId = null): Collection
+    {
+        $taxonomyType = $this->getTypeBySlug($type);
+        if (!$taxonomyType) {
+            return new Collection();
+        }
+        return $this->getByType($taxonomyType->id, $parentId);
+    }
+
     public function getTree(string $typeId): Collection
     {
         return $this->repository->getTree($typeId);

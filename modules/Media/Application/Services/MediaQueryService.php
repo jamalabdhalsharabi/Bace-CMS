@@ -23,6 +23,11 @@ final class MediaQueryService
         return $this->repository->getPaginated($filters, $perPage);
     }
 
+    public function paginate(int $perPage = 24, array $filters = []): LengthAwarePaginator
+    {
+        return $this->repository->getPaginated($filters, $perPage);
+    }
+
     public function find(string $id): ?Media
     {
         return $this->repository->find($id);

@@ -1,47 +1,65 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Events\Http\Controllers\Api\EventControllerV2;
+use Modules\Events\Http\Controllers\Api\EventController;
 
 /*
 |--------------------------------------------------------------------------
-| Events Module API V2 Routes
+| Events Module API Routes
 |--------------------------------------------------------------------------
-|
-| Clean Architecture routes using specialized services.
-|
 */
 
-Route::prefix('api/v2/events')->middleware(['api'])->name('api.v2.events.')->group(function () {
+// V1 Routes - Full featured EventController
+Route::prefix('api/v1/events')->middleware(['api'])->name('api.events.')->group(function () {
     // Public routes
-    Route::get('/', [EventControllerV2::class, 'index'])->name('index');
-    Route::get('/slug/{slug}', [EventControllerV2::class, 'showBySlug'])->name('slug');
-    Route::get('/upcoming', [EventControllerV2::class, 'upcoming'])->name('upcoming');
-    Route::get('/ongoing', [EventControllerV2::class, 'ongoing'])->name('ongoing');
-    Route::get('/past', [EventControllerV2::class, 'past'])->name('past');
+    Route::get('/', [EventController::class, 'index'])->name('index');
+    Route::get('/upcoming', [EventController::class, 'upcoming'])->name('upcoming');
+    Route::get('/past', [EventController::class, 'past'])->name('past');
+    Route::get('/slug/{slug}', [EventController::class, 'showBySlug'])->name('slug');
+    Route::get('/{id}', [EventController::class, 'show'])->name('show');
+    Route::get('/{id}/stats', [EventController::class, 'stats'])->name('stats');
+    Route::post('/{id}/register', [EventController::class, 'register'])->name('register');
+    Route::get('/{id}/calendar', [EventController::class, 'addToCalendar'])->name('calendar');
 
-    // Public registration
-    Route::post('/{id}/register', [EventControllerV2::class, 'register'])->name('register');
-    Route::get('/{id}/stats', [EventControllerV2::class, 'registrationStats'])->name('stats');
-
-    // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
         // CRUD
-        Route::post('/', [EventControllerV2::class, 'store'])->name('store');
-        Route::get('/{id}', [EventControllerV2::class, 'show'])->name('show');
-        Route::put('/{id}', [EventControllerV2::class, 'update'])->name('update');
-        Route::delete('/{id}', [EventControllerV2::class, 'destroy'])->name('destroy');
+        Route::post('/', [EventController::class, 'store'])->name('store');
+        Route::put('/{id}', [EventController::class, 'update'])->name('update');
+        Route::delete('/{id}', [EventController::class, 'destroy'])->name('destroy');
 
         // Workflow
-        Route::post('/{id}/publish', [EventControllerV2::class, 'publish'])->name('publish');
-        Route::post('/{id}/unpublish', [EventControllerV2::class, 'unpublish'])->name('unpublish');
-        Route::post('/{id}/cancel', [EventControllerV2::class, 'cancel'])->name('cancel');
-        Route::post('/{id}/postpone', [EventControllerV2::class, 'postpone'])->name('postpone');
-        Route::post('/{id}/duplicate', [EventControllerV2::class, 'duplicate'])->name('duplicate');
+        Route::post('/{id}/publish', [EventController::class, 'publish'])->name('publish');
+        Route::post('/{id}/unpublish', [EventController::class, 'unpublish'])->name('unpublish');
+        Route::post('/{id}/schedule', [EventController::class, 'schedule'])->name('schedule');
+        Route::post('/{id}/cancel', [EventController::class, 'cancel'])->name('cancel');
+        Route::post('/{id}/postpone', [EventController::class, 'postpone'])->name('postpone');
+        Route::post('/{id}/feature', [EventController::class, 'feature'])->name('feature');
+        Route::post('/{id}/unfeature', [EventController::class, 'unfeature'])->name('unfeature');
+        Route::post('/{id}/duplicate', [EventController::class, 'duplicate'])->name('duplicate');
+        Route::post('/recurring', [EventController::class, 'createRecurring'])->name('create-recurring');
 
         // Registrations
-        Route::get('/{id}/registrations', [EventControllerV2::class, 'registrations'])->name('registrations');
-        Route::post('/{id}/registrations/{registrationId}/cancel', [EventControllerV2::class, 'cancelRegistration'])->name('cancel-registration');
-        Route::post('/{id}/registrations/{registrationId}/check-in', [EventControllerV2::class, 'checkIn'])->name('check-in');
+        Route::get('/{id}/registrations', [EventController::class, 'registrations'])->name('registrations');
+        Route::get('/{id}/registrations/export', [EventController::class, 'exportRegistrations'])->name('export-registrations');
+        Route::post('/{id}/cancel-registration', [EventController::class, 'cancelRegistration'])->name('cancel-registration');
+        Route::post('/{id}/confirm-attendance', [EventController::class, 'confirmAttendance'])->name('confirm-attendance');
+        Route::post('/{id}/check-in', [EventController::class, 'checkIn'])->name('check-in');
+        Route::post('/{id}/send-reminder', [EventController::class, 'sendReminder'])->name('send-reminder');
+
+        // Speakers
+        Route::post('/{id}/speakers', [EventController::class, 'addSpeaker'])->name('add-speaker');
+        Route::delete('/{id}/speakers/{speakerId}', [EventController::class, 'removeSpeaker'])->name('remove-speaker');
+
+        // Agenda
+        Route::post('/{id}/agenda', [EventController::class, 'addAgendaItem'])->name('add-agenda');
+        Route::put('/{id}/agenda/{itemId}', [EventController::class, 'updateAgendaItem'])->name('update-agenda');
+        Route::delete('/{id}/agenda/{itemId}', [EventController::class, 'removeAgendaItem'])->name('remove-agenda');
+
+        // Venue & Online
+        Route::post('/{id}/venue', [EventController::class, 'setVenue'])->name('set-venue');
+        Route::post('/{id}/online-details', [EventController::class, 'setOnlineDetails'])->name('set-online-details');
+        Route::post('/{id}/capacity', [EventController::class, 'setCapacity'])->name('set-capacity');
+        Route::post('/{id}/enable-waiting-list', [EventController::class, 'enableWaitingList'])->name('enable-waiting-list');
     });
 });
+
