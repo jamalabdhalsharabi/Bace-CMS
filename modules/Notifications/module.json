@@ -4,7 +4,7 @@
     "description": "In-app and email notifications system",
     "version": "1.0.0",
     "keywords": ["notifications", "alerts", "email"],
-    "priority": 37,
+    "priority": 14,
     "enabled": true,
     "providers": [
         "Modules\\Notifications\\Providers\\NotificationsServiceProvider"

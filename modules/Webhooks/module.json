@@ -4,7 +4,7 @@
     "description": "Webhook management and logging",
     "version": "1.0.0",
     "keywords": ["webhooks", "integration", "api"],
-    "priority": 50,
+    "priority": 23,
     "enabled": true,
     "providers": [
         "Modules\\Webhooks\\Providers\\WebhooksServiceProvider"

@@ -1,65 +1,47 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Events\Http\Controllers\Api\EventController;
+use Modules\Events\Http\Controllers\Api\EventControllerV2;
 
-Route::prefix('api/v1/events')->middleware(['api'])->name('api.v1.events.')->group(function () {
-    Route::get('/', [EventController::class, 'index'])->name('index');
-    Route::get('/slug/{slug}', [EventController::class, 'showBySlug'])->name('slug');
-    Route::post('/{id}/register', [EventController::class, 'register'])->name('register');
-    Route::post('/{id}/waitlist', [EventController::class, 'joinWaitlist'])->name('waitlist');
+/*
+|--------------------------------------------------------------------------
+| Events Module API V2 Routes
+|--------------------------------------------------------------------------
+|
+| Clean Architecture routes using specialized services.
+|
+*/
 
+Route::prefix('api/v2/events')->middleware(['api'])->name('api.v2.events.')->group(function () {
+    // Public routes
+    Route::get('/', [EventControllerV2::class, 'index'])->name('index');
+    Route::get('/slug/{slug}', [EventControllerV2::class, 'showBySlug'])->name('slug');
+    Route::get('/upcoming', [EventControllerV2::class, 'upcoming'])->name('upcoming');
+    Route::get('/ongoing', [EventControllerV2::class, 'ongoing'])->name('ongoing');
+    Route::get('/past', [EventControllerV2::class, 'past'])->name('past');
+
+    // Public registration
+    Route::post('/{id}/register', [EventControllerV2::class, 'register'])->name('register');
+    Route::get('/{id}/stats', [EventControllerV2::class, 'registrationStats'])->name('stats');
+
+    // Protected routes
     Route::middleware('auth:sanctum')->group(function () {
         // CRUD
-        Route::post('/', [EventController::class, 'store'])->name('store');
-        Route::get('/{id}', [EventController::class, 'show'])->name('show');
-        Route::put('/{id}', [EventController::class, 'update'])->name('update');
-        Route::delete('/{id}', [EventController::class, 'destroy'])->name('destroy');
+        Route::post('/', [EventControllerV2::class, 'store'])->name('store');
+        Route::get('/{id}', [EventControllerV2::class, 'show'])->name('show');
+        Route::put('/{id}', [EventControllerV2::class, 'update'])->name('update');
+        Route::delete('/{id}', [EventControllerV2::class, 'destroy'])->name('destroy');
 
         // Workflow
-        Route::post('/{id}/submit-review', [EventController::class, 'submitForReview'])->name('submit-review');
-        Route::post('/{id}/approve', [EventController::class, 'approve'])->name('approve');
-        Route::post('/{id}/reject', [EventController::class, 'reject'])->name('reject');
-        Route::post('/{id}/publish', [EventController::class, 'publish'])->name('publish');
-        Route::post('/{id}/schedule', [EventController::class, 'schedule'])->name('schedule');
-        Route::post('/{id}/unpublish', [EventController::class, 'unpublish'])->name('unpublish');
-        Route::post('/{id}/archive', [EventController::class, 'archive'])->name('archive');
+        Route::post('/{id}/publish', [EventControllerV2::class, 'publish'])->name('publish');
+        Route::post('/{id}/unpublish', [EventControllerV2::class, 'unpublish'])->name('unpublish');
+        Route::post('/{id}/cancel', [EventControllerV2::class, 'cancel'])->name('cancel');
+        Route::post('/{id}/postpone', [EventControllerV2::class, 'postpone'])->name('postpone');
+        Route::post('/{id}/duplicate', [EventControllerV2::class, 'duplicate'])->name('duplicate');
 
-        // Registration Management
-        Route::post('/{id}/registration/open', [EventController::class, 'openRegistration'])->name('open-registration');
-        Route::post('/{id}/registration/close', [EventController::class, 'closeRegistration'])->name('close-registration');
-        Route::post('/registrations/{regId}/confirm-payment', [EventController::class, 'confirmPayment'])->name('confirm-payment');
-        Route::post('/registrations/{regId}/cancel', [EventController::class, 'cancelRegistration'])->name('cancel-registration');
-        Route::post('/registrations/{regId}/refund', [EventController::class, 'refundRegistration'])->name('refund');
-        Route::post('/registrations/{regId}/promote', [EventController::class, 'promoteFromWaitlist'])->name('promote-waitlist');
-        Route::post('/registrations/{regId}/check-in', [EventController::class, 'checkIn'])->name('check-in');
-
-        // Ticket Types
-        Route::post('/{id}/ticket-types', [EventController::class, 'addTicketType'])->name('add-ticket-type');
-        Route::put('/{id}/ticket-types/{ticketId}', [EventController::class, 'updateTicketType'])->name('update-ticket-type');
-        Route::delete('/{id}/ticket-types/{ticketId}', [EventController::class, 'deleteTicketType'])->name('delete-ticket-type');
-        Route::post('/{id}/ticket-types/{ticketId}/toggle', [EventController::class, 'toggleTicketType'])->name('toggle-ticket-type');
-
-        // Sessions
-        Route::post('/{id}/sessions', [EventController::class, 'addSession'])->name('add-session');
-        Route::put('/{id}/sessions/{sessionId}', [EventController::class, 'updateSession'])->name('update-session');
-        Route::delete('/{id}/sessions/{sessionId}', [EventController::class, 'deleteSession'])->name('delete-session');
-        Route::post('/{id}/sessions/{sessionId}/cancel', [EventController::class, 'cancelSession'])->name('cancel-session');
-
-        // Speakers
-        Route::post('/{id}/speakers', [EventController::class, 'addSpeaker'])->name('add-speaker');
-        Route::delete('/{id}/speakers/{speakerId}', [EventController::class, 'removeSpeaker'])->name('remove-speaker');
-        Route::post('/{id}/speakers/{speakerId}/invite', [EventController::class, 'sendSpeakerInvite'])->name('speaker-invite');
-
-        // Event Lifecycle
-        Route::post('/{id}/start', [EventController::class, 'startEvent'])->name('start');
-        Route::post('/{id}/end', [EventController::class, 'endEvent'])->name('end');
-        Route::post('/{id}/certificates', [EventController::class, 'sendCertificates'])->name('certificates');
-        Route::post('/{id}/recordings', [EventController::class, 'publishRecordings'])->name('recordings');
-
-        // Other
-        Route::post('/{id}/postpone', [EventController::class, 'postponeEvent'])->name('postpone');
-        Route::post('/{id}/cancel', [EventController::class, 'cancelEvent'])->name('cancel');
-        Route::post('/{id}/duplicate', [EventController::class, 'duplicate'])->name('duplicate');
+        // Registrations
+        Route::get('/{id}/registrations', [EventControllerV2::class, 'registrations'])->name('registrations');
+        Route::post('/{id}/registrations/{registrationId}/cancel', [EventControllerV2::class, 'cancelRegistration'])->name('cancel-registration');
+        Route::post('/{id}/registrations/{registrationId}/check-in', [EventControllerV2::class, 'checkIn'])->name('check-in');
     });
 });

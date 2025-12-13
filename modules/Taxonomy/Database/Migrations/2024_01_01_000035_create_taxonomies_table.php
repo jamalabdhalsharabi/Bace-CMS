@@ -29,7 +29,7 @@ return new class extends Migration
             $table->index(['type_id', 'parent_id']);
             $table->index('is_active');
             $table->index('slug');
-            $table->index('path');
+            $table->rawIndex('path(255)', 'taxonomies_path_index');
             $table->index('depth');
         });
     }

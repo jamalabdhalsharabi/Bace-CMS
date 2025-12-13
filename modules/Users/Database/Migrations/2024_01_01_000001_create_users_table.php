@@ -14,7 +14,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('name');
-            $table->foreignUuid('avatar_id')->nullable()->constrained('media')->nullOnDelete();
+            $table->uuid('avatar_id')->nullable();
             $table->string('status', 20)->default('active'); // pending, active, suspended, banned
             $table->boolean('two_factor_enabled')->default(false);
             $table->string('two_factor_secret')->nullable();

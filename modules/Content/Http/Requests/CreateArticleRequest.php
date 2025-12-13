@@ -20,7 +20,7 @@ class CreateArticleRequest extends FormRequest
             'status' => ['nullable', 'string', 'in:draft,pending,published,archived'],
             'featured_image_id' => ['nullable', 'uuid', 'exists:media,id'],
             'is_featured' => ['nullable', 'boolean'],
-            'is_commentable' => ['nullable', 'boolean'],
+            'allow_comments' => ['nullable', 'boolean'],
             'translations' => ['required', 'array', 'min:1'],
             'translations.*.title' => ['required', 'string', 'max:255'],
             'translations.*.slug' => ['nullable', 'string', 'max:255'],

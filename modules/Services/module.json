@@ -4,7 +4,7 @@
     "description": "Services management with workflow, revisions, and translations",
     "version": "1.0.0",
     "keywords": ["services", "workflow", "revisions"],
-    "priority": 35,
+    "priority": 8,
     "enabled": true,
     "providers": [
         "Modules\\Services\\Providers\\ServicesServiceProvider"

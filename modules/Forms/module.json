@@ -4,7 +4,7 @@
     "description": "Form builder and submission management",
     "version": "1.0.0",
     "keywords": ["forms", "contact", "submissions", "builder"],
-    "priority": 35,
+    "priority": 15,
     "enabled": true,
     "providers": [
         "Modules\\Forms\\Providers\\FormsServiceProvider"

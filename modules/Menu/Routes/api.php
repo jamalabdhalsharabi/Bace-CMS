@@ -2,46 +2,23 @@
 
 use Illuminate\Support\Facades\Route;
 use Modules\Menu\Http\Controllers\Api\MenuController;
+use Modules\Menu\Http\Controllers\Api\MenuItemController;
 
-Route::prefix('api/v1')->middleware(['api'])->group(function () {
-    Route::get('/menus/slug/{slug}', [MenuController::class, 'showBySlug'])->name('api.v1.menus.slug');
-    Route::get('/menus/location/{location}', [MenuController::class, 'showByLocation'])->name('api.v1.menus.location');
-    Route::get('/menus/{slug}/tree', [MenuController::class, 'tree'])->name('api.v1.menus.tree');
+Route::prefix('api/v1/menus')->middleware(['api'])->name('api.menus.')->group(function () {
+    Route::get('/', [MenuController::class, 'index'])->name('index');
+    Route::get('/location/{location}', [MenuController::class, 'byLocation'])->name('location');
+    Route::get('/{id}', [MenuController::class, 'show'])->name('show');
 
     Route::middleware('auth:sanctum')->group(function () {
-        // CRUD
-        Route::get('/menus', [MenuController::class, 'index'])->name('api.v1.menus.index');
-        Route::post('/menus', [MenuController::class, 'store'])->name('api.v1.menus.store');
-        Route::get('/menus/{id}', [MenuController::class, 'show'])->name('api.v1.menus.show');
-        Route::put('/menus/{id}', [MenuController::class, 'update'])->name('api.v1.menus.update');
-        Route::delete('/menus/{id}', [MenuController::class, 'destroy'])->name('api.v1.menus.destroy');
+        Route::post('/', [MenuController::class, 'store'])->name('store');
+        Route::put('/{id}', [MenuController::class, 'update'])->name('update');
+        Route::delete('/{id}', [MenuController::class, 'destroy'])->name('destroy');
+        Route::post('/{id}/activate', [MenuController::class, 'activate'])->name('activate');
+        Route::post('/{id}/deactivate', [MenuController::class, 'deactivate'])->name('deactivate');
 
-        // Workflow
-        Route::post('/menus/{id}/publish', [MenuController::class, 'publish'])->name('api.v1.menus.publish');
-        Route::post('/menus/{id}/unpublish', [MenuController::class, 'unpublish'])->name('api.v1.menus.unpublish');
-        Route::post('/menus/{id}/archive', [MenuController::class, 'archive'])->name('api.v1.menus.archive');
-
-        // Location
-        Route::put('/menus/{id}/location', [MenuController::class, 'setLocation'])->name('api.v1.menus.set-location');
-        Route::delete('/menus/{id}/location', [MenuController::class, 'removeLocation'])->name('api.v1.menus.remove-location');
-
-        // Clone & Preview
-        Route::post('/menus/{id}/duplicate', [MenuController::class, 'duplicate'])->name('api.v1.menus.duplicate');
-        Route::get('/menus/{id}/preview', [MenuController::class, 'preview'])->name('api.v1.menus.preview');
-
-        // Items Management
-        Route::post('/menus/{menuId}/items', [MenuController::class, 'addItem'])->name('api.v1.menus.items.store');
-        Route::put('/menu-items/{itemId}', [MenuController::class, 'updateItem'])->name('api.v1.menus.items.update');
-        Route::delete('/menu-items/{itemId}', [MenuController::class, 'deleteItem'])->name('api.v1.menus.items.destroy');
-        Route::post('/menu-items/reorder', [MenuController::class, 'reorderItems'])->name('api.v1.menus.items.reorder');
-        Route::post('/menu-items/{itemId}/toggle', [MenuController::class, 'toggleItem'])->name('api.v1.menus.items.toggle');
-        Route::post('/menu-items/{itemId}/move', [MenuController::class, 'moveItem'])->name('api.v1.menus.items.move');
-
-        // Bulk Items
-        Route::post('/menus/{menuId}/items/bulk', [MenuController::class, 'bulkAddItems'])->name('api.v1.menus.items.bulk-add');
-        Route::delete('/menus/{menuId}/items/bulk', [MenuController::class, 'bulkDeleteItems'])->name('api.v1.menus.items.bulk-delete');
-
-        // Auto-generate
-        Route::post('/menus/{menuId}/auto-generate', [MenuController::class, 'autoGenerate'])->name('api.v1.menus.auto-generate');
+        Route::post('/{menuId}/items', [MenuItemController::class, 'store'])->name('items.store');
+        Route::put('/{menuId}/items/{id}', [MenuItemController::class, 'update'])->name('items.update');
+        Route::delete('/{menuId}/items/{id}', [MenuItemController::class, 'destroy'])->name('items.destroy');
+        Route::post('/{menuId}/items/reorder', [MenuItemController::class, 'reorder'])->name('items.reorder');
     });
 });

@@ -1,0 +1,34 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Modules\Content\Application\Actions\Page;
+
+use Modules\Content\Domain\Models\Page;
+use Modules\Core\Application\Actions\Action;
+
+final class DuplicatePageAction extends Action
+{
+    public function execute(Page $page): Page
+    {
+        return $this->transaction(function () use ($page) {
+            $clone = $page->replicate(['status', 'published_at']);
+            $clone->status = 'draft';
+            $clone->created_by = $this->userId();
+            $clone->save();
+
+            foreach ($page->translations as $trans) {
+                $clone->translations()->create([
+                    'locale' => $trans->locale,
+                    'title' => $trans->title . ' (Copy)',
+                    'slug' => $trans->slug . '-copy-' . time(),
+                    'content' => $trans->content,
+                    'meta_title' => $trans->meta_title,
+                    'meta_description' => $trans->meta_description,
+                ]);
+            }
+
+            return $clone->fresh(['translations']);
+        });
+    }
+}

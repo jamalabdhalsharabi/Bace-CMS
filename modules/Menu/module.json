@@ -4,7 +4,7 @@
     "description": "Navigation menu management with nested items",
     "version": "1.0.0",
     "keywords": ["menu", "navigation", "links"],
-    "priority": 25,
+    "priority": 13,
     "enabled": true,
     "providers": [
         "Modules\\Menu\\Providers\\MenuServiceProvider"

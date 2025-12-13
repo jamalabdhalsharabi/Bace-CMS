@@ -4,7 +4,7 @@
     "description": "Comment system with moderation and replies",
     "version": "1.0.0",
     "keywords": ["comments", "replies", "moderation"],
-    "priority": 36,
+    "priority": 12,
     "enabled": true,
     "providers": [
         "Modules\\Comments\\Providers\\CommentsServiceProvider"

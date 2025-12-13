@@ -19,7 +19,7 @@ class UpdateArticleRequest extends FormRequest
             'type' => ['nullable', 'string', 'in:post,news,tutorial'],
             'featured_image_id' => ['nullable', 'uuid', 'exists:media,id'],
             'is_featured' => ['nullable', 'boolean'],
-            'is_commentable' => ['nullable', 'boolean'],
+            'allow_comments' => ['nullable', 'boolean'],
             'translations' => ['nullable', 'array'],
             'translations.*.title' => ['required', 'string', 'max:255'],
             'translations.*.slug' => ['nullable', 'string', 'max:255'],

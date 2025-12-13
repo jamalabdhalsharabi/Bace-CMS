@@ -4,7 +4,7 @@
     "description": "System settings and configuration management",
     "version": "1.0.0",
     "keywords": ["settings", "configuration", "options"],
-    "priority": 5,
+    "priority": 7,
     "enabled": true,
     "providers": [
         "Modules\\Settings\\Providers\\SettingsServiceProvider"

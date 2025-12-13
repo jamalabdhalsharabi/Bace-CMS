@@ -5,10 +5,21 @@ declare(strict_types=1);
 namespace Modules\Users\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\Users\Application\Actions\ActivateUserAction;
+use Modules\Users\Application\Actions\ChangePasswordAction;
+use Modules\Users\Application\Actions\CreateUserAction;
+use Modules\Users\Application\Actions\DeleteUserAction;
+use Modules\Users\Application\Actions\RemoveAvatarAction;
+use Modules\Users\Application\Actions\SuspendUserAction;
+use Modules\Users\Application\Actions\UpdateAvatarAction;
+use Modules\Users\Application\Actions\UpdateProfileAction;
+use Modules\Users\Application\Actions\UpdateUserAction;
+use Modules\Users\Application\Services\UserCommandService;
+use Modules\Users\Application\Services\UserQueryService;
 use Modules\Users\Contracts\UserRepositoryContract;
-use Modules\Users\Contracts\UserServiceContract;
+use Modules\Users\Domain\Models\User;
+use Modules\Users\Domain\Repositories\UserRepository as DomainUserRepository;
 use Modules\Users\Repositories\UserRepository;
-use Modules\Users\Services\UserService;
 
 class UsersServiceProvider extends ServiceProvider
 {
@@ -22,9 +33,39 @@ class UsersServiceProvider extends ServiceProvider
             $this->moduleNameLower
         );
 
-        // Bind contracts
+        $this->registerRepositories();
+        $this->registerActions();
+        $this->registerServices();
+    }
+
+    protected function registerRepositories(): void
+    {
+        $this->app->singleton(DomainUserRepository::class, fn ($app) => 
+            new DomainUserRepository(new User())
+        );
+
+        // Legacy binding
         $this->app->bind(UserRepositoryContract::class, UserRepository::class);
-        $this->app->bind(UserServiceContract::class, UserService::class);
+    }
+
+    protected function registerActions(): void
+    {
+        $this->app->singleton(CreateUserAction::class);
+        $this->app->singleton(UpdateUserAction::class);
+        $this->app->singleton(DeleteUserAction::class);
+        $this->app->singleton(ActivateUserAction::class);
+        $this->app->singleton(SuspendUserAction::class);
+        $this->app->singleton(ChangePasswordAction::class);
+        $this->app->singleton(UpdateAvatarAction::class);
+        $this->app->singleton(RemoveAvatarAction::class);
+        $this->app->singleton(UpdateProfileAction::class);
+    }
+
+    protected function registerServices(): void
+    {
+        // Services
+        $this->app->singleton(UserQueryService::class);
+        $this->app->singleton(UserCommandService::class);
     }
 
     public function boot(): void
