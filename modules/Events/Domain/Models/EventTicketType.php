@@ -7,6 +7,7 @@ namespace Modules\Events\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Class EventTicketType
@@ -30,11 +31,21 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property bool $is_active
  * @property int $sort_order
  *
- * @property-read Event $event
+ * @property-read Event $event Parent event
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, EventTicketTypeTranslation> $translations
+ * @property-read EventTicketTypeTranslation|null $translation Current locale translation
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|EventTicketType newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|EventTicketType newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|EventTicketType query()
  */
 class EventTicketType extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['name', 'description'];
+    public string $translationForeignKey = 'ticket_type_id';
 
     protected $table = 'event_ticket_types';
 
@@ -55,21 +66,45 @@ class EventTicketType extends Model
         'sort_order' => 'integer',
     ];
 
+    /**
+     * Get the parent event.
+     *
+     * @return BelongsTo<Event, EventTicketType>
+     */
     public function event(): BelongsTo
     {
         return $this->belongsTo(Event::class);
     }
 
+    /**
+     * Get the available quantity of tickets.
+     *
+     * @return int Number of tickets still available
+     */
     public function getAvailableQuantity(): int
     {
         return max(0, ($this->quantity ?? PHP_INT_MAX) - $this->sold_count);
     }
 
+    /**
+     * Check if this ticket type is currently available for purchase.
+     *
+     * Considers active status, sale period, and available quantity.
+     *
+     * @return bool True if tickets can be purchased
+     */
     public function isAvailable(): bool
     {
-        if (!$this->is_active) return false;
-        if ($this->sale_start && $this->sale_start > now()) return false;
-        if ($this->sale_end && $this->sale_end < now()) return false;
+        if (!$this->is_active) {
+            return false;
+        }
+        if ($this->sale_start && $this->sale_start > now()) {
+            return false;
+        }
+        if ($this->sale_end && $this->sale_end < now()) {
+            return false;
+        }
+
         return $this->getAvailableQuantity() > 0;
     }
 }

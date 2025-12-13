@@ -8,8 +8,8 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Page Model - Represents static pages with hierarchical structure.
@@ -57,6 +57,14 @@ class Page extends Model
 {
     use HasUuids;
     use SoftDeletes;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['title', 'slug', 'content', 'meta_title', 'meta_description'];
 
     protected $table = 'pages';
 
@@ -124,46 +132,6 @@ class Page extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
-    }
-
-    /**
-     * Get all translations for this page.
-     *
-     * @return HasMany<PageTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(PageTranslation::class);
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<PageTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(PageTranslation::class)->where('locale', app()->getLocale());
-    }
-
-    /**
-     * Get the localized title.
-     *
-     * @return string|null The page title
-     */
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    /**
-     * Get the localized slug.
-     *
-     * @return string|null The page slug
-     */
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
     }
 
     /**

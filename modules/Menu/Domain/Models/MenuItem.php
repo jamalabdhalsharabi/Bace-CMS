@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Modules\Core\Traits\HasOrdering;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * MenuItem Model - Represents an individual navigation link.
@@ -49,6 +50,10 @@ class MenuItem extends Model
 {
     use HasUuids;
     use HasOrdering;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['label', 'title', 'description'];
+    public string $translationForeignKey = 'menu_item_id';
 
     protected $table = 'menu_items';
 
@@ -113,28 +118,6 @@ class MenuItem extends Model
     public function linkable(): MorphTo
     {
         return $this->morphTo();
-    }
-
-    /**
-     * Get the localized title for the current locale.
-     *
-     * @param string|null $value Raw JSON value
-     * @return string The localized title
-     */
-    public function getTitleAttribute($value): string
-    {
-        $titles = json_decode($value, true) ?? [];
-        return $titles[app()->getLocale()] ?? $titles['en'] ?? '';
-    }
-
-    /**
-     * Get all localized titles.
-     *
-     * @return array<string, string> Titles keyed by locale
-     */
-    public function getLocalizedTitles(): array
-    {
-        return json_decode($this->attributes['title'] ?? '{}', true) ?? [];
     }
 
     /**

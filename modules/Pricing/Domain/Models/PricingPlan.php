@@ -7,8 +7,8 @@ namespace Modules\Pricing\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Class PricingPlan
@@ -41,7 +41,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  */
 class PricingPlan extends Model
 {
-    use HasUuids, SoftDeletes;
+    use HasUuids, SoftDeletes, HasTranslations;
+
+    public array $translatedAttributes = ['name', 'description', 'cta_text'];
+    public string $translationForeignKey = 'plan_id';
 
     protected $table = 'pricing_plans';
 
@@ -58,33 +61,6 @@ class PricingPlan extends Model
         'billing_periods' => 'array',
         'meta' => 'array',
     ];
-
-    /**
-     * Define the has-many relationship with plan translations.
-     *
-     * Retrieves all translation records for this plan across
-     * all supported locales including name, description, and CTA text.
-     *
-     * @return HasMany The has-many relationship instance to PricingPlanTranslation
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(PricingPlanTranslation::class, 'plan_id');
-    }
-
-    /**
-     * Define the has-one relationship with the current locale translation.
-     *
-     * Retrieves the translation record matching the application's
-     * current locale setting for displaying localized plan content.
-     *
-     * @return HasOne The has-one relationship instance to PricingPlanTranslation
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(PricingPlanTranslation::class, 'plan_id')
-            ->where('locale', app()->getLocale());
-    }
 
     /**
      * Define the has-many relationship with plan prices.
@@ -175,32 +151,6 @@ class PricingPlan extends Model
     public function linkedServices(): HasMany
     {
         return $this->links()->where('linkable_type', 'Modules\\Services\\Domain\\Models\\Service');
-    }
-
-    /**
-     * Accessor for the plan's localized name.
-     *
-     * Returns the name from the current locale translation if available,
-     * otherwise falls back to the first available translation.
-     *
-     * @return string|null The localized plan name or null if no translations
-     */
-    public function getNameAttribute(): ?string
-    {
-        return $this->translation?->name ?? $this->translations->first()?->name;
-    }
-
-    /**
-     * Accessor for the plan's localized description.
-     *
-     * Returns the description from the current locale translation
-     * for displaying plan details on pricing pages.
-     *
-     * @return string|null The localized description or null if not set
-     */
-    public function getDescriptionAttribute(): ?string
-    {
-        return $this->translation?->description;
     }
 
     /**

@@ -31,10 +31,17 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property array|null $options
  * @property array|null $meta
  *
- * @property-read Product $product
- * @property-read \Illuminate\Database\Eloquent\Collection|ProductPrice[] $prices
- * @property-read ProductInventory|null $inventory
- * @property-read float|null $price
+ * @property-read Product $product Parent product
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ProductPrice> $prices Variant prices
+ * @property-read ProductInventory|null $inventory Inventory record
+ * @property-read float|null $price Default currency price (accessor)
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ * @property \Carbon\Carbon|null $deleted_at Soft delete timestamp
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductVariant newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductVariant newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|ProductVariant query()
  */
 class ProductVariant extends Model
 {
@@ -65,27 +72,54 @@ class ProductVariant extends Model
         'meta' => 'array',
     ];
 
+    /**
+     * Get the parent product.
+     *
+     * @return BelongsTo<Product, ProductVariant>
+     */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /**
+     * Get all prices for this variant.
+     *
+     * @return HasMany<ProductPrice>
+     */
     public function prices(): HasMany
     {
         return $this->hasMany(ProductPrice::class, 'variant_id');
     }
 
+    /**
+     * Get the inventory record for this variant.
+     *
+     * @return HasOne<ProductInventory>
+     */
     public function inventory(): HasOne
     {
         return $this->hasOne(ProductInventory::class, 'variant_id');
     }
 
+    /**
+     * Get the price in the default currency.
+     *
+     * @return float|null The price amount or null
+     */
     public function getPriceAttribute(): ?float
     {
-        $price = $this->prices()->whereHas('currency', fn($q) => $q->where('is_default', true))->first();
+        $price = $this->prices()->whereHas('currency', fn ($q) => $q->where('is_default', true))->first();
+
         return $price?->amount;
     }
 
+    /**
+     * Get a specific option value by key.
+     *
+     * @param string $key The option key (e.g., 'color', 'size')
+     * @return string|null The option value or null
+     */
     public function getOptionLabel(string $key): ?string
     {
         return $this->options[$key] ?? null;

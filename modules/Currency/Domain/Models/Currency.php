@@ -28,7 +28,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property bool $is_active
  * @property int $ordering
  *
- * @property-read \Illuminate\Database\Eloquent\Collection|ExchangeRate[] $exchangeRates
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, ExchangeRate> $exchangeRates Exchange rates from this currency
+ * @property \Carbon\Carbon $created_at Record creation timestamp
+ * @property \Carbon\Carbon|null $updated_at Record last update timestamp
+ *
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency active() Filter active currencies
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency ordered() Order by ordering field
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder|Currency query()
  */
 class Currency extends Model
 {
@@ -56,11 +64,22 @@ class Currency extends Model
         'ordering' => 'integer',
     ];
 
+    /**
+     * Get exchange rates from this currency.
+     *
+     * @return HasMany<ExchangeRate>
+     */
     public function exchangeRates(): HasMany
     {
         return $this->hasMany(ExchangeRate::class, 'from_currency_id');
     }
 
+    /**
+     * Format an amount in this currency.
+     *
+     * @param float $amount The amount to format
+     * @return string Formatted currency string
+     */
     public function format(float $amount): string
     {
         $formatted = number_format(
@@ -75,26 +94,54 @@ class Currency extends Model
             : $formatted . $this->symbol;
     }
 
+    /**
+     * Scope to filter only active currencies.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Currency> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Currency>
+     */
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
     }
 
+    /**
+     * Scope to order currencies by ordering field.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder<Currency> $query
+     * @return \Illuminate\Database\Eloquent\Builder<Currency>
+     */
     public function scopeOrdered($query)
     {
         return $query->orderBy('ordering');
     }
 
+    /**
+     * Get the default currency.
+     *
+     * @return self|null The default currency or null
+     */
     public static function getDefault(): ?self
     {
         return static::where('is_default', true)->first();
     }
 
+    /**
+     * Find a currency by its code.
+     *
+     * @param string $code The currency code (e.g., 'USD')
+     * @return self|null The currency or null
+     */
     public static function findByCode(string $code): ?self
     {
         return static::where('code', strtoupper($code))->first();
     }
 
+    /**
+     * Set this currency as the default.
+     *
+     * @return self Returns self for method chaining
+     */
     public function setAsDefault(): self
     {
         static::where('is_default', true)->update(['is_default' => false]);

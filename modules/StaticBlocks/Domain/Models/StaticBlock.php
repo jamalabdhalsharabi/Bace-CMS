@@ -6,9 +6,8 @@ namespace Modules\StaticBlocks\Domain\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Cache;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * StaticBlock Model - Represents reusable content blocks.
@@ -38,6 +37,9 @@ use Illuminate\Support\Facades\Cache;
 class StaticBlock extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['title', 'content'];
 
     /**
      * The table associated with the model.
@@ -52,46 +54,6 @@ class StaticBlock extends Model
         'is_active' => 'boolean',
         'settings' => 'array',
     ];
-
-    /**
-     * Get all translations for this block.
-     *
-     * @return HasMany<StaticBlockTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(StaticBlockTranslation::class);
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<StaticBlockTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(StaticBlockTranslation::class)->where('locale', app()->getLocale());
-    }
-
-    /**
-     * Get the localized block title.
-     *
-     * @return string|null The title
-     */
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    /**
-     * Get the localized block content.
-     *
-     * @return string|null The content
-     */
-    public function getContentAttribute(): ?string
-    {
-        return $this->translation?->content ?? $this->translations->first()?->content;
-    }
 
     /**
      * Find an active block by identifier with caching.

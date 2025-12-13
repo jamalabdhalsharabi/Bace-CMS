@@ -7,6 +7,7 @@ namespace Modules\Taxonomy\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * TaxonomyType Model - Defines taxonomy type configurations.
@@ -32,6 +33,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class TaxonomyType extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['name', 'name_singular', 'description'];
+    public string $translationForeignKey = 'type_id';
 
     protected $table = 'taxonomy_types';
 
@@ -58,28 +63,6 @@ class TaxonomyType extends Model
     public function taxonomies(): HasMany
     {
         return $this->hasMany(Taxonomy::class, 'type_id');
-    }
-
-    /**
-     * Get the localized type name.
-     *
-     * @param string|null $value Raw JSON value
-     * @return string The name or slug as fallback
-     */
-    public function getNameAttribute($value): string
-    {
-        $names = json_decode($value, true) ?? [];
-        return $names[app()->getLocale()] ?? $names['en'] ?? $this->slug;
-    }
-
-    /**
-     * Get all localized names.
-     *
-     * @return array<string, string> Names keyed by locale
-     */
-    public function getLocalizedNames(): array
-    {
-        return json_decode($this->attributes['name'], true) ?? [];
     }
 
     /**

@@ -7,6 +7,7 @@ namespace Modules\Menu\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Menu Model - Represents a navigation menu structure.
@@ -34,6 +35,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Menu extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    public array $translatedAttributes = ['name', 'description'];
 
     protected $table = 'menus';
 
