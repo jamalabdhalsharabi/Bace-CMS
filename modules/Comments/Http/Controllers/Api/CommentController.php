@@ -6,38 +6,19 @@ namespace Modules\Comments\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Modules\Comments\Contracts\CommentServiceContract;
+use Modules\Comments\Application\Services\CommentCommandService;
+use Modules\Comments\Application\Services\CommentQueryService;
 use Modules\Comments\Http\Requests\CreateCommentRequest;
 use Modules\Comments\Http\Requests\ReplyCommentRequest;
 use Modules\Comments\Http\Resources\CommentResource;
 use Modules\Core\Http\Controllers\BaseController;
 
-/**
- * Class CommentController
- * 
- * API controller for managing comments including CRUD operations,
- * moderation (approve, reject, spam), and replies.
- * 
- * @package Modules\Comments\Http\Controllers\Api
- */
 class CommentController extends BaseController
 {
-    /**
-     * The comment service instance for handling comment-related business logic.
-     *
-     * @var CommentServiceContract
-     */
-    protected CommentServiceContract $commentService;
-
-    /**
-     * Create a new CommentController instance.
-     *
-     * @param CommentServiceContract $commentService The comment service contract implementation
-     */
     public function __construct(
-        CommentServiceContract $commentService
+        protected CommentQueryService $queryService,
+        protected CommentCommandService $commandService
     ) {
-        $this->commentService = $commentService;
     }
 
     /** Get comments for a specific commentable model. */
@@ -48,7 +29,7 @@ class CommentController extends BaseController
             'commentable_id' => 'required|uuid',
         ]);
 
-        $comments = $this->commentService->getForModel(
+        $comments = $this->queryService->getForModel(
             $request->commentable_type,
             $request->commentable_id,
             $request->integer('per_page', 20)
@@ -60,7 +41,7 @@ class CommentController extends BaseController
     /** Get pending comments for moderation. */
     public function pending(Request $request): JsonResponse
     {
-        $comments = $this->commentService->getPending($request->integer('per_page', 20));
+        $comments = $this->queryService->getPending($request->integer('per_page', 20));
 
         return $this->paginated(CommentResource::collection($comments)->resource);
     }
@@ -68,7 +49,7 @@ class CommentController extends BaseController
     /** Get a single comment by ID. */
     public function show(string $id): JsonResponse
     {
-        $comment = $this->commentService->find($id);
+        $comment = $this->queryService->find($id);
 
         if (!$comment) {
             return $this->notFound('Comment not found');
@@ -80,7 +61,7 @@ class CommentController extends BaseController
     /** Create a new comment. */
     public function store(CreateCommentRequest $request): JsonResponse
     {
-        $comment = $this->commentService->create($request->validated());
+        $comment = $this->queryService->create($request->validated());
 
         return $this->created(new CommentResource($comment), 'Comment submitted successfully');
     }
@@ -88,13 +69,13 @@ class CommentController extends BaseController
     /** Reply to an existing comment. */
     public function reply(ReplyCommentRequest $request, string $parentId): JsonResponse
     {
-        $parent = $this->commentService->find($parentId);
+        $parent = $this->queryService->find($parentId);
 
         if (!$parent) {
             return $this->notFound('Parent comment not found');
         }
 
-        $comment = $this->commentService->reply($parent, $request->validated());
+        $comment = $this->queryService->reply($parent, $request->validated());
 
         return $this->created(new CommentResource($comment), 'Reply submitted successfully');
     }
@@ -102,13 +83,13 @@ class CommentController extends BaseController
     /** Delete a comment. */
     public function destroy(string $id): JsonResponse
     {
-        $comment = $this->commentService->find($id);
+        $comment = $this->queryService->find($id);
 
         if (!$comment) {
             return $this->notFound('Comment not found');
         }
 
-        $this->commentService->delete($comment);
+        $this->queryService->delete($comment);
 
         return $this->success(null, 'Comment deleted successfully');
     }
@@ -116,13 +97,13 @@ class CommentController extends BaseController
     /** Approve a pending comment. */
     public function approve(string $id): JsonResponse
     {
-        $comment = $this->commentService->find($id);
+        $comment = $this->queryService->find($id);
 
         if (!$comment) {
             return $this->notFound('Comment not found');
         }
 
-        $comment = $this->commentService->approve($comment);
+        $comment = $this->queryService->approve($comment);
 
         return $this->success(new CommentResource($comment), 'Comment approved');
     }
@@ -130,13 +111,13 @@ class CommentController extends BaseController
     /** Reject a pending comment. */
     public function reject(string $id): JsonResponse
     {
-        $comment = $this->commentService->find($id);
+        $comment = $this->queryService->find($id);
 
         if (!$comment) {
             return $this->notFound('Comment not found');
         }
 
-        $comment = $this->commentService->reject($comment);
+        $comment = $this->queryService->reject($comment);
 
         return $this->success(new CommentResource($comment), 'Comment rejected');
     }
@@ -144,13 +125,13 @@ class CommentController extends BaseController
     /** Mark a comment as spam. */
     public function spam(string $id): JsonResponse
     {
-        $comment = $this->commentService->find($id);
+        $comment = $this->queryService->find($id);
 
         if (!$comment) {
             return $this->notFound('Comment not found');
         }
 
-        $comment = $this->commentService->markAsSpam($comment);
+        $comment = $this->queryService->markAsSpam($comment);
 
         return $this->success(new CommentResource($comment), 'Comment marked as spam');
     }

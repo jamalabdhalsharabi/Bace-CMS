@@ -7,36 +7,16 @@ namespace Modules\ExchangeRates\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\ExchangeRates\Contracts\ExchangeRateServiceContract;
-use Modules\ExchangeRates\Domain\Models\ExchangeRate;
-use Modules\ExchangeRates\Domain\Models\RateAlert;
+use Modules\ExchangeRates\Application\Services\ExchangeRateCommandService;
+use Modules\ExchangeRates\Application\Services\ExchangeRateQueryService;
 use Modules\ExchangeRates\Http\Resources\ExchangeRateResource;
 
-/**
- * Class ExchangeRateController
- * 
- * API controller for managing exchange rates including fetching,
- * updating, history, alerts, and currency conversion.
- * 
- * @package Modules\ExchangeRates\Http\Controllers\Api
- */
 class ExchangeRateController extends BaseController
 {
-    /**
-     * The exchange rate service instance.
-     *
-     * @var ExchangeRateServiceContract
-     */
-    protected ExchangeRateServiceContract $rateService;
-
-    /**
-     * Create a new ExchangeRateController instance.
-     *
-     * @param ExchangeRateServiceContract $rateService The exchange rate service implementation
-     */
-    public function __construct(ExchangeRateServiceContract $rateService)
-    {
-        $this->rateService = $rateService;
+    public function __construct(
+        protected ExchangeRateQueryService $queryService,
+        protected ExchangeRateCommandService $commandService
+    ) {
     }
 
     /**
@@ -46,7 +26,7 @@ class ExchangeRateController extends BaseController
      */
     public function index(): JsonResponse
     {
-        return $this->success(ExchangeRateResource::collection($this->rateService->getAllRates()));
+        return $this->success(ExchangeRateResource::collection($this->queryService->getAllRates()));
     }
 
     /**
@@ -58,7 +38,7 @@ class ExchangeRateController extends BaseController
      */
     public function show(string $baseId, string $targetId): JsonResponse
     {
-        $rate = $this->rateService->getRate($baseId, $targetId);
+        $rate = $this->queryService->getRate($baseId, $targetId);
         return $rate ? $this->success(new ExchangeRateResource($rate)) : $this->notFound('Rate not found');
     }
 
@@ -70,7 +50,7 @@ class ExchangeRateController extends BaseController
      */
     public function fetch(Request $request): JsonResponse
     {
-        $result = $this->rateService->fetchFromApi($request->provider);
+        $result = $this->queryService->fetchFromApi($request->provider);
         return $result['success'] 
             ? $this->success($result, 'Rates fetched successfully')
             : $this->error($result['error'], 500);
@@ -90,7 +70,7 @@ class ExchangeRateController extends BaseController
             'rate' => 'required|numeric|min:0.000001',
         ]);
 
-        $rate = $this->rateService->updateManually(
+        $rate = $this->queryService->updateManually(
             $request->base_currency_id,
             $request->target_currency_id,
             $request->rate
@@ -109,7 +89,7 @@ class ExchangeRateController extends BaseController
     {
         $rate = ExchangeRate::find($id);
         if (!$rate) return $this->notFound('Rate not found');
-        return $this->success(new ExchangeRateResource($this->rateService->freeze($rate)));
+        return $this->success(new ExchangeRateResource($this->queryService->freeze($rate)));
     }
 
     /**
@@ -122,7 +102,7 @@ class ExchangeRateController extends BaseController
     {
         $rate = ExchangeRate::find($id);
         if (!$rate) return $this->notFound('Rate not found');
-        return $this->success(new ExchangeRateResource($this->rateService->unfreeze($rate)));
+        return $this->success(new ExchangeRateResource($this->queryService->unfreeze($rate)));
     }
 
     /**
@@ -135,7 +115,7 @@ class ExchangeRateController extends BaseController
      */
     public function history(Request $request, string $baseId, string $targetId): JsonResponse
     {
-        $history = $this->rateService->getHistory($baseId, $targetId, $request->from, $request->to);
+        $history = $this->queryService->getHistory($baseId, $targetId, $request->from, $request->to);
         return $this->success($history);
     }
 
@@ -147,7 +127,7 @@ class ExchangeRateController extends BaseController
      */
     public function cleanHistory(Request $request): JsonResponse
     {
-        $deleted = $this->rateService->cleanOldHistory($request->integer('days', 365));
+        $deleted = $this->queryService->cleanOldHistory($request->integer('days', 365));
         return $this->success(['deleted' => $deleted], 'Old history cleaned');
     }
 
@@ -160,7 +140,7 @@ class ExchangeRateController extends BaseController
     public function importHistory(Request $request): JsonResponse
     {
         $request->validate(['data' => 'required|array']);
-        $result = $this->rateService->importHistory($request->data);
+        $result = $this->queryService->importHistory($request->data);
         return $this->success($result);
     }
 
@@ -173,7 +153,7 @@ class ExchangeRateController extends BaseController
      */
     public function exportHistory(string $baseId, string $targetId): JsonResponse
     {
-        return $this->success($this->rateService->exportHistory($baseId, $targetId));
+        return $this->success($this->queryService->exportHistory($baseId, $targetId));
     }
 
     /**
@@ -191,7 +171,7 @@ class ExchangeRateController extends BaseController
             'threshold' => 'required|numeric|min:0',
         ]);
 
-        return $this->created($this->rateService->createAlert($request->all()));
+        return $this->created($this->queryService->createAlert($request->all()));
     }
 
     /**
@@ -204,7 +184,7 @@ class ExchangeRateController extends BaseController
     {
         $alert = RateAlert::find($id);
         if (!$alert) return $this->notFound('Alert not found');
-        return $this->success($this->rateService->deactivateAlert($alert));
+        return $this->success($this->queryService->deactivateAlert($alert));
     }
 
     /**
@@ -221,7 +201,7 @@ class ExchangeRateController extends BaseController
             'to_currency_id' => 'required|uuid|exists:currencies,id',
         ]);
 
-        $result = $this->rateService->convert(
+        $result = $this->queryService->convert(
             $request->amount,
             $request->from_currency_id,
             $request->to_currency_id
@@ -237,7 +217,7 @@ class ExchangeRateController extends BaseController
      */
     public function detectConflicts(): JsonResponse
     {
-        return $this->success($this->rateService->detectConflicts());
+        return $this->success($this->queryService->detectConflicts());
     }
 
     /**
@@ -249,7 +229,7 @@ class ExchangeRateController extends BaseController
     public function updateProductPrices(Request $request): JsonResponse
     {
         $request->validate(['currency_id' => 'required|uuid|exists:currencies,id']);
-        $updated = $this->rateService->updateProductPrices($request->currency_id);
+        $updated = $this->queryService->updateProductPrices($request->currency_id);
         return $this->success(['updated' => $updated]);
     }
 }

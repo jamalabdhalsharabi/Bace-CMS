@@ -6,37 +6,16 @@ namespace Modules\Search\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Search\Contracts\SearchServiceContract;
+use Modules\Search\Application\Services\SearchQueryService;
 use Modules\Search\Http\Requests\SearchIndexRequest;
 use Modules\Search\Http\Requests\SearchRequest;
 use Modules\Search\Http\Requests\SuggestionsRequest;
 
-/**
- * Class SearchController
- *
- * API controller for search functionality including
- * global search, index-specific search, and suggestions.
- *
- * @package Modules\Search\Http\Controllers\Api
- */
 class SearchController extends BaseController
 {
-    /**
-     * The search service instance.
-     *
-     * @var SearchServiceContract
-     */
-    protected SearchServiceContract $searchService;
-
-    /**
-     * Create a new SearchController instance.
-     *
-     * @param SearchServiceContract $searchService The search service implementation
-     */
     public function __construct(
-        SearchServiceContract $searchService
+        protected SearchQueryService $queryService
     ) {
-        $this->searchService = $searchService;
     }
 
     /**
@@ -49,7 +28,7 @@ class SearchController extends BaseController
     {
         $validated = $request->validated();
 
-        $results = $this->searchService->search(
+        $results = $this->queryService->search(
             $validated['q'],
             [
                 'indices' => $validated['indices'] ?? null,
@@ -72,7 +51,7 @@ class SearchController extends BaseController
     {
         $validated = $request->validated();
 
-        $results = $this->searchService->searchIndex(
+        $results = $this->queryService->searchIndex(
             $index,
             $validated['q'],
             [
@@ -96,7 +75,7 @@ class SearchController extends BaseController
     {
         $validated = $request->validated();
 
-        $results = $this->searchService->searchIndex(
+        $results = $this->queryService->searchIndex(
             $validated['index'] ?? 'articles',
             $validated['q'],
             ['limit' => $validated['limit'] ?? 5]

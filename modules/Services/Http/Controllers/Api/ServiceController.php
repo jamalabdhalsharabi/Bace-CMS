@@ -7,34 +7,16 @@ namespace Modules\Services\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Services\Contracts\ServiceServiceContract;
+use Modules\Services\Application\Services\ServiceCommandService;
+use Modules\Services\Application\Services\ServiceQueryService;
 use Modules\Services\Http\Resources\ServiceResource;
 
-/**
- * Class ServiceController
- *
- * API controller for managing services including CRUD,
- * workflow, translations, media, categories, and revisions.
- *
- * @package Modules\Services\Http\Controllers\Api
- */
 class ServiceController extends BaseController
 {
-    /**
-     * The service service instance.
-     *
-     * @var ServiceServiceContract
-     */
-    protected ServiceServiceContract $serviceService;
-
-    /**
-     * Create a new ServiceController instance.
-     *
-     * @param ServiceServiceContract $serviceService The service implementation
-     */
-    public function __construct(ServiceServiceContract $serviceService)
-    {
-        $this->serviceService = $serviceService;
+    public function __construct(
+        protected ServiceQueryService $queryService,
+        protected ServiceCommandService $commandService
+    ) {
     }
 
     /**
@@ -45,7 +27,7 @@ class ServiceController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $services = $this->serviceService->list(
+        $services = $this->queryService->list(
             $request->only(['status', 'is_featured', 'category_id', 'search']),
             $request->integer('per_page', 20)
         );
@@ -60,7 +42,7 @@ class ServiceController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         return $service ? $this->success(new ServiceResource($service)) : $this->notFound('Service not found');
     }
 
@@ -72,7 +54,7 @@ class ServiceController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
-        $service = $this->serviceService->findBySlug($slug);
+        $service = $this->queryService->findBySlug($slug);
         return $service ? $this->success(new ServiceResource($service)) : $this->notFound('Service not found');
     }
 
@@ -90,7 +72,7 @@ class ServiceController extends BaseController
             'translations.*.name' => 'required|string|max:200',
             'category_ids' => 'nullable|array',
         ]);
-        return $this->created(new ServiceResource($this->serviceService->create($request->all())));
+        return $this->created(new ServiceResource($this->queryService->create($request->all())));
     }
 
     /**
@@ -102,9 +84,9 @@ class ServiceController extends BaseController
      */
     public function update(Request $request, string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->update($service, $request->all())));
+        return $this->success(new ServiceResource($this->queryService->update($service, $request->all())));
     }
 
     /**
@@ -115,9 +97,9 @@ class ServiceController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        $this->serviceService->delete($service);
+        $this->queryService->delete($service);
         return $this->success(null, 'Service deleted');
     }
 
@@ -131,7 +113,7 @@ class ServiceController extends BaseController
     {
         $service = \Modules\Services\Domain\Models\Service::withTrashed()->find($id);
         if (!$service) return $this->notFound('Service not found');
-        $this->serviceService->forceDelete($service);
+        $this->queryService->forceDelete($service);
         return $this->success(null, 'Service permanently deleted');
     }
 
@@ -143,7 +125,7 @@ class ServiceController extends BaseController
      */
     public function restore(string $id): JsonResponse
     {
-        $service = $this->serviceService->restore($id);
+        $service = $this->queryService->restore($id);
         return $service ? $this->success(new ServiceResource($service)) : $this->notFound('Service not found');
     }
 
@@ -156,9 +138,9 @@ class ServiceController extends BaseController
      */
     public function saveDraft(Request $request, string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->saveDraft($service, $request->all())));
+        return $this->success(new ServiceResource($this->queryService->saveDraft($service, $request->all())));
     }
 
     /**
@@ -169,9 +151,9 @@ class ServiceController extends BaseController
      */
     public function submitForReview(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->submitForReview($service)));
+        return $this->success(new ServiceResource($this->queryService->submitForReview($service)));
     }
 
     /**
@@ -182,9 +164,9 @@ class ServiceController extends BaseController
      */
     public function startReview(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->startReview($service, auth()->id())));
+        return $this->success(new ServiceResource($this->queryService->startReview($service, auth()->id())));
     }
 
     /**
@@ -196,9 +178,9 @@ class ServiceController extends BaseController
      */
     public function approve(Request $request, string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->approve($service, $request->notes)));
+        return $this->success(new ServiceResource($this->queryService->approve($service, $request->notes)));
     }
 
     /**
@@ -210,9 +192,9 @@ class ServiceController extends BaseController
      */
     public function reject(Request $request, string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->reject($service, $request->notes)));
+        return $this->success(new ServiceResource($this->queryService->reject($service, $request->notes)));
     }
 
     /**
@@ -223,9 +205,9 @@ class ServiceController extends BaseController
      */
     public function publish(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->publish($service)));
+        return $this->success(new ServiceResource($this->queryService->publish($service)));
     }
 
     /**
@@ -238,66 +220,66 @@ class ServiceController extends BaseController
     public function schedule(Request $request, string $id): JsonResponse
     {
         $request->validate(['scheduled_at' => 'required|date|after:now']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->schedule($service, new \DateTime($request->scheduled_at))));
+        return $this->success(new ServiceResource($this->queryService->schedule($service, new \DateTime($request->scheduled_at))));
     }
 
     public function cancelSchedule(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->cancelSchedule($service)));
+        return $this->success(new ServiceResource($this->queryService->cancelSchedule($service)));
     }
 
     public function unpublish(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->unpublish($service)));
+        return $this->success(new ServiceResource($this->queryService->unpublish($service)));
     }
 
     public function archive(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->archive($service)));
+        return $this->success(new ServiceResource($this->queryService->archive($service)));
     }
 
     public function unarchive(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->unarchive($service)));
+        return $this->success(new ServiceResource($this->queryService->unarchive($service)));
     }
 
     // Features
     public function feature(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->feature($service)));
+        return $this->success(new ServiceResource($this->queryService->feature($service)));
     }
 
     public function unfeature(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->unfeature($service)));
+        return $this->success(new ServiceResource($this->queryService->unfeature($service)));
     }
 
     public function clone(Request $request, string $id): JsonResponse
     {
         $request->validate(['new_slug' => 'required|string|max:100|unique:services,slug']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->created(new ServiceResource($this->serviceService->clone($service, $request->new_slug)));
+        return $this->created(new ServiceResource($this->queryService->clone($service, $request->new_slug)));
     }
 
     public function reorder(Request $request): JsonResponse
     {
         $request->validate(['order' => 'required|array', 'order.*' => 'uuid']);
-        $this->serviceService->reorder($request->order);
+        $this->queryService->reorder($request->order);
         return $this->success(null, 'Services reordered');
     }
 
@@ -308,91 +290,91 @@ class ServiceController extends BaseController
             'locale' => 'required|string|max:10',
             'name' => 'required|string|max:200',
         ]);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->createTranslation($service, $request->locale, $request->except('locale'))));
+        return $this->success(new ServiceResource($this->queryService->createTranslation($service, $request->locale, $request->except('locale'))));
     }
 
     // Media
     public function attachMedia(Request $request, string $id): JsonResponse
     {
         $request->validate(['media_ids' => 'required|array', 'media_ids.*' => 'uuid']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->attachMedia($service, $request->media_ids)));
+        return $this->success(new ServiceResource($this->queryService->attachMedia($service, $request->media_ids)));
     }
 
     public function detachMedia(Request $request, string $id): JsonResponse
     {
         $request->validate(['media_ids' => 'required|array', 'media_ids.*' => 'uuid']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->detachMedia($service, $request->media_ids)));
+        return $this->success(new ServiceResource($this->queryService->detachMedia($service, $request->media_ids)));
     }
 
     public function reorderMedia(Request $request, string $id): JsonResponse
     {
         $request->validate(['order' => 'required|array', 'order.*' => 'uuid']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->reorderMedia($service, $request->order)));
+        return $this->success(new ServiceResource($this->queryService->reorderMedia($service, $request->order)));
     }
 
     // Categories
     public function syncCategories(Request $request, string $id): JsonResponse
     {
         $request->validate(['term_ids' => 'required|array']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->syncCategories($service, $request->term_ids)));
+        return $this->success(new ServiceResource($this->queryService->syncCategories($service, $request->term_ids)));
     }
 
     public function attachRelated(Request $request, string $id): JsonResponse
     {
         $request->validate(['service_ids' => 'required|array', 'service_ids.*' => 'uuid']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->attachRelated($service, $request->service_ids)));
+        return $this->success(new ServiceResource($this->queryService->attachRelated($service, $request->service_ids)));
     }
 
     // Revisions
     public function revisions(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success($this->serviceService->getRevisions($service));
+        return $this->success($this->queryService->getRevisions($service));
     }
 
     public function compareRevisions(Request $request, string $id): JsonResponse
     {
         $request->validate(['revision_1' => 'required|uuid', 'revision_2' => 'required|uuid']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success($this->serviceService->compareRevisions($service, $request->revision_1, $request->revision_2));
+        return $this->success($this->queryService->compareRevisions($service, $request->revision_1, $request->revision_2));
     }
 
     public function restoreRevision(Request $request, string $id): JsonResponse
     {
         $request->validate(['revision_id' => 'required|uuid']);
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        return $this->success(new ServiceResource($this->serviceService->restoreRevision($service, $request->revision_id)));
+        return $this->success(new ServiceResource($this->queryService->restoreRevision($service, $request->revision_id)));
     }
 
     // Search
     public function indexInSearch(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        $this->serviceService->indexInSearch($service);
+        $this->queryService->indexInSearch($service);
         return $this->success(null, 'Service indexed');
     }
 
     public function removeFromIndex(string $id): JsonResponse
     {
-        $service = $this->serviceService->find($id);
+        $service = $this->queryService->find($id);
         if (!$service) return $this->notFound('Service not found');
-        $this->serviceService->removeFromIndex($service);
+        $this->queryService->removeFromIndex($service);
         return $this->success(null, 'Service removed from index');
     }
 }

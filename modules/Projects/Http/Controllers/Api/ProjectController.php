@@ -7,37 +7,18 @@ namespace Modules\Projects\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Projects\Contracts\ProjectServiceContract;
+use Modules\Projects\Application\Services\ProjectCommandService;
+use Modules\Projects\Application\Services\ProjectQueryService;
 use Modules\Projects\Http\Requests\CreateProjectRequest;
 use Modules\Projects\Http\Requests\UpdateProjectRequest;
 use Modules\Projects\Http\Resources\ProjectResource;
 
-/**
- * Class ProjectController
- * 
- * API controller for managing portfolio projects including CRUD,
- * workflow, gallery, and publishing.
- * 
- * @package Modules\Projects\Http\Controllers\Api
- */
 class ProjectController extends BaseController
 {
-    /**
-     * The project service instance for handling project-related business logic.
-     *
-     * @var ProjectServiceContract
-     */
-    protected ProjectServiceContract $projectService;
-
-    /**
-     * Create a new ProjectController instance.
-     *
-     * @param ProjectServiceContract $projectService The project service contract implementation
-     */
     public function __construct(
-        ProjectServiceContract $projectService
+        protected ProjectQueryService $queryService,
+        protected ProjectCommandService $commandService
     ) {
-        $this->projectService = $projectService;
     }
 
     /**
@@ -50,7 +31,7 @@ class ProjectController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $projects = $this->projectService->list(
+        $projects = $this->queryService->list(
             $request->only(['status', 'featured', 'type']),
             $request->integer('per_page', 12)
         );
@@ -65,7 +46,7 @@ class ProjectController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $project = $this->projectService->find($id);
+        $project = $this->queryService->find($id);
         if (!$project) return $this->notFound('Project not found');
         return $this->success(new ProjectResource($project));
     }
@@ -78,7 +59,7 @@ class ProjectController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
-        $project = $this->projectService->findBySlug($slug);
+        $project = $this->queryService->findBySlug($slug);
         if (!$project) return $this->notFound('Project not found');
         return $this->success(new ProjectResource($project));
     }
@@ -91,7 +72,7 @@ class ProjectController extends BaseController
      */
     public function store(CreateProjectRequest $request): JsonResponse
     {
-        $project = $this->projectService->create($request->validated());
+        $project = $this->queryService->create($request->validated());
         return $this->created(new ProjectResource($project));
     }
 
@@ -104,9 +85,9 @@ class ProjectController extends BaseController
      */
     public function update(UpdateProjectRequest $request, string $id): JsonResponse
     {
-        $project = $this->projectService->find($id);
+        $project = $this->queryService->find($id);
         if (!$project) return $this->notFound('Project not found');
-        $project = $this->projectService->update($project, $request->validated());
+        $project = $this->queryService->update($project, $request->validated());
         return $this->success(new ProjectResource($project));
     }
 
@@ -118,9 +99,9 @@ class ProjectController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $project = $this->projectService->find($id);
+        $project = $this->queryService->find($id);
         if (!$project) return $this->notFound('Project not found');
-        $this->projectService->delete($project);
+        $this->queryService->delete($project);
         return $this->success(null, 'Project deleted');
     }
 
@@ -132,9 +113,9 @@ class ProjectController extends BaseController
      */
     public function publish(string $id): JsonResponse
     {
-        $project = $this->projectService->find($id);
+        $project = $this->queryService->find($id);
         if (!$project) return $this->notFound('Project not found');
-        $project = $this->projectService->publish($project);
+        $project = $this->queryService->publish($project);
         return $this->success(new ProjectResource($project));
     }
 }

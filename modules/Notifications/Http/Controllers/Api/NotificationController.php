@@ -7,35 +7,16 @@ namespace Modules\Notifications\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Notifications\Contracts\NotificationServiceContract;
+use Modules\Notifications\Application\Services\NotificationCommandService;
+use Modules\Notifications\Application\Services\NotificationQueryService;
 use Modules\Notifications\Http\Resources\NotificationResource;
 
-/**
- * Class NotificationController
- *
- * API controller for managing user notifications including
- * listing, reading, and deleting notifications.
- *
- * @package Modules\Notifications\Http\Controllers\Api
- */
 class NotificationController extends BaseController
 {
-    /**
-     * The notification service instance.
-     *
-     * @var NotificationServiceContract
-     */
-    protected NotificationServiceContract $notificationService;
-
-    /**
-     * Create a new NotificationController instance.
-     *
-     * @param NotificationServiceContract $notificationService The notification service
-     */
     public function __construct(
-        NotificationServiceContract $notificationService
+        protected NotificationQueryService $queryService,
+        protected NotificationCommandService $commandService
     ) {
-        $this->notificationService = $notificationService;
     }
 
     /**
@@ -46,7 +27,7 @@ class NotificationController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $notifications = $this->notificationService->getForUser(
+        $notifications = $this->queryService->getForUser(
             auth()->id(),
             filters: $request->only(['unread_only', 'type']),
             perPage: $request->integer('per_page', 20)
@@ -62,7 +43,7 @@ class NotificationController extends BaseController
      */
     public function unreadCount(): JsonResponse
     {
-        $count = $this->notificationService->getUnreadCount(auth()->id());
+        $count = $this->queryService->getUnreadCount(auth()->id());
 
         return $this->success(['count' => $count]);
     }
@@ -75,7 +56,7 @@ class NotificationController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $notification = $this->notificationService->find($id);
+        $notification = $this->queryService->find($id);
 
         if (!$notification || $notification->user_id !== auth()->id()) {
             return $this->notFound('Notification not found');
@@ -92,13 +73,13 @@ class NotificationController extends BaseController
      */
     public function markAsRead(string $id): JsonResponse
     {
-        $notification = $this->notificationService->find($id);
+        $notification = $this->queryService->find($id);
 
         if (!$notification || $notification->user_id !== auth()->id()) {
             return $this->notFound('Notification not found');
         }
 
-        $notification = $this->notificationService->markAsRead($notification);
+        $notification = $this->queryService->markAsRead($notification);
 
         return $this->success(new NotificationResource($notification));
     }
@@ -110,7 +91,7 @@ class NotificationController extends BaseController
      */
     public function markAllAsRead(): JsonResponse
     {
-        $count = $this->notificationService->markAllAsRead(auth()->id());
+        $count = $this->queryService->markAllAsRead(auth()->id());
 
         return $this->success(['marked' => $count], 'All notifications marked as read');
     }
@@ -123,13 +104,13 @@ class NotificationController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $notification = $this->notificationService->find($id);
+        $notification = $this->queryService->find($id);
 
         if (!$notification || $notification->user_id !== auth()->id()) {
             return $this->notFound('Notification not found');
         }
 
-        $this->notificationService->delete($notification);
+        $this->queryService->delete($notification);
 
         return $this->success(null, 'Notification deleted');
     }
@@ -141,7 +122,7 @@ class NotificationController extends BaseController
      */
     public function destroyAllRead(): JsonResponse
     {
-        $count = $this->notificationService->deleteAllRead(auth()->id());
+        $count = $this->queryService->deleteAllRead(auth()->id());
 
         return $this->success(['deleted' => $count], 'Read notifications deleted');
     }

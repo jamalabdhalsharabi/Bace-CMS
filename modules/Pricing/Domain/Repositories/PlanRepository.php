@@ -6,16 +6,16 @@ namespace Modules\Pricing\Domain\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
 use Modules\Core\Domain\Repositories\BaseRepository;
-use Modules\Pricing\Domain\Models\Plan;
+use Modules\Pricing\Domain\Models\PricingPlan;
 
 /**
  * Plan Repository.
  *
- * @extends BaseRepository<Plan>
+ * @extends BaseRepository<PricingPlan>
  */
 final class PlanRepository extends BaseRepository
 {
-    public function __construct(Plan $model)
+    public function __construct(PricingPlan $model)
     {
         parent::__construct($model);
     }

@@ -7,39 +7,20 @@ namespace Modules\Forms\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\Forms\Contracts\FormServiceContract;
+use Modules\Forms\Application\Services\FormCommandService;
+use Modules\Forms\Application\Services\FormQueryService;
 use Modules\Forms\Http\Requests\CreateFormRequest;
 use Modules\Forms\Http\Requests\SubmitFormRequest;
 use Modules\Forms\Http\Requests\UpdateFormRequest;
 use Modules\Forms\Http\Resources\FormResource;
 use Modules\Forms\Http\Resources\FormSubmissionResource;
 
-/**
- * Class FormController
- *
- * API controller for managing dynamic forms, form submissions,
- * and submission status management.
- *
- * @package Modules\Forms\Http\Controllers\Api
- */
 class FormController extends BaseController
 {
-    /**
-     * The form service instance.
-     *
-     * @var FormServiceContract
-     */
-    protected FormServiceContract $formService;
-
-    /**
-     * Create a new FormController instance.
-     *
-     * @param FormServiceContract $formService The form service implementation
-     */
     public function __construct(
-        FormServiceContract $formService
+        protected FormQueryService $queryService,
+        protected FormCommandService $commandService
     ) {
-        $this->formService = $formService;
     }
 
     /**
@@ -50,7 +31,7 @@ class FormController extends BaseController
      */
     public function index(Request $request): JsonResponse
     {
-        $forms = $this->formService->list(
+        $forms = $this->queryService->list(
             filters: $request->only(['type', 'active', 'search']),
             perPage: $request->integer('per_page', 15)
         );
@@ -66,7 +47,7 @@ class FormController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $form = $this->formService->find($id);
+        $form = $this->queryService->find($id);
 
         if (!$form) {
             return $this->notFound('Form not found');
@@ -83,7 +64,7 @@ class FormController extends BaseController
      */
     public function showBySlug(string $slug): JsonResponse
     {
-        $form = $this->formService->findBySlug($slug);
+        $form = $this->queryService->findBySlug($slug);
 
         if (!$form) {
             return $this->notFound('Form not found');
@@ -100,7 +81,7 @@ class FormController extends BaseController
      */
     public function store(CreateFormRequest $request): JsonResponse
     {
-        $form = $this->formService->create($request->validated());
+        $form = $this->queryService->create($request->validated());
 
         return $this->created(new FormResource($form), 'Form created successfully');
     }
@@ -114,13 +95,13 @@ class FormController extends BaseController
      */
     public function update(UpdateFormRequest $request, string $id): JsonResponse
     {
-        $form = $this->formService->find($id);
+        $form = $this->queryService->find($id);
 
         if (!$form) {
             return $this->notFound('Form not found');
         }
 
-        $form = $this->formService->update($form, $request->validated());
+        $form = $this->queryService->update($form, $request->validated());
 
         return $this->success(new FormResource($form), 'Form updated successfully');
     }
@@ -133,13 +114,13 @@ class FormController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $form = $this->formService->find($id);
+        $form = $this->queryService->find($id);
 
         if (!$form) {
             return $this->notFound('Form not found');
         }
 
-        $this->formService->delete($form);
+        $this->queryService->delete($form);
 
         return $this->success(null, 'Form deleted successfully');
     }
@@ -154,14 +135,14 @@ class FormController extends BaseController
      */
     public function submit(SubmitFormRequest $request, string $slug): JsonResponse
     {
-        $form = $this->formService->findBySlug($slug);
+        $form = $this->queryService->findBySlug($slug);
 
         if (!$form) {
             return $this->notFound('Form not found');
         }
 
         try {
-            $submission = $this->formService->submit($form, $request->validated(), [
+            $submission = $this->queryService->submit($form, $request->validated(), [
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'referrer' => $request->header('referer'),
@@ -185,7 +166,7 @@ class FormController extends BaseController
      */
     public function submissions(Request $request, string $id): JsonResponse
     {
-        $submissions = $this->formService->getSubmissions(
+        $submissions = $this->queryService->getSubmissions(
             $id,
             filters: $request->only(['status', 'exclude_spam']),
             perPage: $request->integer('per_page', 20)
@@ -211,7 +192,7 @@ class FormController extends BaseController
             return $this->notFound('Submission not found');
         }
 
-        $submission = $this->formService->updateSubmissionStatus($submission, $request->status);
+        $submission = $this->queryService->updateSubmissionStatus($submission, $request->status);
 
         return $this->success(new FormSubmissionResource($submission));
     }
