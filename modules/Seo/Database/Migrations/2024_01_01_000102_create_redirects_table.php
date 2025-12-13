@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignUuid('created_by')->constrained('users')->cascadeOnDelete();
             $table->timestamps();
 
-            $table->index('source_url');
+            $table->rawIndex('source_url(255)', 'redirects_source_url_index');
             $table->index('is_active');
         });
     }

@@ -4,7 +4,7 @@
     "description": "Portfolio and case studies management",
     "version": "1.0.0",
     "keywords": ["projects", "portfolio", "case-studies"],
-    "priority": 41,
+    "priority": 17,
     "enabled": true,
     "providers": [
         "Modules\\Projects\\Providers\\ProjectsServiceProvider"

@@ -4,7 +4,7 @@
     "description": "Customer testimonials and reviews",
     "version": "1.0.0",
     "keywords": ["testimonials", "reviews", "feedback"],
-    "priority": 43,
+    "priority": 20,
     "enabled": true,
     "providers": [
         "Modules\\Testimonials\\Providers\\TestimonialsServiceProvider"

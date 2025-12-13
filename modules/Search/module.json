@@ -4,7 +4,7 @@
     "description": "Full-text search module with multiple engine support",
     "version": "1.0.0",
     "keywords": ["search", "fulltext", "meilisearch", "indexing"],
-    "priority": 30,
+    "priority": 24,
     "enabled": true,
     "providers": [
         "Modules\\Search\\Providers\\SearchServiceProvider"

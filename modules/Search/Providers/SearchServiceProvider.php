@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Modules\Search\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Modules\Search\Application\Services\SearchQueryService;
 use Modules\Search\Contracts\SearchEngineContract;
-use Modules\Search\Contracts\SearchServiceContract;
 use Modules\Search\Engines\DatabaseSearchEngine;
 use Modules\Search\Engines\MeilisearchEngine;
-use Modules\Search\Services\SearchService;
 
 class SearchServiceProvider extends ServiceProvider
 {
@@ -23,17 +22,8 @@ class SearchServiceProvider extends ServiceProvider
             $this->moduleNameLower
         );
 
-        $this->app->bind(SearchEngineContract::class, function ($app) {
-            $driver = config('search.driver', 'database');
-
-            return match ($driver) {
-                'meilisearch' => $app->make(MeilisearchEngine::class),
-                default => $app->make(DatabaseSearchEngine::class),
-            };
-        });
-
-        $this->app->bind(SearchServiceContract::class, SearchService::class);
-        $this->app->alias(SearchServiceContract::class, 'search');
+        $this->registerEngines();
+        $this->registerServices();
     }
 
     public function boot(): void
@@ -45,5 +35,22 @@ class SearchServiceProvider extends ServiceProvider
                 \Modules\Search\Console\Commands\ReindexCommand::class,
             ]);
         }
+    }
+
+    protected function registerEngines(): void
+    {
+        $this->app->bind(SearchEngineContract::class, function ($app) {
+            $driver = config('search.driver', 'database');
+
+            return match ($driver) {
+                'meilisearch' => $app->make(MeilisearchEngine::class),
+                default => $app->make(DatabaseSearchEngine::class),
+            };
+        });
+    }
+
+    protected function registerServices(): void
+    {
+        $this->app->singleton(SearchQueryService::class);
     }
 }

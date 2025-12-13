@@ -4,7 +4,7 @@
     "description": "Pricing plans, subscriptions, and coupons management",
     "version": "1.0.0",
     "keywords": ["pricing", "plans", "subscriptions", "coupons"],
-    "priority": 45,
+    "priority": 18,
     "enabled": true,
     "providers": [
         "Modules\\Pricing\\Providers\\PricingServiceProvider"

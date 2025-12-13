@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('template', 100)->default('default');
             $table->foreignUuid('parent_id')->nullable()->constrained('pages')->nullOnDelete();
             $table->unsignedInteger('depth')->default(0);
-            $table->string('path', 1000)->nullable();
+            $table->string('path', 500)->nullable();
             $table->unsignedInteger('sort_order')->default(0);
             $table->unsignedInteger('version')->default(1);
             $table->timestamp('published_at')->nullable();
@@ -31,7 +31,7 @@ return new class extends Migration
             $table->softDeletes();
 
             $table->index('parent_id');
-            $table->index('path');
+            $table->rawIndex('path(255)', 'pages_path_index');
             $table->index('template');
         });
     }

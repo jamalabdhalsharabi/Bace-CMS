@@ -4,7 +4,7 @@
     "description": "Product catalog and inventory management",
     "version": "1.0.0",
     "keywords": ["products", "catalog", "inventory", "variants"],
-    "priority": 40,
+    "priority": 16,
     "enabled": true,
     "providers": [
         "Modules\\Products\\Providers\\ProductsServiceProvider"

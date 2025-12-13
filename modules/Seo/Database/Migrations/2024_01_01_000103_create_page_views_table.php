@@ -32,8 +32,7 @@ return new class extends Migration
             $table->text('user_agent')->nullable();
             $table->timestamp('created_at');
 
-            $table->index('url');
-            $table->index(['viewable_type', 'viewable_id']);
+            $table->rawIndex('url(255)', 'page_views_url_index');
             $table->index('visitor_id');
             $table->index('created_at');
             $table->index('country');

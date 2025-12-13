@@ -16,7 +16,7 @@ class ArticleResource extends JsonResource
             'type' => $this->type,
             'status' => $this->status,
             'is_featured' => $this->is_featured,
-            'is_commentable' => $this->is_commentable,
+            'allow_comments' => $this->allow_comments,
             'view_count' => $this->view_count,
             'reading_time' => $this->reading_time,
             'published_at' => $this->published_at?->toISOString(),

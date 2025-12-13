@@ -4,7 +4,7 @@
     "description": "Reusable content blocks and widgets",
     "version": "1.0.0",
     "keywords": ["blocks", "widgets", "sections"],
-    "priority": 44,
+    "priority": 21,
     "enabled": true,
     "providers": [
         "Modules\\StaticBlocks\\Providers\\StaticBlocksServiceProvider"

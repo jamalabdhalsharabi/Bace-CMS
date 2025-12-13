@@ -4,7 +4,7 @@
     "description": "Events and tickets management",
     "version": "1.0.0",
     "keywords": ["events", "tickets", "registrations"],
-    "priority": 42,
+    "priority": 19,
     "enabled": true,
     "providers": [
         "Modules\\Events\\Providers\\EventsServiceProvider"

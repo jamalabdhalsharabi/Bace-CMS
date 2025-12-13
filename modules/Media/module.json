@@ -4,7 +4,7 @@
     "description": "Media library module for file uploads and image processing",
     "version": "1.0.0",
     "keywords": ["media", "files", "images", "uploads"],
-    "priority": 10,
+    "priority": 3,
     "enabled": true,
     "providers": [
         "Modules\\Media\\Providers\\MediaServiceProvider"

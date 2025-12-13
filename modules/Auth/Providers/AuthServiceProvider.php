@@ -6,6 +6,12 @@ namespace Modules\Auth\Providers;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
+use Modules\Auth\Application\Actions\LoginAction;
+use Modules\Auth\Application\Actions\LogoutAction;
+use Modules\Auth\Application\Actions\RegisterAction;
+use Modules\Auth\Application\Actions\ResetPasswordAction;
+use Modules\Auth\Application\Services\AuthCommandService;
+use Modules\Auth\Application\Services\AuthQueryService;
 use Modules\Auth\Contracts\AuthServiceContract;
 use Modules\Auth\Contracts\PermissionServiceContract;
 use Modules\Auth\Contracts\RoleServiceContract;
@@ -25,9 +31,28 @@ class AuthServiceProvider extends ServiceProvider
             $this->moduleNameLower
         );
 
+        $this->registerActions();
+        $this->registerServices();
+    }
+
+    protected function registerActions(): void
+    {
+        $this->app->singleton(LoginAction::class);
+        $this->app->singleton(RegisterAction::class);
+        $this->app->singleton(LogoutAction::class);
+        $this->app->singleton(ResetPasswordAction::class);
+    }
+
+    protected function registerServices(): void
+    {
+        // Legacy bindings
         $this->app->bind(AuthServiceContract::class, AuthService::class);
         $this->app->bind(RoleServiceContract::class, RoleService::class);
         $this->app->bind(PermissionServiceContract::class, PermissionService::class);
+
+        // New architecture
+        $this->app->singleton(AuthQueryService::class);
+        $this->app->singleton(AuthCommandService::class);
     }
 
     public function boot(): void

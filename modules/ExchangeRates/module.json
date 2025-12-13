@@ -4,7 +4,7 @@
     "description": "Exchange rates management with API sync and history",
     "version": "1.0.0",
     "keywords": ["exchange", "rates", "currency", "conversion"],
-    "priority": 13,
+    "priority": 9,
     "enabled": true,
     "providers": [
         "Modules\\ExchangeRates\\Providers\\ExchangeRatesServiceProvider"

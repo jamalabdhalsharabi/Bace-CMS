@@ -4,7 +4,7 @@
     "description": "User management module with profiles and preferences",
     "version": "1.0.0",
     "keywords": ["users", "profiles", "accounts"],
-    "priority": 5,
+    "priority": 2,
     "enabled": true,
     "providers": [
         "Modules\\Users\\Providers\\UsersServiceProvider"
