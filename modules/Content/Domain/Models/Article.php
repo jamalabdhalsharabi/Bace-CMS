@@ -7,9 +7,8 @@ namespace Modules\Content\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Article Model - Represents blog posts, news, and other article content.
@@ -63,6 +62,14 @@ class Article extends Model
 {
     use HasUuids;
     use SoftDeletes;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['title', 'slug', 'excerpt', 'content', 'meta_title', 'meta_description'];
 
     protected $table = 'articles';
 
@@ -139,50 +146,6 @@ class Article extends Model
     public function featuredImage(): BelongsTo
     {
         return $this->belongsTo(\Modules\Media\Domain\Models\Media::class, 'featured_image_id');
-    }
-
-    /**
-     * Get all translations for this article.
-     *
-     * @return HasMany<ArticleTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(ArticleTranslation::class);
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<ArticleTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(ArticleTranslation::class)->where('locale', app()->getLocale());
-    }
-
-    /**
-     * Get the localized title.
-     *
-     * Returns current locale title, falling back to first available translation.
-     *
-     * @return string|null The article title
-     */
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    /**
-     * Get the localized slug.
-     *
-     * Returns current locale slug, falling back to first available translation.
-     *
-     * @return string|null The article slug
-     */
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
     }
 
     /**

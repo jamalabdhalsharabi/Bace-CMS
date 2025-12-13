@@ -7,7 +7,7 @@ namespace Modules\Notifications\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * NotificationTemplate Model - Defines notification templates.
@@ -37,6 +37,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class NotificationTemplate extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['email_subject', 'email_body', 'push_title', 'push_body', 'sms_body'];
+
+    /**
+     * Custom foreign key for translations.
+     *
+     * @var string
+     */
+    public string $translationForeignKey = 'template_id';
 
     protected $table = 'notification_templates';
 
@@ -55,27 +70,6 @@ class NotificationTemplate extends Model
         'is_active' => 'boolean',
         'is_system' => 'boolean',
     ];
-
-    /**
-     * Get all translations.
-     *
-     * @return HasMany<NotificationTemplateTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(NotificationTemplateTranslation::class, 'template_id');
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<NotificationTemplateTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(NotificationTemplateTranslation::class, 'template_id')
-            ->where('locale', app()->getLocale());
-    }
 
     /**
      * Find a template by its slug.

@@ -7,8 +7,7 @@ namespace Modules\Forms\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * FormField Model - Defines individual form input fields.
@@ -44,6 +43,21 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 class FormField extends Model
 {
     use HasUuids;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['label', 'placeholder', 'help_text', 'error_message'];
+
+    /**
+     * Custom foreign key for translations.
+     *
+     * @var string
+     */
+    public string $translationForeignKey = 'field_id';
 
     protected $table = 'form_fields';
 
@@ -80,47 +94,6 @@ class FormField extends Model
     public function form(): BelongsTo
     {
         return $this->belongsTo(Form::class);
-    }
-
-    /**
-     * Get all translations for this field.
-     *
-     * @return HasMany<FormFieldTranslation>
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(FormFieldTranslation::class, 'field_id');
-    }
-
-    /**
-     * Get the translation for the current locale.
-     *
-     * @return HasOne<FormFieldTranslation>
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(FormFieldTranslation::class, 'field_id')
-            ->where('locale', app()->getLocale());
-    }
-
-    /**
-     * Get the localized field label.
-     *
-     * @return string The label or field name as fallback
-     */
-    public function getLabelAttribute(): string
-    {
-        return $this->translation?->label ?? $this->translations->first()?->label ?? $this->name;
-    }
-
-    /**
-     * Get the localized placeholder text.
-     *
-     * @return string|null The placeholder or null
-     */
-    public function getPlaceholderAttribute(): ?string
-    {
-        return $this->translation?->placeholder ?? $this->translations->first()?->placeholder;
     }
 
     /**

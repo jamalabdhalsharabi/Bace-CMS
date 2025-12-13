@@ -8,11 +8,11 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Modules\Core\Traits\HasMedia;
 use Modules\Core\Traits\HasOrdering;
+use Modules\Core\Traits\HasTranslations;
 
 /**
  * Taxonomy Model - Represents categories, tags, and other taxonomies.
@@ -54,6 +54,14 @@ class Taxonomy extends Model
     use SoftDeletes;
     use HasMedia;
     use HasOrdering;
+    use HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['name', 'slug', 'description'];
 
     protected $table = 'taxonomies';
 
@@ -90,17 +98,6 @@ class Taxonomy extends Model
         return $this->belongsTo(\Modules\Media\Domain\Models\Media::class, 'featured_image_id');
     }
 
-    public function translations(): HasMany
-    {
-        return $this->hasMany(TaxonomyTranslation::class);
-    }
-
-    public function translation(): HasOne
-    {
-        return $this->hasOne(TaxonomyTranslation::class)
-            ->where('locale', app()->getLocale());
-    }
-
     public function articles(): MorphToMany
     {
         return $this->morphedByMany(
@@ -110,21 +107,6 @@ class Taxonomy extends Model
             'taxonomy_id',
             'taggable_id'
         );
-    }
-
-    public function getNameAttribute(): ?string
-    {
-        return $this->translation?->name ?? $this->translations->first()?->name;
-    }
-
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
-    }
-
-    public function getDescriptionAttribute(): ?string
-    {
-        return $this->translation?->description;
     }
 
     public function getPathAttribute(): array

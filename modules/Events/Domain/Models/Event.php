@@ -7,8 +7,8 @@ namespace Modules\Events\Domain\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Modules\Core\Traits\HasTranslations;
 use Modules\Taxonomy\Traits\HasTaxonomies;
 
 /**
@@ -47,7 +47,14 @@ use Modules\Taxonomy\Traits\HasTaxonomies;
  */
 class Event extends Model
 {
-    use HasUuids, SoftDeletes, HasTaxonomies;
+    use HasUuids, SoftDeletes, HasTaxonomies, HasTranslations;
+
+    /**
+     * Translatable attributes (Astrotomic format).
+     *
+     * @var array<string>
+     */
+    public array $translatedAttributes = ['title', 'slug', 'description', 'short_description', 'meta_title', 'meta_description'];
 
     protected $table = 'events';
 
@@ -70,32 +77,6 @@ class Event extends Model
         'max_attendees' => 'integer',
         'meta' => 'array',
     ];
-
-    /**
-     * Define the has-many relationship with event translations.
-     *
-     * Retrieves all translation records for this event across
-     * all supported locales including title, description, and SEO fields.
-     *
-     * @return HasMany The has-many relationship instance to EventTranslation
-     */
-    public function translations(): HasMany
-    {
-        return $this->hasMany(EventTranslation::class);
-    }
-
-    /**
-     * Define the has-one relationship with the current locale translation.
-     *
-     * Retrieves the translation record matching the application's
-     * current locale setting for displaying localized event content.
-     *
-     * @return HasOne The has-one relationship instance to EventTranslation
-     */
-    public function translation(): HasOne
-    {
-        return $this->hasOne(EventTranslation::class)->where('locale', app()->getLocale());
-    }
 
     /**
      * Define the has-many relationship with event ticket types.
@@ -121,32 +102,6 @@ class Event extends Model
     public function registrations(): HasMany
     {
         return $this->hasMany(EventRegistration::class);
-    }
-
-    /**
-     * Accessor for the event's localized title.
-     *
-     * Returns the title from the current locale translation if available,
-     * otherwise falls back to the first available translation's title.
-     *
-     * @return string|null The localized title or null if no translations exist
-     */
-    public function getTitleAttribute(): ?string
-    {
-        return $this->translation?->title ?? $this->translations->first()?->title;
-    }
-
-    /**
-     * Accessor for the event's localized URL slug.
-     *
-     * Returns the slug from the current locale translation if available,
-     * otherwise falls back to the first available translation's slug.
-     *
-     * @return string|null The localized slug or null if no translations exist
-     */
-    public function getSlugAttribute(): ?string
-    {
-        return $this->translation?->slug ?? $this->translations->first()?->slug;
     }
 
     /**
