@@ -11,6 +11,7 @@ use Modules\Seo\Application\Actions\LogPageViewAction;
 use Modules\Seo\Application\Actions\UpdateSeoMetaAction;
 use Modules\Seo\Application\Services\SeoCommandService;
 use Modules\Seo\Application\Services\SeoQueryService;
+use Modules\Seo\Domain\Contracts\SeoMetaRepositoryInterface;
 use Modules\Seo\Domain\Models\Redirect;
 use Modules\Seo\Domain\Models\SeoMeta;
 use Modules\Seo\Domain\Repositories\RedirectRepository;
@@ -37,6 +38,7 @@ class SeoServiceProvider extends ServiceProvider
 
     protected function registerRepositories(): void
     {
+        $this->app->bind(SeoMetaRepositoryInterface::class, SeoMetaRepository::class);
         $this->app->singleton(SeoMetaRepository::class, fn ($app) => new SeoMetaRepository(new SeoMeta()));
         $this->app->singleton(RedirectRepository::class, fn ($app) => new RedirectRepository(new Redirect()));
     }

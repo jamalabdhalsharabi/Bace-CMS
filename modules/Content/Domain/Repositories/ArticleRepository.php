@@ -6,19 +6,36 @@ namespace Modules\Content\Domain\Repositories;
 
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
+use Modules\Content\Domain\Contracts\ArticleRepositoryInterface;
 use Modules\Content\Domain\Models\Article;
 use Modules\Core\Domain\Repositories\BaseRepository;
 
 /**
- * Article Repository.
+ * Article Repository Implementation.
  *
- * Handles all data access operations for articles.
- * Abstracts database queries from business logic.
+ * Read-only repository for Article model queries.
+ * All write operations (create, update, delete) must be performed
+ * through Action classes, not through this repository.
+ *
+ * Features:
+ * - Supports multi-language article lookups via slug
+ * - Provides filtering by status, type, author, and search
+ * - Uses eager loading to minimize N+1 queries
  *
  * @extends BaseRepository<Article>
+ * @implements ArticleRepositoryInterface
+ *
+ * @package Modules\Content\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
-final class ArticleRepository extends BaseRepository
+final class ArticleRepository extends BaseRepository implements ArticleRepositoryInterface
 {
+    /**
+     * Create a new ArticleRepository instance.
+     *
+     * @param Article $model The Article model instance
+     */
     public function __construct(Article $model)
     {
         parent::__construct($model);

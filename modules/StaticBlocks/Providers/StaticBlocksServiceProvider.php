@@ -10,9 +10,17 @@ use Modules\StaticBlocks\Application\Actions\DeleteStaticBlockAction;
 use Modules\StaticBlocks\Application\Actions\UpdateStaticBlockAction;
 use Modules\StaticBlocks\Application\Services\StaticBlockCommandService;
 use Modules\StaticBlocks\Application\Services\StaticBlockQueryService;
+use Modules\StaticBlocks\Domain\Contracts\StaticBlockRepositoryInterface;
 use Modules\StaticBlocks\Domain\Models\StaticBlock;
 use Modules\StaticBlocks\Domain\Repositories\StaticBlockRepository;
 
+/**
+ * Static Blocks Module Service Provider.
+ *
+ * @package Modules\StaticBlocks\Providers
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 class StaticBlocksServiceProvider extends ServiceProvider
 {
     protected string $moduleName = 'StaticBlocks';
@@ -34,6 +42,7 @@ class StaticBlocksServiceProvider extends ServiceProvider
 
     protected function registerRepositories(): void
     {
+        $this->app->bind(StaticBlockRepositoryInterface::class, StaticBlockRepository::class);
         $this->app->singleton(StaticBlockRepository::class, fn ($app) => new StaticBlockRepository(new StaticBlock()));
     }
 

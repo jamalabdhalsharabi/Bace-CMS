@@ -11,10 +11,22 @@ use Modules\Settings\Domain\Models\Setting;
 /**
  * Setting Repository.
  *
+ * Read-only repository for Setting model queries.
+ * All write operations must be performed through Action classes.
+ *
  * @extends BaseRepository<Setting>
+ *
+ * @package Modules\Settings\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class SettingRepository extends BaseRepository
 {
+    /**
+     * Create a new SettingRepository instance.
+     *
+     * @param Setting $model The Setting model instance
+     */
     public function __construct(Setting $model)
     {
         parent::__construct($model);

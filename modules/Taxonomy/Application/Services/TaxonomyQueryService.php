@@ -11,9 +11,21 @@ use Modules\Taxonomy\Domain\Repositories\TaxonomyRepository;
 
 /**
  * Taxonomy Query Service.
+ *
+ * Handles all read operations for taxonomies via Repository pattern.
+ * No write operations - delegates to TaxonomyCommandService for mutations.
+ *
+ * @package Modules\Taxonomy\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class TaxonomyQueryService
 {
+    /**
+     * Create a new TaxonomyQueryService instance.
+     *
+     * @param TaxonomyRepository $repository The taxonomy repository
+     */
     public function __construct(
         private readonly TaxonomyRepository $repository
     ) {}

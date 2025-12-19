@@ -23,6 +23,7 @@ use Modules\Content\Application\Services\ArticleTaxonomyService;
 use Modules\Content\Application\Services\ArticleWorkflowService;
 use Modules\Content\Application\Services\PageCommandService;
 use Modules\Content\Application\Services\PageQueryService;
+use Modules\Content\Domain\Contracts\ArticleRepositoryInterface;
 use Modules\Content\Domain\Models\Article;
 use Modules\Content\Domain\Models\Page;
 use Modules\Content\Domain\Repositories\ArticleRepository;
@@ -31,13 +32,40 @@ use Modules\Content\Domain\Repositories\PageRepository;
 /**
  * Content Module Service Provider.
  *
- * Registers all Content module services, repositories, and actions.
+ * Registers and bootstraps the Content module including:
+ * - Repository bindings (Interface to Implementation)
+ * - Action classes for CRUD operations
+ * - Query and Command services
+ * - Views and migrations
+ *
+ * @package Modules\Content\Providers
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 class ContentServiceProvider extends ServiceProvider
 {
+    /**
+     * Module name for path resolution.
+     *
+     * @var string
+     */
     protected string $moduleName = 'Content';
+
+    /**
+     * Lowercase module name for config keys.
+     *
+     * @var string
+     */
     protected string $moduleNameLower = 'content';
 
+    /**
+     * Register module services.
+     *
+     * Binds interfaces to implementations and registers
+     * all module-specific services in the container.
+     *
+     * @return void
+     */
     public function register(): void
     {
         $this->mergeConfigFrom(
@@ -50,6 +78,13 @@ class ContentServiceProvider extends ServiceProvider
         $this->registerServices();
     }
 
+    /**
+     * Bootstrap module services.
+     *
+     * Loads migrations, routes, and views for the module.
+     *
+     * @return void
+     */
     public function boot(): void
     {
         $this->loadMigrationsFrom(module_path($this->moduleName, 'Database/Migrations'));
@@ -58,10 +93,22 @@ class ContentServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register repositories.
+     * Register repository bindings.
+     *
+     * Binds repository interfaces to their concrete implementations.
+     * This enables dependency injection and easier testing through mocking.
+     *
+     * @return void
      */
     protected function registerRepositories(): void
     {
+        // Bind interface to implementation for dependency injection
+        $this->app->bind(
+            ArticleRepositoryInterface::class,
+            ArticleRepository::class
+        );
+
+        // Register concrete repositories as singletons
         $this->app->singleton(ArticleRepository::class, fn ($app) => 
             new ArticleRepository(new Article())
         );

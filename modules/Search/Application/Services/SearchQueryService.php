@@ -9,11 +9,24 @@ use Modules\Search\Domain\DTO\SearchQuery;
 
 /**
  * Search Query Service.
+ *
+ * Handles global search operations across multiple content types.
+ * Searches articles, products, projects, services, and events.
+ *
+ * @package Modules\Search\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class SearchQueryService
 {
+    /**
+     * @var array<string, class-string> Searchable model mappings
+     */
     private array $searchables = [];
 
+    /**
+     * Create a new SearchQueryService instance.
+     */
     public function __construct()
     {
         $this->searchables = config('search.searchables', [

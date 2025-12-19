@@ -79,7 +79,7 @@ class NotificationController extends BaseController
             return $this->notFound('Notification not found');
         }
 
-        $notification = $this->queryService->markAsRead($notification);
+        $notification = $this->commandService->markAsRead($notification);
 
         return $this->success(new NotificationResource($notification));
     }
@@ -91,7 +91,7 @@ class NotificationController extends BaseController
      */
     public function markAllAsRead(): JsonResponse
     {
-        $count = $this->queryService->markAllAsRead(auth()->id());
+        $count = $this->commandService->markAllAsRead(auth()->id());
 
         return $this->success(['marked' => $count], 'All notifications marked as read');
     }
@@ -110,7 +110,7 @@ class NotificationController extends BaseController
             return $this->notFound('Notification not found');
         }
 
-        $this->queryService->delete($notification);
+        $this->commandService->delete($notification);
 
         return $this->success(null, 'Notification deleted');
     }
@@ -122,7 +122,7 @@ class NotificationController extends BaseController
      */
     public function destroyAllRead(): JsonResponse
     {
-        $count = $this->queryService->deleteAllRead(auth()->id());
+        $count = $this->commandService->deleteAllRead(auth()->id());
 
         return $this->success(['deleted' => $count], 'Read notifications deleted');
     }

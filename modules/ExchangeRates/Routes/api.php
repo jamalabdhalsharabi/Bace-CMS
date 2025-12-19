@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\ExchangeRates\Http\Controllers\Api\ExchangeRateController;
 
-Route::prefix('api/v1/exchange-rates')->middleware(['api'])->name('api.exchange-rates.')->group(function () {
+Route::prefix('api/v1/exchange-rates')->middleware(['api'])->name('api.v1.exchange-rates.')->group(function () {
     Route::get('/', [ExchangeRateController::class, 'index'])->name('index');
     Route::get('/{baseId}/{targetId}', [ExchangeRateController::class, 'show'])->name('show');
     Route::post('/convert', [ExchangeRateController::class, 'convert'])->name('convert');

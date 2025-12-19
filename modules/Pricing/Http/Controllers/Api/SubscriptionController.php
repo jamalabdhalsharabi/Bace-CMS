@@ -8,7 +8,10 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Pricing\Contracts\SubscriptionServiceContract;
+use Modules\Pricing\Http\Requests\ChangePlanRequest;
 use Modules\Pricing\Http\Requests\CreateSubscriptionRequest;
+use Modules\Pricing\Http\Requests\ExtendSubscriptionRequest;
+use Modules\Pricing\Http\Requests\RefundSubscriptionRequest;
 use Modules\Pricing\Http\Resources\SubscriptionResource;
 
 /**
@@ -87,14 +90,13 @@ class SubscriptionController extends BaseController
      * @param string $id The UUID of the subscription
      * @return JsonResponse The upgraded subscription or 404 error
      */
-    public function upgrade(Request $request, string $id): JsonResponse
+    public function upgrade(ChangePlanRequest $request, string $id): JsonResponse
     {
-        $request->validate(['new_plan_id' => 'required|uuid|exists:pricing_plans,id']);
         $subscription = $this->subscriptionService->find($id);
         if (!$subscription || $subscription->user_id !== auth()->id()) {
             return $this->notFound('Subscription not found');
         }
-        $subscription = $this->subscriptionService->upgrade($subscription, $request->new_plan_id);
+        $subscription = $this->subscriptionService->upgrade($subscription, $request->validated()['new_plan_id']);
         return $this->success(new SubscriptionResource($subscription), 'Subscription upgraded');
     }
 
@@ -105,14 +107,13 @@ class SubscriptionController extends BaseController
      * @param string $id The UUID of the subscription
      * @return JsonResponse The downgraded subscription or 404 error
      */
-    public function downgrade(Request $request, string $id): JsonResponse
+    public function downgrade(ChangePlanRequest $request, string $id): JsonResponse
     {
-        $request->validate(['new_plan_id' => 'required|uuid|exists:pricing_plans,id']);
         $subscription = $this->subscriptionService->find($id);
         if (!$subscription || $subscription->user_id !== auth()->id()) {
             return $this->notFound('Subscription not found');
         }
-        $subscription = $this->subscriptionService->downgrade($subscription, $request->new_plan_id);
+        $subscription = $this->subscriptionService->downgrade($subscription, $request->validated()['new_plan_id']);
         return $this->success(new SubscriptionResource($subscription), 'Downgrade scheduled');
     }
 
@@ -172,18 +173,14 @@ class SubscriptionController extends BaseController
      * @param string $id The UUID of the subscription
      * @return JsonResponse Refund result or 404 error
      */
-    public function refund(Request $request, string $id): JsonResponse
+    public function refund(RefundSubscriptionRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'type' => 'required|in:full,prorated,partial',
-            'amount' => 'nullable|numeric|min:0',
-            'reason' => 'nullable|string',
-        ]);
         $subscription = $this->subscriptionService->find($id);
         if (!$subscription) {
             return $this->notFound('Subscription not found');
         }
-        $result = $this->subscriptionService->refund($subscription, $request->type, $request->amount);
+        $data = $request->validated();
+        $result = $this->subscriptionService->refund($subscription, $data['type'], $data['amount'] ?? null);
         return $this->success($result, 'Refund processed');
     }
 
@@ -194,18 +191,14 @@ class SubscriptionController extends BaseController
      * @param string $id The UUID of the subscription
      * @return JsonResponse The extended subscription or 404 error
      */
-    public function extend(Request $request, string $id): JsonResponse
+    public function extend(ExtendSubscriptionRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'days' => 'required|integer|min:1|max:365',
-            'reason' => 'nullable|string',
-            'notify_user' => 'nullable|boolean',
-        ]);
         $subscription = $this->subscriptionService->find($id);
         if (!$subscription) {
             return $this->notFound('Subscription not found');
         }
-        $subscription = $this->subscriptionService->extend($subscription, $request->days, $request->reason);
+        $data = $request->validated();
+        $subscription = $this->subscriptionService->extend($subscription, $data['days'], $data['reason'] ?? null);
         return $this->success(new SubscriptionResource($subscription), 'Subscription extended');
     }
 }

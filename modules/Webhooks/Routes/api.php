@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Webhooks\Http\Controllers\Api\WebhookController;
 
-Route::prefix('api/v1/webhooks')->middleware(['api', 'auth:sanctum'])->name('api.webhooks.')->group(function () {
+Route::prefix('api/v1/webhooks')->middleware(['api', 'auth:sanctum'])->name('api.v1.webhooks.')->group(function () {
     Route::get('/', [WebhookController::class, 'index'])->name('index');
     Route::post('/', [WebhookController::class, 'store'])->name('store');
     Route::get('/{id}', [WebhookController::class, 'show'])->name('show');

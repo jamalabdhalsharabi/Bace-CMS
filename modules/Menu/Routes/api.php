@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Menu\Http\Controllers\Api\MenuController;
 use Modules\Menu\Http\Controllers\Api\MenuItemController;
 
-Route::prefix('api/v1/menus')->middleware(['api'])->name('api.menus.')->group(function () {
+Route::prefix('api/v1/menus')->middleware(['api'])->name('api.v1.menus.')->group(function () {
     Route::get('/', [MenuController::class, 'index'])->name('index');
     Route::get('/location/{location}', [MenuController::class, 'byLocation'])->name('location');
     Route::get('/{id}', [MenuController::class, 'show'])->name('show');

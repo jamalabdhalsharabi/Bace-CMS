@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Taxonomy\Http\Controllers\Api\TaxonomyController;
 
-Route::prefix('api/v1/taxonomies')->middleware(['api'])->name('api.taxonomies.')->group(function () {
+Route::prefix('api/v1/taxonomies')->middleware(['api'])->name('api.v1.taxonomies.')->group(function () {
     // Public routes
     Route::get('/types', [TaxonomyController::class, 'types'])->name('types');
     Route::get('/{type}', [TaxonomyController::class, 'index'])->name('index');

@@ -16,10 +16,25 @@ use Modules\Products\Domain\Models\Product;
 /**
  * Product Command Service.
  *
- * Orchestrates write operations for products.
+ * Orchestrates all write operations for products via Action classes.
+ * No direct Model usage - delegates all mutations to dedicated Actions.
+ *
+ * @package Modules\Products\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ProductCommandService
 {
+    /**
+     * Create a new ProductCommandService instance.
+     *
+     * @param CreateProductAction $createAction Action for creating products
+     * @param UpdateProductAction $updateAction Action for updating products
+     * @param PublishProductAction $publishAction Action for publishing products
+     * @param DeleteProductAction $deleteAction Action for deleting products
+     * @param DuplicateProductAction $duplicateAction Action for duplicating products
+     * @param FeatureProductAction $featureAction Action for featuring products
+     */
     public function __construct(
         private readonly CreateProductAction $createAction,
         private readonly UpdateProductAction $updateAction,

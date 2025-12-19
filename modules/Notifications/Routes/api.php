@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Notifications\Http\Controllers\Api\NotificationController;
 
-Route::prefix('api/v1/notifications')->middleware(['api', 'auth:sanctum'])->name('api.notifications.')->group(function () {
+Route::prefix('api/v1/notifications')->middleware(['api', 'auth:sanctum'])->name('api.v1.notifications.')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('unread-count');
     Route::get('/{id}', [NotificationController::class, 'show'])->name('show');

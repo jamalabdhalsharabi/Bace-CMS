@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Comments\Http\Controllers\Api\CommentController;
 
-Route::prefix('api/v1/comments')->middleware(['api'])->name('api.comments.')->group(function () {
+Route::prefix('api/v1/comments')->middleware(['api'])->name('api.v1.comments.')->group(function () {
     // Public routes
     Route::get('/', [CommentController::class, 'index'])->name('index');
     Route::post('/', [CommentController::class, 'store'])->name('store');

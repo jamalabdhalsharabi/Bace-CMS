@@ -7,7 +7,11 @@ namespace Modules\Content\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Content\Contracts\PageServiceContract;
+use Modules\Content\Http\Requests\ChangeTemplateRequest;
 use Modules\Content\Http\Requests\CreatePageRequest;
+use Modules\Content\Http\Requests\ReorderRequest;
+use Modules\Content\Http\Requests\RestoreRevisionRequest;
+use Modules\Content\Http\Requests\SchedulePageRequest;
 use Modules\Content\Http\Requests\UpdatePageRequest;
 use Modules\Content\Http\Resources\PageResource;
 use Modules\Core\Http\Controllers\BaseController;
@@ -187,12 +191,9 @@ class PageController extends BaseController
      * @param Request $request The request containing 'order' array of page UUIDs
      * @return JsonResponse Success message confirming reorder
      */
-    public function reorder(Request $request): JsonResponse
+    public function reorder(ReorderRequest $request): JsonResponse
     {
-        $request->validate(['order' => 'required|array', 'order.*' => 'uuid']);
-
-        $this->pageService->reorder($request->order);
-
+        $this->pageService->reorder($request->validated()['order']);
         return $this->success(null, 'Pages reordered successfully');
     }
 
@@ -309,12 +310,11 @@ class PageController extends BaseController
      * @param string $id The UUID of the page to schedule
      * @return JsonResponse The scheduled page or 404 error
      */
-    public function schedule(Request $request, string $id): JsonResponse
+    public function schedule(SchedulePageRequest $request, string $id): JsonResponse
     {
-        $request->validate(['scheduled_at' => 'required|date|after:now']);
         $page = $this->pageService->find($id);
         if (!$page) return $this->notFound('Page not found');
-        return $this->success(new PageResource($this->pageService->schedule($page, new \DateTime($request->scheduled_at))));
+        return $this->success(new PageResource($this->pageService->schedule($page, new \DateTime($request->validated()['scheduled_at']))));
     }
 
     /**
@@ -454,12 +454,11 @@ class PageController extends BaseController
      * @param string $id The UUID of the page
      * @return JsonResponse The updated page or 404 error
      */
-    public function reorderSections(Request $request, string $id): JsonResponse
+    public function reorderSections(ReorderRequest $request, string $id): JsonResponse
     {
-        $request->validate(['order' => 'required|array']);
         $page = $this->pageService->find($id);
         if (!$page) return $this->notFound('Page not found');
-        return $this->success(new PageResource($this->pageService->reorderSections($page, $request->order)));
+        return $this->success(new PageResource($this->pageService->reorderSections($page, $request->validated()['order'])));
     }
 
     /**
@@ -469,12 +468,11 @@ class PageController extends BaseController
      * @param string $id The UUID of the page
      * @return JsonResponse The updated page or 404 error
      */
-    public function changeTemplate(Request $request, string $id): JsonResponse
+    public function changeTemplate(ChangeTemplateRequest $request, string $id): JsonResponse
     {
-        $request->validate(['template' => 'required|string']);
         $page = $this->pageService->find($id);
         if (!$page) return $this->notFound('Page not found');
-        return $this->success(new PageResource($this->pageService->changeTemplate($page, $request->template)));
+        return $this->success(new PageResource($this->pageService->changeTemplate($page, $request->validated()['template'])));
     }
 
     /**
@@ -562,11 +560,10 @@ class PageController extends BaseController
      * @param string $id The UUID of the page
      * @return JsonResponse The restored page or 404 error
      */
-    public function restoreRevision(Request $request, string $id): JsonResponse
+    public function restoreRevision(RestoreRevisionRequest $request, string $id): JsonResponse
     {
-        $request->validate(['revision_number' => 'required|integer']);
         $page = $this->pageService->find($id);
         if (!$page) return $this->notFound('Page not found');
-        return $this->success(new PageResource($this->pageService->restoreRevision($page, $request->revision_number)));
+        return $this->success(new PageResource($this->pageService->restoreRevision($page, $request->validated()['revision_number'])));
     }
 }

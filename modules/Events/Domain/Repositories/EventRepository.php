@@ -12,10 +12,23 @@ use Modules\Events\Domain\Models\Event;
 /**
  * Event Repository.
  *
+ * Read-only repository for Event model queries.
+ * All write operations (create, update, delete) must be performed
+ * through Action classes, not through this repository.
+ *
  * @extends BaseRepository<Event>
+ *
+ * @package Modules\Events\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class EventRepository extends BaseRepository
 {
+    /**
+     * Create a new EventRepository instance.
+     *
+     * @param Event $model The Event model instance
+     */
     public function __construct(Event $model)
     {
         parent::__construct($model);
@@ -37,14 +50,14 @@ final class EventRepository extends BaseRepository
         }
 
         if (!empty($filters['upcoming'])) {
-            $query->where('start_date', '>', now());
+            $query->where('starts_at', '>', now());
         }
 
         if (!empty($filters['event_type'])) {
             $query->where('event_type', $filters['event_type']);
         }
 
-        return $query->orderBy('start_date')->paginate($perPage);
+        return $query->orderBy('starts_at')->paginate($perPage);
     }
 
     /**
@@ -54,8 +67,8 @@ final class EventRepository extends BaseRepository
     {
         return $this->query()
             ->where('status', 'published')
-            ->where('start_date', '>', now())
-            ->orderBy('start_date')
+            ->where('starts_at', '>', now())
+            ->orderBy('starts_at')
             ->limit($limit)
             ->get();
     }
@@ -67,8 +80,8 @@ final class EventRepository extends BaseRepository
     {
         return $this->query()
             ->where('status', 'published')
-            ->where('start_date', '<=', now())
-            ->where('end_date', '>=', now())
+            ->where('starts_at', '<=', now())
+            ->where('ends_at', '>=', now())
             ->get();
     }
 
@@ -78,8 +91,8 @@ final class EventRepository extends BaseRepository
     public function getPast(int $perPage = 15): LengthAwarePaginator
     {
         return $this->query()
-            ->where('end_date', '<', now())
-            ->orderByDesc('end_date')
+            ->where('ends_at', '<', now())
+            ->orderByDesc('ends_at')
             ->paginate($perPage);
     }
 

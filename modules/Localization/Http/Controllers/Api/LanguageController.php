@@ -8,13 +8,16 @@ use Illuminate\Http\JsonResponse;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Localization\Application\Services\LanguageCommandService;
 use Modules\Localization\Application\Services\LanguageQueryService;
-use Modules\Localization\Http\Requests\CreateLanguageRequest;
-use Modules\Localization\Http\Requests\UpdateLanguageRequest;
-use Modules\Localization\Http\Requests\SetFallbackRequest;
-use Modules\Localization\Http\Requests\ImportPackRequest;
 use Modules\Localization\Http\Requests\AddTranslationKeyRequest;
-use Modules\Localization\Http\Requests\UpdateTranslationRequest;
+use Modules\Localization\Http\Requests\AssignTranslatorRequest;
 use Modules\Localization\Http\Requests\AutoTranslateRequest;
+use Modules\Localization\Http\Requests\CreateLanguageRequest;
+use Modules\Localization\Http\Requests\DeleteTranslationKeyRequest;
+use Modules\Localization\Http\Requests\ImportPackRequest;
+use Modules\Localization\Http\Requests\RejectTranslationRequest;
+use Modules\Localization\Http\Requests\SetFallbackRequest;
+use Modules\Localization\Http\Requests\UpdateLanguageRequest;
+use Modules\Localization\Http\Requests\UpdateTranslationRequest;
 use Modules\Localization\Http\Resources\LanguageResource;
 
 class LanguageController extends BaseController
@@ -149,10 +152,9 @@ class LanguageController extends BaseController
     }
 
     /** Delete translation key. */
-    public function deleteTranslationKey(\Illuminate\Http\Request $request): JsonResponse
+    public function deleteTranslationKey(DeleteTranslationKeyRequest $request): JsonResponse
     {
-        $request->validate(['key' => 'required|string']);
-        $this->commandService->deleteTranslationKey($request->key);
+        $this->commandService->deleteTranslationKey($request->validated()['key']);
         return $this->success(null, 'Translation key deleted');
     }
 
@@ -171,10 +173,9 @@ class LanguageController extends BaseController
     }
 
     /** Reject translation. */
-    public function rejectTranslation(\Illuminate\Http\Request $request, string $translationId): JsonResponse
+    public function rejectTranslation(RejectTranslationRequest $request, string $translationId): JsonResponse
     {
-        $request->validate(['reason' => 'required|string']);
-        $result = $this->commandService->rejectTranslation($translationId, $request->reason);
+        $result = $this->commandService->rejectTranslation($translationId, $request->validated()['reason']);
         return $this->success($result, 'Translation rejected');
     }
 
@@ -204,10 +205,9 @@ class LanguageController extends BaseController
     }
 
     /** Assign translator. */
-    public function assignTranslator(\Illuminate\Http\Request $request, string $id): JsonResponse
+    public function assignTranslator(AssignTranslatorRequest $request, string $id): JsonResponse
     {
-        $request->validate(['user_id' => 'required|uuid']);
-        $result = $this->commandService->assignTranslator($id, $request->user_id);
+        $result = $this->commandService->assignTranslator($id, $request->validated()['user_id']);
         return $this->success($result, 'Translator assigned');
     }
 

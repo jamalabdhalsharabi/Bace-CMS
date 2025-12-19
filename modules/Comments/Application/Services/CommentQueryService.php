@@ -37,13 +37,31 @@ final class CommentQueryService
         return $this->repository->getForCommentable($type, $id);
     }
 
-    public function getPending(): Collection
+    public function getPending(int $perPage = 20): LengthAwarePaginator
     {
-        return $this->repository->getPending();
+        return Comment::where('status', 'pending')
+            ->with(['user', 'commentable'])
+            ->latest()
+            ->paginate($perPage);
     }
 
     public function getReported(): Collection
     {
         return $this->repository->getReported();
+    }
+
+    public function getForModel(string $type, string $id, int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->repository->getForModel($type, $id, $perPage);
+    }
+
+    public function findWithTrashed(string $id): ?Comment
+    {
+        return $this->repository->findWithTrashed($id);
+    }
+
+    public function getStats(?string $commentableType = null, ?string $commentableId = null): array
+    {
+        return $this->repository->getStats($commentableType, $commentableId);
     }
 }

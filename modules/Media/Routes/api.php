@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Media\Http\Controllers\Api\MediaController;
 use Modules\Media\Http\Controllers\Api\FolderController;
 
-Route::prefix('api/v1/media')->middleware(['api', 'auth:sanctum'])->name('api.media.')->group(function () {
+Route::prefix('api/v1/media')->middleware(['api', 'auth:sanctum'])->name('api.v1.media.')->group(function () {
     // List & Search
     Route::get('/', [MediaController::class, 'index'])->name('index');
     Route::get('/search', [MediaController::class, 'search'])->name('search');
@@ -44,7 +44,7 @@ Route::prefix('api/v1/media')->middleware(['api', 'auth:sanctum'])->name('api.me
     Route::post('/remove-duplicates', [MediaController::class, 'removeDuplicates'])->name('remove-duplicates');
 });
 
-Route::prefix('api/v1/folders')->middleware(['api', 'auth:sanctum'])->name('api.folders.')->group(function () {
+Route::prefix('api/v1/folders')->middleware(['api', 'auth:sanctum'])->name('api.v1.folders.')->group(function () {
     Route::get('/', [FolderController::class, 'index'])->name('index');
     Route::post('/', [FolderController::class, 'store'])->name('store');
     Route::delete('/{id}', [FolderController::class, 'destroy'])->name('destroy');

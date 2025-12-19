@@ -12,6 +12,7 @@ use Modules\Forms\Application\Services\FormQueryService;
 use Modules\Forms\Http\Requests\CreateFormRequest;
 use Modules\Forms\Http\Requests\SubmitFormRequest;
 use Modules\Forms\Http\Requests\UpdateFormRequest;
+use Modules\Forms\Http\Requests\UpdateSubmissionStatusRequest;
 use Modules\Forms\Http\Resources\FormResource;
 use Modules\Forms\Http\Resources\FormSubmissionResource;
 
@@ -81,7 +82,7 @@ class FormController extends BaseController
      */
     public function store(CreateFormRequest $request): JsonResponse
     {
-        $form = $this->queryService->create($request->validated());
+        $form = $this->commandService->create($request->validated());
 
         return $this->created(new FormResource($form), 'Form created successfully');
     }
@@ -101,7 +102,7 @@ class FormController extends BaseController
             return $this->notFound('Form not found');
         }
 
-        $form = $this->queryService->update($form, $request->validated());
+        $form = $this->commandService->update($form, $request->validated());
 
         return $this->success(new FormResource($form), 'Form updated successfully');
     }
@@ -120,7 +121,7 @@ class FormController extends BaseController
             return $this->notFound('Form not found');
         }
 
-        $this->queryService->delete($form);
+        $this->commandService->delete($form);
 
         return $this->success(null, 'Form deleted successfully');
     }
@@ -142,7 +143,7 @@ class FormController extends BaseController
         }
 
         try {
-            $submission = $this->queryService->submit($form, $request->validated(), [
+            $submission = $this->commandService->submit($form, $request->validated(), [
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
                 'referrer' => $request->header('referer'),
@@ -177,23 +178,12 @@ class FormController extends BaseController
 
     /**
      * Update the status of a form submission.
-     *
-     * @param Request $request The request containing new status
-     * @param string $submissionId The UUID of the submission
-     * @return JsonResponse The updated submission or 404 error
      */
-    public function updateSubmissionStatus(Request $request, string $submissionId): JsonResponse
+    public function updateSubmissionStatus(UpdateSubmissionStatusRequest $request, string $submissionId): JsonResponse
     {
-        $request->validate(['status' => 'required|in:new,read,spam,processed']);
-
-        $submission = \Modules\Forms\Domain\Models\FormSubmission::find($submissionId);
-
-        if (!$submission) {
-            return $this->notFound('Submission not found');
-        }
-
-        $submission = $this->queryService->updateSubmissionStatus($submission, $request->status);
-
-        return $this->success(new FormSubmissionResource($submission));
+        $submission = $this->commandService->updateSubmissionStatus($submissionId, $request->validated()['status']);
+        return $submission 
+            ? $this->success(new FormSubmissionResource($submission)) 
+            : $this->notFound('Submission not found');
     }
 }

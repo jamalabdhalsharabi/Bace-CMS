@@ -12,12 +12,23 @@ use Modules\Products\Domain\Models\Product;
 /**
  * Product Repository.
  *
- * Handles all data access operations for products.
+ * Read-only repository for Product model queries.
+ * All write operations (create, update, delete) must be performed
+ * through Action classes, not through this repository.
  *
  * @extends BaseRepository<Product>
+ *
+ * @package Modules\Products\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ProductRepository extends BaseRepository
 {
+    /**
+     * Create a new ProductRepository instance.
+     *
+     * @param Product $model The Product model instance
+     */
     public function __construct(Product $model)
     {
         parent::__construct($model);

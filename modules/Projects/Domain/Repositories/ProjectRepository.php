@@ -12,10 +12,22 @@ use Modules\Projects\Domain\Models\Project;
 /**
  * Project Repository.
  *
+ * Read-only repository for Project model queries.
+ * All write operations must be performed through Action classes.
+ *
  * @extends BaseRepository<Project>
+ *
+ * @package Modules\Projects\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ProjectRepository extends BaseRepository
 {
+    /**
+     * Create a new ProjectRepository instance.
+     *
+     * @param Project $model The Project model instance
+     */
     public function __construct(Project $model)
     {
         parent::__construct($model);

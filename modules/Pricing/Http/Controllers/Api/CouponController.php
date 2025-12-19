@@ -8,6 +8,8 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Pricing\Contracts\CouponServiceContract;
+use Modules\Pricing\Http\Requests\StoreCouponRequest;
+use Modules\Pricing\Http\Requests\ValidateCouponRequest;
 use Modules\Pricing\Http\Resources\CouponResource;
 
 /**
@@ -63,26 +65,10 @@ class CouponController extends BaseController
 
     /**
      * Store a newly created coupon.
-     *
-     * @param Request $request The request containing coupon data
-     * @return JsonResponse The created coupon (HTTP 201)
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCouponRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string|max:20|unique:coupons,code',
-            'type' => 'required|in:percentage,fixed',
-            'value' => 'required|numeric|min:0',
-            'applies_to.plans' => 'nullable|array',
-            'applies_to.billing_periods' => 'nullable|array',
-            'usage_limit' => 'nullable|integer|min:1',
-            'per_user_limit' => 'nullable|integer|min:1',
-            'starts_at' => 'nullable|date',
-            'expires_at' => 'nullable|date|after:starts_at',
-            'first_payment_only' => 'nullable|boolean',
-        ]);
-        
-        return $this->created(new CouponResource($this->couponService->create($request->all())));
+        return $this->created(new CouponResource($this->couponService->create($request->validated())));
     }
 
     /**
@@ -145,18 +131,11 @@ class CouponController extends BaseController
 
     /**
      * Validate a coupon code for a specific plan.
-     *
-     * @param Request $request The request containing code and plan_id
-     * @return JsonResponse Validation result with discount info
      */
-    public function validateCoupon(Request $request): JsonResponse
+    public function validateCoupon(ValidateCouponRequest $request): JsonResponse
     {
-        $request->validate([
-            'code' => 'required|string',
-            'plan_id' => 'required|uuid',
-        ]);
-        
-        $result = $this->couponService->validate($request->code, auth()->id(), $request->plan_id);
+        $data = $request->validated();
+        $result = $this->couponService->validate($data['code'], auth()->id(), $data['plan_id']);
         
         if (!$result['valid']) {
             return $this->error($result['error'], 422);

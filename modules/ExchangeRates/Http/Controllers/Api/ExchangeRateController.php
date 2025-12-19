@@ -9,8 +9,18 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\ExchangeRates\Application\Services\ExchangeRateCommandService;
 use Modules\ExchangeRates\Application\Services\ExchangeRateQueryService;
+use Modules\ExchangeRates\Http\Requests\ConvertRequest;
+use Modules\ExchangeRates\Http\Requests\CreateAlertRequest;
+use Modules\ExchangeRates\Http\Requests\ImportHistoryRequest;
+use Modules\ExchangeRates\Http\Requests\UpdateProductPricesRequest;
+use Modules\ExchangeRates\Http\Requests\UpdateRateRequest;
 use Modules\ExchangeRates\Http\Resources\ExchangeRateResource;
 
+/**
+ * ExchangeRate API Controller.
+ *
+ * Follows Clean Architecture principles.
+ */
 class ExchangeRateController extends BaseController
 {
     public function __construct(
@@ -50,7 +60,7 @@ class ExchangeRateController extends BaseController
      */
     public function fetch(Request $request): JsonResponse
     {
-        $result = $this->queryService->fetchFromApi($request->provider);
+        $result = $this->commandService->fetchFromApi($request->provider);
         return $result['success'] 
             ? $this->success($result, 'Rates fetched successfully')
             : $this->error($result['error'], 500);
@@ -62,20 +72,14 @@ class ExchangeRateController extends BaseController
      * @param Request $request The request containing currencies and rate value
      * @return JsonResponse The updated exchange rate
      */
-    public function update(Request $request): JsonResponse
+    public function update(UpdateRateRequest $request): JsonResponse
     {
-        $request->validate([
-            'base_currency_id' => 'required|uuid|exists:currencies,id',
-            'target_currency_id' => 'required|uuid|exists:currencies,id',
-            'rate' => 'required|numeric|min:0.000001',
-        ]);
-
-        $rate = $this->queryService->updateManually(
-            $request->base_currency_id,
-            $request->target_currency_id,
-            $request->rate
+        $data = $request->validated();
+        $rate = $this->commandService->updateManually(
+            $data['base_currency_id'],
+            $data['target_currency_id'],
+            $data['rate']
         );
-
         return $this->success(new ExchangeRateResource($rate), 'Rate updated');
     }
 
@@ -87,9 +91,9 @@ class ExchangeRateController extends BaseController
      */
     public function freeze(string $id): JsonResponse
     {
-        $rate = ExchangeRate::find($id);
+        $rate = $this->queryService->findById($id);
         if (!$rate) return $this->notFound('Rate not found');
-        return $this->success(new ExchangeRateResource($this->queryService->freeze($rate)));
+        return $this->success(new ExchangeRateResource($this->commandService->freeze($id)));
     }
 
     /**
@@ -100,9 +104,9 @@ class ExchangeRateController extends BaseController
      */
     public function unfreeze(string $id): JsonResponse
     {
-        $rate = ExchangeRate::find($id);
+        $rate = $this->queryService->findById($id);
         if (!$rate) return $this->notFound('Rate not found');
-        return $this->success(new ExchangeRateResource($this->queryService->unfreeze($rate)));
+        return $this->success(new ExchangeRateResource($this->commandService->unfreeze($id)));
     }
 
     /**
@@ -127,7 +131,7 @@ class ExchangeRateController extends BaseController
      */
     public function cleanHistory(Request $request): JsonResponse
     {
-        $deleted = $this->queryService->cleanOldHistory($request->integer('days', 365));
+        $deleted = $this->commandService->cleanOldHistory($request->integer('days', 365));
         return $this->success(['deleted' => $deleted], 'Old history cleaned');
     }
 
@@ -137,10 +141,9 @@ class ExchangeRateController extends BaseController
      * @param Request $request The request containing history data array
      * @return JsonResponse Import result
      */
-    public function importHistory(Request $request): JsonResponse
+    public function importHistory(ImportHistoryRequest $request): JsonResponse
     {
-        $request->validate(['data' => 'required|array']);
-        $result = $this->queryService->importHistory($request->data);
+        $result = $this->commandService->importHistory($request->validated()['data']);
         return $this->success($result);
     }
 
@@ -162,16 +165,9 @@ class ExchangeRateController extends BaseController
      * @param Request $request The request containing alert configuration
      * @return JsonResponse The created alert (HTTP 201)
      */
-    public function createAlert(Request $request): JsonResponse
+    public function createAlert(CreateAlertRequest $request): JsonResponse
     {
-        $request->validate([
-            'base_currency_id' => 'required|uuid|exists:currencies,id',
-            'target_currency_id' => 'required|uuid|exists:currencies,id',
-            'condition' => 'required|in:above,below,equals',
-            'threshold' => 'required|numeric|min:0',
-        ]);
-
-        return $this->created($this->queryService->createAlert($request->all()));
+        return $this->created($this->commandService->createAlert($request->validated()));
     }
 
     /**
@@ -182,9 +178,9 @@ class ExchangeRateController extends BaseController
      */
     public function deactivateAlert(string $id): JsonResponse
     {
-        $alert = RateAlert::find($id);
+        $alert = $this->queryService->findAlert($id);
         if (!$alert) return $this->notFound('Alert not found');
-        return $this->success($this->queryService->deactivateAlert($alert));
+        return $this->success($this->commandService->deactivateAlert($id));
     }
 
     /**
@@ -193,20 +189,14 @@ class ExchangeRateController extends BaseController
      * @param Request $request The request containing amount and currency IDs
      * @return JsonResponse Converted amount
      */
-    public function convert(Request $request): JsonResponse
+    public function convert(ConvertRequest $request): JsonResponse
     {
-        $request->validate([
-            'amount' => 'required|numeric|min:0',
-            'from_currency_id' => 'required|uuid|exists:currencies,id',
-            'to_currency_id' => 'required|uuid|exists:currencies,id',
-        ]);
-
+        $data = $request->validated();
         $result = $this->queryService->convert(
-            $request->amount,
-            $request->from_currency_id,
-            $request->to_currency_id
+            $data['amount'],
+            $data['from_currency_id'],
+            $data['to_currency_id']
         );
-
         return $this->success(['converted_amount' => $result]);
     }
 
@@ -226,10 +216,9 @@ class ExchangeRateController extends BaseController
      * @param Request $request The request containing currency_id
      * @return JsonResponse Count of updated products
      */
-    public function updateProductPrices(Request $request): JsonResponse
+    public function updateProductPrices(UpdateProductPricesRequest $request): JsonResponse
     {
-        $request->validate(['currency_id' => 'required|uuid|exists:currencies,id']);
-        $updated = $this->queryService->updateProductPrices($request->currency_id);
+        $updated = $this->commandService->updateProductPrices($request->validated()['currency_id']);
         return $this->success(['updated' => $updated]);
     }
 }

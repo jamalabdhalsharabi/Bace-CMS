@@ -6,14 +6,18 @@ namespace Modules\Comments\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Modules\Comments\Application\Services\CommentCommandService;
 use Modules\Comments\Application\Services\CommentQueryService;
+use Modules\Comments\Http\Requests\BanUserRequest;
+use Modules\Comments\Http\Requests\BulkCommentIdsRequest;
 use Modules\Comments\Http\Requests\CreateCommentRequest;
+use Modules\Comments\Http\Requests\IndexCommentsRequest;
+use Modules\Comments\Http\Requests\LockCommentsRequest;
 use Modules\Comments\Http\Requests\ReplyCommentRequest;
 use Modules\Comments\Http\Requests\ReportCommentRequest;
+use Modules\Comments\Http\Requests\UnbanUserRequest;
 use Modules\Comments\Http\Requests\VoteCommentRequest;
-use Modules\Comments\Http\Requests\LockCommentsRequest;
-use Modules\Comments\Http\Requests\BanUserRequest;
 use Modules\Comments\Http\Resources\CommentResource;
 use Modules\Core\Http\Controllers\BaseController;
 
@@ -26,19 +30,14 @@ class CommentController extends BaseController
     }
 
     /** Get comments for a specific commentable model. */
-    public function index(Request $request): JsonResponse
+    public function index(IndexCommentsRequest $request): JsonResponse
     {
-        $request->validate([
-            'commentable_type' => 'required|string',
-            'commentable_id' => 'required|uuid',
-        ]);
-
+        $data = $request->validated();
         $comments = $this->queryService->getForModel(
-            $request->commentable_type,
-            $request->commentable_id,
+            $data['commentable_type'],
+            $data['commentable_id'],
             $request->integer('per_page', 20)
         );
-
         return $this->paginated(CommentResource::collection($comments)->resource);
     }
 
@@ -65,7 +64,7 @@ class CommentController extends BaseController
     /** Create a new comment. */
     public function store(CreateCommentRequest $request): JsonResponse
     {
-        $comment = $this->queryService->create($request->validated());
+        $comment = $this->commandService->create($request->validated());
 
         return $this->created(new CommentResource($comment), 'Comment submitted successfully');
     }
@@ -79,7 +78,7 @@ class CommentController extends BaseController
             return $this->notFound('Parent comment not found');
         }
 
-        $comment = $this->queryService->reply($parent, $request->validated());
+        $comment = $this->commandService->reply($parent, $request->validated());
 
         return $this->created(new CommentResource($comment), 'Reply submitted successfully');
     }
@@ -93,7 +92,7 @@ class CommentController extends BaseController
             return $this->notFound('Comment not found');
         }
 
-        $this->queryService->delete($comment);
+        $this->commandService->delete($comment);
 
         return $this->success(null, 'Comment deleted successfully');
     }
@@ -107,7 +106,7 @@ class CommentController extends BaseController
             return $this->notFound('Comment not found');
         }
 
-        $comment = $this->queryService->approve($comment);
+        $comment = $this->commandService->approve($comment);
 
         return $this->success(new CommentResource($comment), 'Comment approved');
     }
@@ -121,7 +120,7 @@ class CommentController extends BaseController
             return $this->notFound('Comment not found');
         }
 
-        $comment = $this->queryService->reject($comment);
+        $comment = $this->commandService->reject($comment);
 
         return $this->success(new CommentResource($comment), 'Comment rejected');
     }
@@ -176,7 +175,7 @@ class CommentController extends BaseController
     {
         $comment = $this->queryService->find($id);
         if (!$comment) return $this->notFound('Comment not found');
-        $this->commandService->report($comment, $request->reason, auth()->id());
+        $this->commandService->report($comment, $request->reason, Auth::id());
         return $this->success(null, 'Comment reported');
     }
 
@@ -203,7 +202,7 @@ class CommentController extends BaseController
     {
         $comment = $this->queryService->find($id);
         if (!$comment) return $this->notFound('Comment not found');
-        $this->commandService->vote($comment, $request->type, auth()->id());
+        $this->commandService->vote($comment, $request->type, Auth::id());
         return $this->success(null, 'Vote recorded');
     }
 
@@ -238,26 +237,23 @@ class CommentController extends BaseController
     }
 
     /** Unban a user. */
-    public function unbanUser(Request $request): JsonResponse
+    public function unbanUser(UnbanUserRequest $request): JsonResponse
     {
-        $request->validate(['user_id' => 'required|uuid']);
-        $this->commandService->unbanUser($request->user_id);
+        $this->commandService->unbanUser($request->validated()['user_id']);
         return $this->success(null, 'User unbanned');
     }
 
     /** Bulk approve comments. */
-    public function bulkApprove(Request $request): JsonResponse
+    public function bulkApprove(BulkCommentIdsRequest $request): JsonResponse
     {
-        $request->validate(['ids' => 'required|array', 'ids.*' => 'uuid']);
-        $count = $this->commandService->bulkApprove($request->ids);
+        $count = $this->commandService->bulkApprove($request->validated()['ids']);
         return $this->success(['approved' => $count], 'Comments approved');
     }
 
     /** Bulk reject comments. */
-    public function bulkReject(Request $request): JsonResponse
+    public function bulkReject(BulkCommentIdsRequest $request): JsonResponse
     {
-        $request->validate(['ids' => 'required|array', 'ids.*' => 'uuid']);
-        $count = $this->commandService->bulkReject($request->ids);
+        $count = $this->commandService->bulkReject($request->validated()['ids']);
         return $this->success(['rejected' => $count], 'Comments rejected');
     }
 

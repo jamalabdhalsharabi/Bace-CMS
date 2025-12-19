@@ -18,9 +18,27 @@ use Modules\Media\Domain\Models\MediaFolder;
 
 /**
  * Media Command Service.
+ *
+ * Orchestrates all write operations for media via Action classes.
+ * No direct Model usage - delegates all mutations to dedicated Actions.
+ *
+ * @package Modules\Media\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class MediaCommandService
 {
+    /**
+     * Create a new MediaCommandService instance.
+     *
+     * @param UploadMediaAction $uploadAction Action for uploading media
+     * @param DeleteMediaAction $deleteAction Action for deleting media
+     * @param UpdateMediaAction $updateAction Action for updating media
+     * @param MoveMediaAction $moveAction Action for moving media
+     * @param DuplicateMediaAction $duplicateAction Action for duplicating media
+     * @param CreateFolderAction $createFolderAction Action for creating folders
+     * @param DeleteFolderAction $deleteFolderAction Action for deleting folders
+     */
     public function __construct(
         private readonly UploadMediaAction $uploadAction,
         private readonly DeleteMediaAction $deleteAction,

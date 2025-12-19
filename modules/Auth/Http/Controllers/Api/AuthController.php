@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 use Modules\Auth\Application\Services\AuthCommandService;
 use Modules\Auth\Domain\DTO\LoginData;
 use Modules\Auth\Domain\DTO\RegisterData;
+use Modules\Auth\Http\Requests\ForgotPasswordRequest;
 use Modules\Auth\Http\Requests\LoginRequest;
 use Modules\Auth\Http\Requests\RegisterRequest;
+use Modules\Auth\Http\Requests\ResetPasswordRequest;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Users\Http\Resources\UserResource;
 
@@ -64,29 +66,16 @@ class AuthController extends BaseController
         ]);
     }
 
-    public function forgotPassword(Request $request): JsonResponse
+    public function forgotPassword(ForgotPasswordRequest $request): JsonResponse
     {
-        $request->validate(['email' => 'required|email']);
-
-        $this->authService->forgotPassword($request->email);
-
+        $this->authService->forgotPassword($request->validated()['email']);
         return $this->success(null, 'Password reset link sent');
     }
 
-    public function resetPassword(Request $request): JsonResponse
+    public function resetPassword(ResetPasswordRequest $request): JsonResponse
     {
-        $request->validate([
-            'token' => 'required',
-            'email' => 'required|email',
-            'password' => 'required|min:8|confirmed',
-        ]);
-
-        $this->authService->resetPassword(
-            $request->token,
-            $request->email,
-            $request->password
-        );
-
+        $data = $request->validated();
+        $this->authService->resetPassword($data['token'], $data['email'], $data['password']);
         return $this->success(null, 'Password reset successfully');
     }
 }

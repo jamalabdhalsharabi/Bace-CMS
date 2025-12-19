@@ -9,7 +9,13 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Pricing\Application\Services\PlanCommandService;
 use Modules\Pricing\Application\Services\PlanQueryService;
+use Modules\Pricing\Http\Requests\ClonePlanRequest;
+use Modules\Pricing\Http\Requests\ComparePlansRequest;
 use Modules\Pricing\Http\Requests\CreatePlanRequest;
+use Modules\Pricing\Http\Requests\ImportPlansRequest;
+use Modules\Pricing\Http\Requests\LinkPlanRequest;
+use Modules\Pricing\Http\Requests\ReorderPlansRequest;
+use Modules\Pricing\Http\Requests\UnlinkPlanRequest;
 use Modules\Pricing\Http\Requests\UpdatePlanRequest;
 use Modules\Pricing\Http\Resources\PlanResource;
 
@@ -75,7 +81,7 @@ class PlanController extends BaseController
      */
     public function store(CreatePlanRequest $request): JsonResponse
     {
-        return $this->created(new PlanResource($this->queryService->create($request->validated())));
+        return $this->created(new PlanResource($this->commandService->create($request->validated())));
     }
 
     /**
@@ -89,7 +95,7 @@ class PlanController extends BaseController
     {
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->queryService->update($plan, $request->validated())));
+        return $this->success(new PlanResource($this->commandService->update($plan, $request->validated())));
     }
 
     /**
@@ -104,7 +110,7 @@ class PlanController extends BaseController
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         try {
-            $this->queryService->delete($plan);
+            $this->commandService->delete($plan);
             return $this->success(null, 'Plan deleted');
         } catch (\Exception $e) {
             return $this->error($e->getMessage(), 422);
@@ -121,7 +127,7 @@ class PlanController extends BaseController
     {
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->queryService->activate($plan)));
+        return $this->success(new PlanResource($this->commandService->activate($plan)));
     }
 
     /**
@@ -134,7 +140,7 @@ class PlanController extends BaseController
     {
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->queryService->deactivate($plan)));
+        return $this->success(new PlanResource($this->commandService->deactivate($plan)));
     }
 
     /**
@@ -147,7 +153,7 @@ class PlanController extends BaseController
     {
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->queryService->setAsDefault($plan)));
+        return $this->success(new PlanResource($this->commandService->setAsDefault($plan)));
     }
 
     /**
@@ -160,7 +166,7 @@ class PlanController extends BaseController
     {
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->success(new PlanResource($this->queryService->setAsRecommended($plan)));
+        return $this->success(new PlanResource($this->commandService->setAsRecommended($plan)));
     }
 
     /**
@@ -169,12 +175,10 @@ class PlanController extends BaseController
      * @param Request $request The request containing comma-separated plan slugs
      * @return JsonResponse Comparison data for the specified plans
      */
-    public function compare(Request $request): JsonResponse
+    public function compare(ComparePlansRequest $request): JsonResponse
     {
-        $request->validate(['plans' => 'required|string']);
-        $planSlugs = explode(',', $request->plans);
-        $plans = \Modules\Pricing\Domain\Models\PricingPlan::whereIn('slug', $planSlugs)->pluck('id')->toArray();
-        return $this->success($this->queryService->compare($plans));
+        $planSlugs = explode(',', $request->validated()['plans']);
+        return $this->success($this->commandService->compare($planSlugs));
     }
 
     /**
@@ -184,12 +188,11 @@ class PlanController extends BaseController
      * @param string $id The UUID of the plan to clone
      * @return JsonResponse The cloned plan (HTTP 201) or 404 error
      */
-    public function clone(Request $request, string $id): JsonResponse
+    public function clone(ClonePlanRequest $request, string $id): JsonResponse
     {
-        $request->validate(['new_slug' => 'required|string|max:50|unique:pricing_plans,slug']);
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
-        return $this->created(new PlanResource($this->queryService->clone($plan, $request->new_slug)));
+        return $this->created(new PlanResource($this->commandService->clone($id, $request->validated()['new_slug'])));
     }
 
     /**
@@ -198,10 +201,9 @@ class PlanController extends BaseController
      * @param Request $request The request containing order array of UUIDs
      * @return JsonResponse Success message
      */
-    public function reorder(Request $request): JsonResponse
+    public function reorder(ReorderPlansRequest $request): JsonResponse
     {
-        $request->validate(['order' => 'required|array', 'order.*' => 'uuid']);
-        $this->queryService->reorder($request->order);
+        $this->commandService->reorder($request->validated()['order']);
         return $this->success(null, 'Plans reordered');
     }
 
@@ -235,13 +237,10 @@ class PlanController extends BaseController
      * @param Request $request The request containing data array and optional mode
      * @return JsonResponse Import result
      */
-    public function import(Request $request): JsonResponse
+    public function import(ImportPlansRequest $request): JsonResponse
     {
-        $request->validate([
-            'data' => 'required|array',
-            'mode' => 'nullable|in:merge,skip',
-        ]);
-        return $this->success($this->queryService->import($request->data, $request->mode ?? 'merge'));
+        $data = $request->validated();
+        return $this->success($this->commandService->import($data['data'], $data['mode'] ?? 'merge'));
     }
 
     /**
@@ -251,17 +250,13 @@ class PlanController extends BaseController
      * @param string $id The UUID of the plan
      * @return JsonResponse The created link (HTTP 201) or 404 error
      */
-    public function link(Request $request, string $id): JsonResponse
+    public function link(LinkPlanRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'entity_type' => 'required|string|in:product,service,event,project',
-            'entity_id' => 'required|uuid',
-            'is_required' => 'nullable|boolean',
-        ]);
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         
-        $link = $this->queryService->link($plan, $request->entity_type, $request->entity_id, $request->boolean('is_required'));
+        $data = $request->validated();
+        $link = $this->commandService->link($id, $data['entity_type'], $data['entity_id'], $data['is_required'] ?? false);
         return $this->created(['id' => $link->id, 'message' => 'Link created']);
     }
 
@@ -272,16 +267,13 @@ class PlanController extends BaseController
      * @param string $id The UUID of the plan
      * @return JsonResponse Success message or 404 error
      */
-    public function unlink(Request $request, string $id): JsonResponse
+    public function unlink(UnlinkPlanRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'entity_type' => 'required|string|in:product,service,event,project',
-            'entity_id' => 'required|uuid',
-        ]);
         $plan = $this->queryService->find($id);
         if (!$plan) return $this->notFound('Plan not found');
         
-        $deleted = $this->queryService->unlink($plan, $request->entity_type, $request->entity_id);
+        $data = $request->validated();
+        $deleted = $this->commandService->unlink($id, $data['entity_type'], $data['entity_id']);
         return $deleted ? $this->success(null, 'Link removed') : $this->notFound('Link not found');
     }
 

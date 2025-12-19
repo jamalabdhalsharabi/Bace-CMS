@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Menu\Application\Services\MenuCommandService;
 use Modules\Menu\Application\Services\MenuQueryService;
-use Modules\Menu\Domain\Models\MenuItem;
 use Modules\Menu\Http\Requests\CreateMenuItemRequest;
 use Modules\Menu\Http\Requests\CreateMenuRequest;
 use Modules\Menu\Http\Requests\ReorderMenuItemsRequest;
@@ -105,7 +104,7 @@ class MenuController extends BaseController
      */
     public function store(CreateMenuRequest $request): JsonResponse
     {
-        $menu = $this->queryService->create($request->validated());
+        $menu = $this->commandService->create($request->validated());
 
         return $this->created(new MenuResource($menu));
     }
@@ -125,7 +124,7 @@ class MenuController extends BaseController
             return $this->notFound('Menu not found');
         }
 
-        $menu = $this->queryService->update($menu, $request->validated());
+        $menu = $this->commandService->update($menu, $request->validated());
 
         return $this->success(new MenuResource($menu));
     }
@@ -144,7 +143,7 @@ class MenuController extends BaseController
             return $this->notFound('Menu not found');
         }
 
-        $this->queryService->delete($menu);
+        $this->commandService->delete($menu);
 
         return $this->success(null, 'Menu deleted');
     }
@@ -164,47 +163,32 @@ class MenuController extends BaseController
             return $this->notFound('Menu not found');
         }
 
-        $item = $this->queryService->addItem($menu, $request->validated());
+        $item = $this->commandService->addItem($menu, $request->validated());
 
         return $this->created(new MenuItemResource($item));
     }
 
     /**
      * Update a menu item.
-     *
-     * @param UpdateMenuItemRequest $request The validated request containing updated item data
-     * @param string $itemId The UUID of the menu item to update
-     * @return JsonResponse The updated menu item or 404 error
      */
     public function updateItem(UpdateMenuItemRequest $request, string $itemId): JsonResponse
     {
-        $item = MenuItem::find($itemId);
+        $item = $this->queryService->findItem($itemId);
+        if (!$item) return $this->notFound('Menu item not found');
 
-        if (!$item) {
-            return $this->notFound('Menu item not found');
-        }
-
-        $item = $this->queryService->updateItem($item, $request->validated());
-
-        return $this->success(new MenuItemResource($item));
+        $updated = $this->commandService->updateItem($itemId, $request->validated());
+        return $this->success(new MenuItemResource($updated));
     }
 
     /**
      * Delete a menu item.
-     *
-     * @param string $itemId The UUID of the menu item to delete
-     * @return JsonResponse Success message or 404 error
      */
     public function deleteItem(string $itemId): JsonResponse
     {
-        $item = MenuItem::find($itemId);
+        $item = $this->queryService->findItem($itemId);
+        if (!$item) return $this->notFound('Menu item not found');
 
-        if (!$item) {
-            return $this->notFound('Menu item not found');
-        }
-
-        $this->queryService->deleteItem($item);
-
+        $this->commandService->deleteItem($itemId);
         return $this->success(null, 'Menu item deleted');
     }
 
@@ -216,7 +200,7 @@ class MenuController extends BaseController
      */
     public function reorderItems(ReorderMenuItemsRequest $request): JsonResponse
     {
-        $this->queryService->reorderItems($request->validated()['order']);
+        $this->commandService->reorderItems($request->validated()['order']);
 
         return $this->success(null, 'Items reordered');
     }

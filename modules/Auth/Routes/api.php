@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Modules\Auth\Http\Controllers\Api\AuthController;
 use Modules\Auth\Http\Controllers\Api\PasswordController;
 
-Route::prefix('api/v1/auth')->middleware(['api'])->name('api.auth.')->group(function () {
+Route::prefix('api/v1/auth')->middleware(['api'])->name('api.v1.auth.')->group(function () {
     Route::post('/register', [AuthController::class, 'register'])->name('register');
     Route::post('/login', [AuthController::class, 'login'])->name('login');
     Route::post('/forgot-password', [PasswordController::class, 'forgot'])->name('password.forgot');

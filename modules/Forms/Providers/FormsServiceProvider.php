@@ -13,6 +13,7 @@ use Modules\Forms\Application\Actions\ToggleFormAction;
 use Modules\Forms\Application\Actions\UpdateFormAction;
 use Modules\Forms\Application\Services\FormCommandService;
 use Modules\Forms\Application\Services\FormQueryService;
+use Modules\Forms\Domain\Contracts\FormRepositoryInterface;
 use Modules\Forms\Domain\Models\Form;
 use Modules\Forms\Domain\Repositories\FormRepository;
 
@@ -41,6 +42,7 @@ class FormsServiceProvider extends ServiceProvider
 
     protected function registerRepositories(): void
     {
+        $this->app->bind(FormRepositoryInterface::class, FormRepository::class);
         $this->app->singleton(FormRepository::class, fn ($app) => 
             new FormRepository(new Form())
         );

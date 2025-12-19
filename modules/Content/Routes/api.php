@@ -1,51 +1,91 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Modules\Content\Http\Controllers\Api\ArticleControllerV2;
+use Modules\Content\Http\Controllers\Api\ArticleListingController;
+use Modules\Content\Http\Controllers\Api\ArticleManagementController;
+use Modules\Content\Http\Controllers\Api\ArticleSocialController;
+use Modules\Content\Http\Controllers\Api\ArticleTaxonomyController;
+use Modules\Content\Http\Controllers\Api\ArticleWorkflowController;
 
 /*
 |--------------------------------------------------------------------------
-| Content Module API V2 Routes
+| Content Module API V1 Routes - Feature-Based Controllers
 |--------------------------------------------------------------------------
 |
-| Clean Architecture routes using specialized services.
+| Clean Architecture routes with specialized controllers following
+| Single Responsibility Principle.
 |
 */
 
-Route::prefix('api/v2')->middleware(['api'])->group(function () {
-    // Public routes
-    Route::get('/articles', [ArticleControllerV2::class, 'index'])->name('api.v2.articles.index');
-    Route::get('/articles/slug/{slug}', [ArticleControllerV2::class, 'showBySlug'])->name('api.v2.articles.slug');
+Route::prefix('api/v1/articles')->middleware(['api'])->name('api.v1.articles.')->group(function () {
 
-    // Protected routes
+    /*
+    |--------------------------------------------------------------------------
+    | Article Listing Routes (Read-Only)
+    |--------------------------------------------------------------------------
+    */
+    Route::get('/', [ArticleListingController::class, 'index'])->name('index');
+    Route::get('/slug/{slug}', [ArticleListingController::class, 'showBySlug'])->name('slug');
+    Route::get('/{id}', [ArticleListingController::class, 'show'])->name('show');
+    Route::get('/{id}/analytics', [ArticleListingController::class, 'analytics'])->name('analytics');
+    Route::get('/{id}/revisions', [ArticleListingController::class, 'revisions'])->name('revisions');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Protected Routes
+    |--------------------------------------------------------------------------
+    */
     Route::middleware('auth:sanctum')->group(function () {
-        // Articles CRUD
-        Route::post('/articles', [ArticleControllerV2::class, 'store'])->name('api.v2.articles.store');
-        Route::get('/articles/{id}', [ArticleControllerV2::class, 'show'])->name('api.v2.articles.show');
-        Route::put('/articles/{id}', [ArticleControllerV2::class, 'update'])->name('api.v2.articles.update');
-        Route::delete('/articles/{id}', [ArticleControllerV2::class, 'destroy'])->name('api.v2.articles.destroy');
-        Route::post('/articles/{id}/restore', [ArticleControllerV2::class, 'restore'])->name('api.v2.articles.restore');
 
-        // Articles Workflow
-        Route::post('/articles/{id}/submit-review', [ArticleControllerV2::class, 'submitForReview'])->name('api.v2.articles.submit-review');
-        Route::post('/articles/{id}/start-review', [ArticleControllerV2::class, 'startReview'])->name('api.v2.articles.start-review');
-        Route::post('/articles/{id}/approve', [ArticleControllerV2::class, 'approve'])->name('api.v2.articles.approve');
-        Route::post('/articles/{id}/reject', [ArticleControllerV2::class, 'reject'])->name('api.v2.articles.reject');
-        Route::post('/articles/{id}/publish', [ArticleControllerV2::class, 'publish'])->name('api.v2.articles.publish');
-        Route::post('/articles/{id}/unpublish', [ArticleControllerV2::class, 'unpublish'])->name('api.v2.articles.unpublish');
-        Route::post('/articles/{id}/schedule', [ArticleControllerV2::class, 'schedule'])->name('api.v2.articles.schedule');
-        Route::post('/articles/{id}/archive', [ArticleControllerV2::class, 'archive'])->name('api.v2.articles.archive');
-        Route::post('/articles/{id}/unarchive', [ArticleControllerV2::class, 'unarchive'])->name('api.v2.articles.unarchive');
+        /*
+        |--------------------------------------------------------------------------
+        | Article Management Routes (CRUD)
+        |--------------------------------------------------------------------------
+        */
+        Route::post('/', [ArticleManagementController::class, 'store'])->name('store');
+        Route::put('/{id}', [ArticleManagementController::class, 'update'])->name('update');
+        Route::delete('/{id}', [ArticleManagementController::class, 'destroy'])->name('destroy');
+        Route::delete('/{id}/force', [ArticleManagementController::class, 'forceDestroy'])->name('force-destroy');
+        Route::post('/{id}/restore', [ArticleManagementController::class, 'restore'])->name('restore');
+        Route::post('/{id}/duplicate', [ArticleManagementController::class, 'duplicate'])->name('duplicate');
+        Route::post('/{id}/restore-revision', [ArticleManagementController::class, 'restoreRevision'])->name('restore-revision');
 
-        // Articles Features
-        Route::post('/articles/{id}/duplicate', [ArticleControllerV2::class, 'duplicate'])->name('api.v2.articles.duplicate');
+        /*
+        |--------------------------------------------------------------------------
+        | Article Workflow Routes
+        |--------------------------------------------------------------------------
+        */
+        Route::post('/{id}/publish', [ArticleWorkflowController::class, 'publish'])->name('publish');
+        Route::post('/{id}/unpublish', [ArticleWorkflowController::class, 'unpublish'])->name('unpublish');
+        Route::post('/{id}/schedule', [ArticleWorkflowController::class, 'schedule'])->name('schedule');
+        Route::post('/{id}/submit-review', [ArticleWorkflowController::class, 'submitForReview'])->name('submit-review');
+        Route::post('/{id}/start-review', [ArticleWorkflowController::class, 'startReview'])->name('start-review');
+        Route::post('/{id}/approve', [ArticleWorkflowController::class, 'approve'])->name('approve');
+        Route::post('/{id}/reject', [ArticleWorkflowController::class, 'reject'])->name('reject');
+        Route::post('/{id}/archive', [ArticleWorkflowController::class, 'archive'])->name('archive');
+        Route::post('/{id}/unarchive', [ArticleWorkflowController::class, 'unarchive'])->name('unarchive');
+        Route::post('/{id}/pin', [ArticleWorkflowController::class, 'pin'])->name('pin');
+        Route::post('/{id}/unpin', [ArticleWorkflowController::class, 'unpin'])->name('unpin');
 
-        // Articles Taxonomy
-        Route::put('/articles/{id}/categories', [ArticleControllerV2::class, 'syncCategories'])->name('api.v2.articles.categories');
-        Route::post('/articles/{id}/tags', [ArticleControllerV2::class, 'addTags'])->name('api.v2.articles.add-tags');
+        /*
+        |--------------------------------------------------------------------------
+        | Article Taxonomy Routes
+        |--------------------------------------------------------------------------
+        */
+        Route::put('/{id}/categories', [ArticleTaxonomyController::class, 'syncCategories'])->name('sync-categories');
+        Route::post('/{id}/tags', [ArticleTaxonomyController::class, 'addTags'])->name('add-tags');
+        Route::delete('/{id}/tags', [ArticleTaxonomyController::class, 'removeTags'])->name('remove-tags');
+        Route::post('/{id}/related', [ArticleTaxonomyController::class, 'attachRelated'])->name('attach-related');
 
-        // Articles Comments
-        Route::post('/articles/{id}/comments/enable', [ArticleControllerV2::class, 'enableComments'])->name('api.v2.articles.enable-comments');
-        Route::post('/articles/{id}/comments/disable', [ArticleControllerV2::class, 'disableComments'])->name('api.v2.articles.disable-comments');
+        /*
+        |--------------------------------------------------------------------------
+        | Article Social Routes
+        |--------------------------------------------------------------------------
+        */
+        Route::post('/{id}/share', [ArticleSocialController::class, 'shareOnSocial'])->name('share');
+        Route::post('/{id}/newsletter', [ArticleSocialController::class, 'sendToNewsletter'])->name('newsletter');
+        Route::post('/{id}/comments/enable', [ArticleSocialController::class, 'enableComments'])->name('enable-comments');
+        Route::post('/{id}/comments/disable', [ArticleSocialController::class, 'disableComments'])->name('disable-comments');
+        Route::post('/{id}/comments/close', [ArticleSocialController::class, 'closeComments'])->name('close-comments');
     });
 });

@@ -16,11 +16,44 @@ use Modules\Content\Domain\Models\Article;
 /**
  * Article Command Service.
  *
- * Handles write operations for articles.
- * Orchestrates actions for complex workflows.
+ * Application service responsible for orchestrating all write operations
+ * (commands) related to articles. Follows the Command pattern and CQRS
+ * principles by separating write operations from read operations.
+ *
+ * This service acts as a facade that delegates specific operations to
+ * dedicated Action classes, ensuring Single Responsibility Principle
+ * and making each operation independently testable.
+ *
+ * Responsibilities:
+ * - Create new articles with translations
+ * - Update existing articles
+ * - Publish/unpublish/schedule articles
+ * - Delete/restore articles (soft delete)
+ * - Duplicate articles with translations
+ *
+ * @package Modules\Content\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
+ *
+ * @see ArticleQueryService For read operations
+ * @see CreateArticleAction
+ * @see UpdateArticleAction
+ * @see PublishArticleAction
  */
 final class ArticleCommandService
 {
+    /**
+     * Create a new ArticleCommandService instance.
+     *
+     * All action dependencies are injected via constructor,
+     * enabling loose coupling and easy testing through mocking.
+     *
+     * @param CreateArticleAction    $createAction    Handles article creation
+     * @param UpdateArticleAction    $updateAction    Handles article updates
+     * @param PublishArticleAction   $publishAction   Handles publish/unpublish/schedule
+     * @param DeleteArticleAction    $deleteAction    Handles delete/restore operations
+     * @param DuplicateArticleAction $duplicateAction Handles article duplication
+     */
     public function __construct(
         private readonly CreateArticleAction $createAction,
         private readonly UpdateArticleAction $updateAction,
