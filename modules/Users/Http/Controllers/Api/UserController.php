@@ -13,20 +13,15 @@ use Modules\Users\Http\Requests\CreateUserRequest;
 use Modules\Users\Http\Requests\UpdateUserRequest;
 use Modules\Users\Http\Resources\UserResource;
 
+/**
+ * User API Controller.
+ *
+ * Follows Clean Architecture principles:
+ * - No validation logic (delegated to Form Requests)
+ * - No business logic (delegated to Services)
+ */
 class UserController extends BaseController
 {
-    /**
-     * The user service instance for handling user-related business logic.
-     *
-     * @var UserServiceContract
-     */
-    protected UserServiceContract $userService;
-
-    /**
-     * Create a new UserController instance.
-     *
-     * @param UserServiceContract $userService The user service contract implementation
-     */
     public function __construct(
         protected UserQueryService $queryService,
         protected UserCommandService $commandService
@@ -35,11 +30,6 @@ class UserController extends BaseController
 
     /**
      * Display a paginated listing of users.
-     *
-     * Supports filtering by search term, status, and verification status.
-     *
-     * @param Request $request The incoming HTTP request containing filter parameters
-     * @return JsonResponse Paginated list of users wrapped in UserResource
      */
     public function index(Request $request): JsonResponse
     {
@@ -48,117 +38,72 @@ class UserController extends BaseController
             perPage: $request->integer('per_page', 15)
         );
 
-        return $this->paginated(
-            UserResource::collection($users)->resource
-        );
+        return $this->paginated(UserResource::collection($users)->resource);
     }
 
     /**
-     * Display the specified user by their UUID.
-     *
-     * @param string $id The UUID of the user to retrieve
-     * @return JsonResponse The user data wrapped in UserResource or 404 error
+     * Display the specified user.
      */
     public function show(string $id): JsonResponse
     {
-        $user = $this->userService->find($id);
-
-        if (!$user) {
-            return $this->notFound('User not found');
-        }
-
-        return $this->success(new UserResource($user));
+        $user = $this->queryService->find($id);
+        return $user ? $this->success(new UserResource($user)) : $this->notFound('User not found');
     }
 
     /**
-     * Store a newly created user in the database.
-     *
-     * @param CreateUserRequest $request The validated request containing user data
-     * @return JsonResponse The newly created user wrapped in UserResource (HTTP 201)
+     * Store a newly created user.
      */
     public function store(CreateUserRequest $request): JsonResponse
     {
-        $dto = CreateUserDTO::fromRequest($request->validated());
-        $user = $this->userService->create($dto);
-
+        $user = $this->commandService->create($request->validated());
         return $this->created(new UserResource($user), 'User created successfully');
     }
 
     /**
-     * Update the specified user in the database.
-     *
-     * @param UpdateUserRequest $request The validated request containing updated user data
-     * @param string $id The UUID of the user to update
-     * @return JsonResponse The updated user wrapped in UserResource or 404 error
+     * Update the specified user.
      */
     public function update(UpdateUserRequest $request, string $id): JsonResponse
     {
-        $user = $this->userService->find($id);
+        $user = $this->queryService->find($id);
+        if (!$user) return $this->notFound('User not found');
 
-        if (!$user) {
-            return $this->notFound('User not found');
-        }
-
-        $dto = UpdateUserDTO::fromRequest($request->validated());
-        $user = $this->userService->update($user, $dto);
-
-        return $this->success(new UserResource($user), 'User updated successfully');
+        $updated = $this->commandService->update($id, $request->validated());
+        return $this->success(new UserResource($updated), 'User updated successfully');
     }
 
     /**
-     * Delete the specified user from the database.
-     *
-     * @param string $id The UUID of the user to delete
-     * @return JsonResponse Success message or 404 error
+     * Delete the specified user.
      */
     public function destroy(string $id): JsonResponse
     {
-        $user = $this->userService->find($id);
+        $user = $this->queryService->find($id);
+        if (!$user) return $this->notFound('User not found');
 
-        if (!$user) {
-            return $this->notFound('User not found');
-        }
-
-        $this->userService->delete($user);
-
+        $this->commandService->delete($id);
         return $this->success(null, 'User deleted successfully');
     }
 
     /**
-     * Activate a user account, enabling their access.
-     *
-     * @param string $id The UUID of the user to activate
-     * @return JsonResponse The activated user or 404 error
+     * Activate a user account.
      */
     public function activate(string $id): JsonResponse
     {
-        $user = $this->userService->find($id);
+        $user = $this->queryService->find($id);
+        if (!$user) return $this->notFound('User not found');
 
-        if (!$user) {
-            return $this->notFound('User not found');
-        }
-
-        $user = $this->userService->activate($user);
-
-        return $this->success(new UserResource($user), 'User activated successfully');
+        $activated = $this->commandService->activate($id);
+        return $this->success(new UserResource($activated), 'User activated successfully');
     }
 
     /**
-     * Suspend a user account, disabling their access.
-     *
-     * @param string $id The UUID of the user to suspend
-     * @return JsonResponse The suspended user or 404 error
+     * Suspend a user account.
      */
     public function suspend(string $id): JsonResponse
     {
-        $user = $this->userService->find($id);
+        $user = $this->queryService->find($id);
+        if (!$user) return $this->notFound('User not found');
 
-        if (!$user) {
-            return $this->notFound('User not found');
-        }
-
-        $user = $this->userService->suspend($user);
-
-        return $this->success(new UserResource($user), 'User suspended successfully');
+        $suspended = $this->commandService->suspend($id);
+        return $this->success(new UserResource($suspended), 'User suspended successfully');
     }
 }

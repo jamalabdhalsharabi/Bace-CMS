@@ -9,8 +9,14 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Forms\Application\Services\FormCommandService;
 use Modules\Forms\Application\Services\FormQueryService;
+use Modules\Forms\Http\Requests\UpdateSubmissionStatusRequest;
 use Modules\Forms\Http\Resources\FormSubmissionResource;
 
+/**
+ * Submission API Controller.
+ *
+ * Follows Clean Architecture principles.
+ */
 class SubmissionController extends BaseController
 {
     public function __construct(
@@ -31,16 +37,14 @@ class SubmissionController extends BaseController
     public function show(string $id): JsonResponse
     {
         $submission = $this->queryService->findSubmission($id);
-        if (!$submission) {
-            return $this->notFound('Submission not found');
-        }
-        return $this->success(new FormSubmissionResource($submission));
+        return $submission 
+            ? $this->success(new FormSubmissionResource($submission)) 
+            : $this->notFound('Submission not found');
     }
 
-    public function updateStatus(Request $request, string $id): JsonResponse
+    public function updateStatus(UpdateSubmissionStatusRequest $request, string $id): JsonResponse
     {
-        $request->validate(['status' => 'required|in:new,read,spam,processed']);
-        $submission = $this->commandService->updateSubmissionStatus($id, $request->status);
+        $submission = $this->commandService->updateSubmissionStatus($id, $request->validated()['status']);
         return $this->success(new FormSubmissionResource($submission));
     }
 

@@ -12,10 +12,20 @@ use Modules\Events\Domain\Repositories\EventRepository;
 /**
  * Event Query Service.
  *
- * Handles read-only operations for events.
+ * Handles all read operations for events via Repository pattern.
+ * No write operations - delegates to EventCommandService for mutations.
+ *
+ * @package Modules\Events\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class EventQueryService
 {
+    /**
+     * Create a new EventQueryService instance.
+     *
+     * @param EventRepository $repository The event repository
+     */
     public function __construct(
         private readonly EventRepository $repository
     ) {}

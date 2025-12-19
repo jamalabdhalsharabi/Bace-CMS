@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Localization\Http\Controllers\Api\LanguageController;
 
-Route::prefix('api/v1/languages')->middleware(['api'])->name('api.languages.')->group(function () {
+Route::prefix('api/v1/languages')->middleware(['api'])->name('api.v1.languages.')->group(function () {
     // Public routes
     Route::get('/', [LanguageController::class, 'index'])->name('index');
     Route::get('/all', [LanguageController::class, 'all'])->name('all');

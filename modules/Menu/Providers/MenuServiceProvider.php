@@ -12,6 +12,7 @@ use Modules\Menu\Application\Actions\ToggleMenuAction;
 use Modules\Menu\Application\Actions\UpdateMenuAction;
 use Modules\Menu\Application\Services\MenuCommandService;
 use Modules\Menu\Application\Services\MenuQueryService;
+use Modules\Menu\Domain\Contracts\MenuRepositoryInterface;
 use Modules\Menu\Domain\Models\Menu;
 use Modules\Menu\Domain\Repositories\MenuRepository;
 
@@ -40,6 +41,7 @@ class MenuServiceProvider extends ServiceProvider
 
     protected function registerRepositories(): void
     {
+        $this->app->bind(MenuRepositoryInterface::class, MenuRepository::class);
         $this->app->singleton(MenuRepository::class, fn ($app) => 
             new MenuRepository(new Menu())
         );

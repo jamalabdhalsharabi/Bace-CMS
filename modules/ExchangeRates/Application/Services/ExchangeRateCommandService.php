@@ -4,20 +4,43 @@ declare(strict_types=1);
 
 namespace Modules\ExchangeRates\Application\Services;
 
+use Modules\ExchangeRates\Application\Actions\CleanOldHistoryAction;
 use Modules\ExchangeRates\Application\Actions\ConvertCurrencyAction;
 use Modules\ExchangeRates\Application\Actions\CreateRateAlertAction;
 use Modules\ExchangeRates\Application\Actions\DeactivateRateAlertAction;
 use Modules\ExchangeRates\Application\Actions\FetchExchangeRatesAction;
 use Modules\ExchangeRates\Application\Actions\FreezeExchangeRateAction;
+use Modules\ExchangeRates\Application\Actions\ImportHistoryAction;
 use Modules\ExchangeRates\Application\Actions\UpdateExchangeRateAction;
 use Modules\ExchangeRates\Domain\DTO\ExchangeRateData;
 use Modules\ExchangeRates\Domain\DTO\RateAlertData;
 use Modules\ExchangeRates\Domain\Models\ExchangeRate;
-use Modules\ExchangeRates\Domain\Models\ExchangeRateHistory;
 use Modules\ExchangeRates\Domain\Models\RateAlert;
 
+/**
+ * Exchange Rate Command Service.
+ *
+ * Orchestrates all exchange rate write operations via Action classes.
+ * No direct Model usage - delegates all mutations to dedicated Actions.
+ *
+ * @package Modules\ExchangeRates\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 final class ExchangeRateCommandService
 {
+    /**
+     * Create a new ExchangeRateCommandService instance.
+     *
+     * @param UpdateExchangeRateAction $updateAction Action for updating rates
+     * @param FreezeExchangeRateAction $freezeAction Action for freezing rates
+     * @param FetchExchangeRatesAction $fetchAction Action for fetching from API
+     * @param CreateRateAlertAction $createAlertAction Action for creating alerts
+     * @param DeactivateRateAlertAction $deactivateAlertAction Action for deactivating alerts
+     * @param ConvertCurrencyAction $convertAction Action for currency conversion
+     * @param CleanOldHistoryAction $cleanAction Action for cleaning old history
+     * @param ImportHistoryAction $importAction Action for importing history
+     */
     public function __construct(
         private readonly UpdateExchangeRateAction $updateAction,
         private readonly FreezeExchangeRateAction $freezeAction,
@@ -25,6 +48,8 @@ final class ExchangeRateCommandService
         private readonly CreateRateAlertAction $createAlertAction,
         private readonly DeactivateRateAlertAction $deactivateAlertAction,
         private readonly ConvertCurrencyAction $convertAction,
+        private readonly CleanOldHistoryAction $cleanAction,
+        private readonly ImportHistoryAction $importAction,
     ) {}
 
     public function updateRate(ExchangeRateData $data): ExchangeRate
@@ -62,26 +87,27 @@ final class ExchangeRateCommandService
         return $this->convertAction->execute($amount, $fromCurrencyId, $toCurrencyId);
     }
 
+    /**
+     * Clean old history records.
+     *
+     * @param int $days Number of days to keep records
+     *
+     * @return int Number of deleted records
+     */
     public function cleanOldHistory(int $days = 365): int
     {
-        return ExchangeRateHistory::where('recorded_at', '<', now()->subDays($days))->delete();
+        return $this->cleanAction->execute($days);
     }
 
+    /**
+     * Import history from external data.
+     *
+     * @param array<int, array<string, mixed>> $data The history data
+     *
+     * @return array{imported: int} Import result
+     */
     public function importHistory(array $data): array
     {
-        $imported = 0;
-
-        foreach ($data as $item) {
-            ExchangeRateHistory::create([
-                'base_currency_id' => $item['base_currency_id'],
-                'target_currency_id' => $item['target_currency_id'],
-                'rate' => $item['rate'],
-                'provider' => $item['provider'] ?? 'import',
-                'recorded_at' => $item['recorded_at'] ?? now(),
-            ]);
-            $imported++;
-        }
-
-        return ['imported' => $imported];
+        return $this->importAction->execute($data);
     }
 }

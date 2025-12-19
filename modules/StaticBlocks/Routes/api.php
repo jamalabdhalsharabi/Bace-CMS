@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\StaticBlocks\Http\Controllers\Api\StaticBlockController;
 
-Route::prefix('api/v1/static-blocks')->middleware(['api'])->name('api.static-blocks.')->group(function () {
+Route::prefix('api/v1/static-blocks')->middleware(['api'])->name('api.v1.static-blocks.')->group(function () {
     // Public routes
     Route::get('/', [StaticBlockController::class, 'index'])->name('index');
     Route::get('/identifier/{identifier}', [StaticBlockController::class, 'show'])->name('identifier');

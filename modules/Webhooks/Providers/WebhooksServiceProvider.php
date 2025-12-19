@@ -11,9 +11,17 @@ use Modules\Webhooks\Application\Actions\DispatchWebhookAction;
 use Modules\Webhooks\Application\Actions\UpdateWebhookAction;
 use Modules\Webhooks\Application\Services\WebhookCommandService;
 use Modules\Webhooks\Application\Services\WebhookQueryService;
+use Modules\Webhooks\Domain\Contracts\WebhookRepositoryInterface;
 use Modules\Webhooks\Domain\Models\Webhook;
 use Modules\Webhooks\Domain\Repositories\WebhookRepository;
 
+/**
+ * Webhooks Module Service Provider.
+ *
+ * @package Modules\Webhooks\Providers
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 class WebhooksServiceProvider extends ServiceProvider
 {
     protected string $moduleName = 'Webhooks';
@@ -35,6 +43,7 @@ class WebhooksServiceProvider extends ServiceProvider
 
     protected function registerRepositories(): void
     {
+        $this->app->bind(WebhookRepositoryInterface::class, WebhookRepository::class);
         $this->app->singleton(WebhookRepository::class, fn ($app) => new WebhookRepository(new Webhook()));
     }
 

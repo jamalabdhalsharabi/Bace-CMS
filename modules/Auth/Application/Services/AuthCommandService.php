@@ -15,10 +15,23 @@ use Modules\Users\Domain\Models\User;
 /**
  * Auth Command Service.
  *
- * Orchestrates authentication operations.
+ * Orchestrates all authentication operations via Action classes.
+ * Handles login, registration, logout, and password reset flows.
+ *
+ * @package Modules\Auth\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class AuthCommandService
 {
+    /**
+     * Create a new AuthCommandService instance.
+     *
+     * @param LoginAction $loginAction Action for user login
+     * @param RegisterAction $registerAction Action for user registration
+     * @param LogoutAction $logoutAction Action for user logout
+     * @param ResetPasswordAction $resetPasswordAction Action for password reset
+     */
     public function __construct(
         private readonly LoginAction $loginAction,
         private readonly RegisterAction $registerAction,

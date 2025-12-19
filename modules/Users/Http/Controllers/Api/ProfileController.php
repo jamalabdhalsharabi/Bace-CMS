@@ -9,8 +9,17 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Users\Application\Services\UserCommandService;
 use Modules\Users\Application\Services\UserQueryService;
+use Modules\Users\Http\Requests\UpdateAvatarRequest;
+use Modules\Users\Http\Requests\UpdateProfileRequest;
 use Modules\Users\Http\Resources\UserResource;
 
+/**
+ * Profile API Controller.
+ *
+ * Follows Clean Architecture principles:
+ * - No validation logic (delegated to Form Requests)
+ * - No business logic (delegated to Services)
+ */
 class ProfileController extends BaseController
 {
     public function __construct(
@@ -21,36 +30,24 @@ class ProfileController extends BaseController
 
     public function show(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        return $this->success(new UserResource($user));
+        return $this->success(new UserResource($request->user()));
     }
 
-    public function update(Request $request): JsonResponse
+    public function update(UpdateProfileRequest $request): JsonResponse
     {
-        $user = $request->user();
-        $user = $this->commandService->update($user->id, $request->only(['name', 'email', 'locale', 'timezone']));
-
+        $user = $this->commandService->update($request->user()->id, $request->validated());
         return $this->success(new UserResource($user), 'Profile updated successfully');
     }
 
-    public function updateAvatar(Request $request): JsonResponse
+    public function updateAvatar(UpdateAvatarRequest $request): JsonResponse
     {
-        $request->validate([
-            'avatar' => 'required|image|max:2048',
-        ]);
-
-        $user = $request->user();
-        // TODO: Implement avatar upload via Media module
-        
+        $user = $this->commandService->updateAvatar($request->user(), $request->file('avatar'));
         return $this->success(new UserResource($user), 'Avatar updated successfully');
     }
 
     public function removeAvatar(Request $request): JsonResponse
     {
-        $user = $request->user();
-        $this->commandService->update($user->id, ['avatar_id' => null]);
-
+        $this->commandService->removeAvatar($request->user());
         return $this->success(null, 'Avatar removed successfully');
     }
 }

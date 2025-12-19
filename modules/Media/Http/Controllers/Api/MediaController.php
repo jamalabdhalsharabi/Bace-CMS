@@ -9,12 +9,14 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Media\Application\Services\MediaCommandService;
 use Modules\Media\Application\Services\MediaQueryService;
-use Modules\Media\Http\Requests\UploadMediaRequest;
-use Modules\Media\Http\Requests\UploadChunkRequest;
-use Modules\Media\Http\Requests\CropImageRequest;
-use Modules\Media\Http\Requests\RotateImageRequest;
 use Modules\Media\Http\Requests\BulkIdsRequest;
 use Modules\Media\Http\Requests\BulkMoveRequest;
+use Modules\Media\Http\Requests\CropImageRequest;
+use Modules\Media\Http\Requests\ReplaceMediaRequest;
+use Modules\Media\Http\Requests\RotateImageRequest;
+use Modules\Media\Http\Requests\TemporaryUrlRequest;
+use Modules\Media\Http\Requests\UploadChunkRequest;
+use Modules\Media\Http\Requests\UploadMediaRequest;
 use Modules\Media\Http\Resources\MediaResource;
 
 class MediaController extends BaseController
@@ -127,9 +129,8 @@ class MediaController extends BaseController
     }
 
     /** Replace existing file. */
-    public function replace(Request $request, string $id): JsonResponse
+    public function replace(ReplaceMediaRequest $request, string $id): JsonResponse
     {
-        $request->validate(['file' => 'required|file']);
         $media = $this->queryService->findById($id);
         if (!$media) return $this->notFound('Media not found');
         $media = $this->commandService->replace($id, $request->file('file'));
@@ -218,13 +219,13 @@ class MediaController extends BaseController
     }
 
     /** Generate temporary URL. */
-    public function temporaryUrl(Request $request, string $id): JsonResponse
+    public function temporaryUrl(TemporaryUrlRequest $request, string $id): JsonResponse
     {
-        $request->validate(['expires_in' => 'nullable|integer|min:1|max:10080']);
         $media = $this->queryService->findById($id);
         if (!$media) return $this->notFound('Media not found');
-        $url = $this->commandService->generateTemporaryUrl($id, $request->integer('expires_in', 60));
-        return $this->success(['url' => $url, 'expires_at' => now()->addMinutes($request->integer('expires_in', 60))]);
+        $expiresIn = $request->validated()['expires_in'] ?? 60;
+        $url = $this->commandService->generateTemporaryUrl($id, $expiresIn);
+        return $this->success(['url' => $url, 'expires_at' => now()->addMinutes($expiresIn)]);
     }
 
     /** Analyze media usage. */

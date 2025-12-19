@@ -19,9 +19,29 @@ use Modules\Users\Domain\Models\User;
 
 /**
  * User Command Service.
+ *
+ * Orchestrates all write operations for users via Action classes.
+ * No direct Model usage - delegates all mutations to dedicated Actions.
+ *
+ * @package Modules\Users\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class UserCommandService
 {
+    /**
+     * Create a new UserCommandService instance.
+     *
+     * @param CreateUserAction $createAction Action for creating users
+     * @param UpdateUserAction $updateAction Action for updating users
+     * @param DeleteUserAction $deleteAction Action for deleting users
+     * @param ActivateUserAction $activateAction Action for activating users
+     * @param SuspendUserAction $suspendAction Action for suspending users
+     * @param ChangePasswordAction $changePasswordAction Action for changing passwords
+     * @param UpdateAvatarAction $updateAvatarAction Action for updating avatars
+     * @param RemoveAvatarAction $removeAvatarAction Action for removing avatars
+     * @param UpdateProfileAction $updateProfileAction Action for updating profiles
+     */
     public function __construct(
         private readonly CreateUserAction $createAction,
         private readonly UpdateUserAction $updateAction,

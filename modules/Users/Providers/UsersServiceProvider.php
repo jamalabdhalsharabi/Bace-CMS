@@ -17,15 +17,45 @@ use Modules\Users\Application\Actions\UpdateUserAction;
 use Modules\Users\Application\Services\UserCommandService;
 use Modules\Users\Application\Services\UserQueryService;
 use Modules\Users\Contracts\UserRepositoryContract;
+use Modules\Users\Domain\Contracts\UserRepositoryInterface;
 use Modules\Users\Domain\Models\User;
 use Modules\Users\Domain\Repositories\UserRepository as DomainUserRepository;
 use Modules\Users\Repositories\UserRepository;
 
+/**
+ * Users Module Service Provider.
+ *
+ * Registers and bootstraps the Users module including:
+ * - Repository bindings (Interface to Implementation)
+ * - User management actions
+ * - Query and Command services
+ * - Views, routes, and translations
+ *
+ * @package Modules\Users\Providers
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 class UsersServiceProvider extends ServiceProvider
 {
+    /**
+     * Module name for path resolution.
+     *
+     * @var string
+     */
     protected string $moduleName = 'Users';
+
+    /**
+     * Lowercase module name for config keys.
+     *
+     * @var string
+     */
     protected string $moduleNameLower = 'users';
 
+    /**
+     * Register module services.
+     *
+     * @return void
+     */
     public function register(): void
     {
         $this->mergeConfigFrom(
@@ -38,13 +68,27 @@ class UsersServiceProvider extends ServiceProvider
         $this->registerServices();
     }
 
+    /**
+     * Register repository bindings.
+     *
+     * Binds repository interfaces to their concrete implementations.
+     *
+     * @return void
+     */
     protected function registerRepositories(): void
     {
+        // Bind interface to implementation for dependency injection
+        $this->app->bind(
+            UserRepositoryInterface::class,
+            DomainUserRepository::class
+        );
+
+        // Register concrete repository as singleton
         $this->app->singleton(DomainUserRepository::class, fn ($app) => 
             new DomainUserRepository(new User())
         );
 
-        // Legacy binding
+        // Legacy binding for backward compatibility
         $this->app->bind(UserRepositoryContract::class, UserRepository::class);
     }
 

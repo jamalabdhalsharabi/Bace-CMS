@@ -13,6 +13,7 @@ use Modules\ExchangeRates\Application\Actions\FreezeExchangeRateAction;
 use Modules\ExchangeRates\Application\Actions\UpdateExchangeRateAction;
 use Modules\ExchangeRates\Application\Services\ExchangeRateCommandService;
 use Modules\ExchangeRates\Application\Services\ExchangeRateQueryService;
+use Modules\ExchangeRates\Domain\Contracts\ExchangeRateRepositoryInterface;
 use Modules\ExchangeRates\Domain\Models\ExchangeRate;
 use Modules\ExchangeRates\Domain\Repositories\ExchangeRateRepository;
 
@@ -37,6 +38,7 @@ class ExchangeRatesServiceProvider extends ServiceProvider
 
     protected function registerRepositories(): void
     {
+        $this->app->bind(ExchangeRateRepositoryInterface::class, ExchangeRateRepository::class);
         $this->app->singleton(ExchangeRateRepository::class, fn ($app) => 
             new ExchangeRateRepository(new ExchangeRate())
         );

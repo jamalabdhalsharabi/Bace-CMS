@@ -15,9 +15,26 @@ use Modules\Projects\Domain\Models\Project;
 
 /**
  * Project Command Service.
+ *
+ * Orchestrates all write operations for projects via Action classes.
+ * No direct Model usage - delegates all mutations to dedicated Actions.
+ *
+ * @package Modules\Projects\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ProjectCommandService
 {
+    /**
+     * Create a new ProjectCommandService instance.
+     *
+     * @param CreateProjectAction $createAction Action for creating projects
+     * @param UpdateProjectAction $updateAction Action for updating projects
+     * @param DeleteProjectAction $deleteAction Action for deleting projects
+     * @param PublishProjectAction $publishAction Action for publishing projects
+     * @param DuplicateProjectAction $duplicateAction Action for duplicating projects
+     * @param FeatureProjectAction $featureAction Action for featuring projects
+     */
     public function __construct(
         private readonly CreateProjectAction $createAction,
         private readonly UpdateProjectAction $updateAction,

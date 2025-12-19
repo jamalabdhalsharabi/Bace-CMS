@@ -6,99 +6,73 @@ namespace Modules\StaticBlocks\Http\Controllers\Api;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Modules\Core\Http\Controllers\BaseController;
-use Modules\StaticBlocks\Domain\Models\StaticBlock;
+use Modules\StaticBlocks\Application\Services\StaticBlockCommandService;
+use Modules\StaticBlocks\Application\Services\StaticBlockQueryService;
+use Modules\StaticBlocks\Http\Requests\CreateTranslationRequest;
+use Modules\StaticBlocks\Http\Requests\DuplicateStaticBlockRequest;
+use Modules\StaticBlocks\Http\Requests\EmbedInPageRequest;
+use Modules\StaticBlocks\Http\Requests\ImportStaticBlockRequest;
+use Modules\StaticBlocks\Http\Requests\RemoveFromPageRequest;
+use Modules\StaticBlocks\Http\Requests\ScheduleVisibilityRequest;
+use Modules\StaticBlocks\Http\Requests\SetVisibilityRequest;
+use Modules\StaticBlocks\Http\Requests\StoreStaticBlockRequest;
+use Modules\StaticBlocks\Http\Requests\UpdateStaticBlockRequest;
 use Modules\StaticBlocks\Http\Resources\StaticBlockResource;
 
 /**
- * Class StaticBlockController
+ * Static Block API Controller.
  *
- * API controller for managing static content blocks
- * including CRUD operations and translations.
- *
- * @package Modules\StaticBlocks\Http\Controllers\Api
+ * Follows Clean Architecture principles:
+ * - No validation logic (delegated to Form Requests)
+ * - No business logic (delegated to Services)
+ * - No direct Model usage (uses Repository Pattern via Services)
  */
 class StaticBlockController extends BaseController
 {
+    public function __construct(
+        protected StaticBlockQueryService $queryService,
+        protected StaticBlockCommandService $commandService
+    ) {
+    }
+
     /**
      * Display a listing of active static blocks.
-     *
-     * @param Request $request The incoming request
-     * @return JsonResponse Collection of active blocks
      */
     public function index(Request $request): JsonResponse
     {
-        $blocks = StaticBlock::with('translation')->active()->get();
+        $blocks = $this->queryService->getActive();
         return $this->success(StaticBlockResource::collection($blocks));
     }
 
     /**
      * Display the specified block by identifier.
-     *
-     * @param string $identifier The unique block identifier
-     * @return JsonResponse The block or 404 error
      */
     public function show(string $identifier): JsonResponse
     {
-        $block = StaticBlock::findByIdentifier($identifier);
+        $block = $this->queryService->findByIdentifier($identifier);
         return $block ? $this->success(new StaticBlockResource($block)) : $this->notFound('Block not found');
     }
 
     /**
      * Store a newly created static block.
-     *
-     * @param Request $request The request with block data and translations
-     * @return JsonResponse The created block (HTTP 201)
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreStaticBlockRequest $request): JsonResponse
     {
-        $data = $request->validate([
-            'identifier' => 'required|string|max:100|unique:static_blocks,identifier',
-            'type' => 'nullable|string|max:50',
-            'translations' => 'required|array|min:1',
-            'translations.*.title' => 'required|string|max:255',
-            'translations.*.content' => 'required|string',
-        ]);
-
-        $block = DB::transaction(function () use ($data) {
-            $b = StaticBlock::create([
-                'identifier' => $data['identifier'],
-                'type' => $data['type'] ?? 'html',
-                'is_active' => true,
-                'created_by' => auth()->id(),
-            ]);
-            foreach ($data['translations'] as $locale => $trans) {
-                $b->translations()->create(['locale' => $locale, 'title' => $trans['title'], 'content' => $trans['content']]);
-            }
-            return $b->fresh(['translations']);
-        });
-
+        $block = $this->commandService->create($request->validated());
         return $this->created(new StaticBlockResource($block));
     }
 
     /**
      * Update the specified static block.
-     *
-     * @param Request $request The request with updated data
-     * @param string $id The UUID of the block
-     * @return JsonResponse The updated block or 404 error
      */
-    public function update(Request $request, string $id): JsonResponse
+    public function update(UpdateStaticBlockRequest $request, string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
 
-        $block->update($request->only(['type', 'is_active', 'settings']));
-
-        if ($request->has('translations')) {
-            foreach ($request->translations as $locale => $trans) {
-                $block->translations()->updateOrCreate(['locale' => $locale], $trans);
-            }
-        }
-
-        StaticBlock::clearCache($block->identifier);
-        return $this->success(new StaticBlockResource($block->fresh(['translations'])));
+        $updated = $this->commandService->update($block, $request->validated());
+        return $this->success(new StaticBlockResource($updated));
     }
 
     /**
@@ -106,10 +80,9 @@ class StaticBlockController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
-        StaticBlock::clearCache($block->identifier);
-        $block->delete();
+        $this->commandService->delete($block);
         return $this->success(null, 'Block deleted');
     }
 
@@ -118,11 +91,8 @@ class StaticBlockController extends BaseController
      */
     public function forceDestroy(string $id): JsonResponse
     {
-        $block = StaticBlock::withTrashed()->find($id);
-        if (!$block) return $this->notFound('Block not found');
-        StaticBlock::clearCache($block->identifier);
-        $block->forceDelete();
-        return $this->success(null, 'Block permanently deleted');
+        $deleted = $this->commandService->forceDelete($id);
+        return $deleted ? $this->success(null, 'Block permanently deleted') : $this->notFound('Block not found');
     }
 
     /**
@@ -130,10 +100,8 @@ class StaticBlockController extends BaseController
      */
     public function restore(string $id): JsonResponse
     {
-        $block = StaticBlock::withTrashed()->find($id);
-        if (!$block) return $this->notFound('Block not found');
-        $block->restore();
-        return $this->success(new StaticBlockResource($block));
+        $block = $this->commandService->restore($id);
+        return $block ? $this->success(new StaticBlockResource($block)) : $this->notFound('Block not found');
     }
 
     /**
@@ -141,10 +109,10 @@ class StaticBlockController extends BaseController
      */
     public function saveDraft(Request $request, string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
-        $block->update(['status' => 'draft', 'draft_content' => $request->content]);
-        return $this->success(new StaticBlockResource($block));
+        $saved = $this->commandService->saveDraft($block, $request->input('content'));
+        return $this->success(new StaticBlockResource($saved));
     }
 
     /**
@@ -152,11 +120,10 @@ class StaticBlockController extends BaseController
      */
     public function publish(string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
-        $block->update(['is_active' => true, 'published_at' => now()]);
-        StaticBlock::clearCache($block->identifier);
-        return $this->success(new StaticBlockResource($block));
+        $published = $this->commandService->publish($block);
+        return $this->success(new StaticBlockResource($published));
     }
 
     /**
@@ -164,11 +131,10 @@ class StaticBlockController extends BaseController
      */
     public function unpublish(string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
-        $block->update(['is_active' => false]);
-        StaticBlock::clearCache($block->identifier);
-        return $this->success(new StaticBlockResource($block));
+        $unpublished = $this->commandService->unpublish($block);
+        return $this->success(new StaticBlockResource($unpublished));
     }
 
     /**
@@ -176,124 +142,79 @@ class StaticBlockController extends BaseController
      */
     public function archive(string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
-        $block->update(['status' => 'archived']);
-        StaticBlock::clearCache($block->identifier);
-        return $this->success(new StaticBlockResource($block));
+        $archived = $this->commandService->archive($block);
+        return $this->success(new StaticBlockResource($archived));
     }
 
     /**
      * Duplicate/clone the block.
      */
-    public function duplicate(Request $request, string $id): JsonResponse
+    public function duplicate(DuplicateStaticBlockRequest $request, string $id): JsonResponse
     {
-        $request->validate(['new_identifier' => 'required|string|max:100|unique:static_blocks,identifier']);
-        $block = StaticBlock::with('translations')->find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
 
-        $newBlock = DB::transaction(function () use ($block, $request) {
-            $clone = $block->replicate();
-            $clone->identifier = $request->new_identifier;
-            $clone->is_active = false;
-            $clone->save();
-            
-            foreach ($block->translations as $trans) {
-                $clone->translations()->create($trans->only(['locale', 'title', 'content']));
-            }
-            return $clone;
-        });
-
+        $newBlock = $this->commandService->duplicate($id, $request->validated()['new_identifier']);
         return $this->created(new StaticBlockResource($newBlock));
     }
 
     /**
      * Embed block in page.
      */
-    public function embedInPage(Request $request, string $id): JsonResponse
+    public function embedInPage(EmbedInPageRequest $request, string $id): JsonResponse
     {
-        $request->validate(['page_id' => 'required|uuid', 'position' => 'nullable|string']);
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
-        DB::table('page_static_blocks')->insert([
-            'page_id' => $request->page_id,
-            'static_block_id' => $id,
-            'position' => $request->position ?? 'content',
-            'sort_order' => 0,
-        ]);
-        
+        $this->commandService->embedInPage($id, $request->validated());
         return $this->success(null, 'Block embedded in page');
     }
 
     /**
      * Remove block from page.
      */
-    public function removeFromPage(Request $request, string $id): JsonResponse
+    public function removeFromPage(RemoveFromPageRequest $request, string $id): JsonResponse
     {
-        $request->validate(['page_id' => 'required|uuid']);
-        
-        DB::table('page_static_blocks')
-            ->where('page_id', $request->page_id)
-            ->where('static_block_id', $id)
-            ->delete();
-        
+        $this->commandService->removeFromPage($id, $request->validated()['page_id']);
         return $this->success(null, 'Block removed from page');
     }
 
     /**
      * Create translated version.
      */
-    public function createTranslation(Request $request, string $id): JsonResponse
+    public function createTranslation(CreateTranslationRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'locale' => 'required|string|max:10',
-            'title' => 'required|string|max:255',
-            'content' => 'required|string',
-        ]);
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
-        $translation = $block->translations()->create($request->validated());
-        StaticBlock::clearCache($block->identifier);
+        $translation = $this->commandService->createTranslation($block, $request->validated());
         return $this->created($translation);
     }
 
     /**
      * Set visibility rules.
      */
-    public function setVisibility(Request $request, string $id): JsonResponse
+    public function setVisibility(SetVisibilityRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'rules' => 'required|array',
-            'rules.pages' => 'nullable|array',
-            'rules.user_roles' => 'nullable|array',
-            'rules.conditions' => 'nullable|array',
-        ]);
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
-        $block->update(['visibility_rules' => $request->rules]);
-        return $this->success(new StaticBlockResource($block));
+        $updated = $this->commandService->setVisibility($block, $request->validated()['rules']);
+        return $this->success(new StaticBlockResource($updated));
     }
 
     /**
      * Schedule visibility.
      */
-    public function scheduleVisibility(Request $request, string $id): JsonResponse
+    public function scheduleVisibility(ScheduleVisibilityRequest $request, string $id): JsonResponse
     {
-        $request->validate([
-            'show_at' => 'nullable|date',
-            'hide_at' => 'nullable|date|after:show_at',
-        ]);
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
-        $block->update([
-            'scheduled_show_at' => $request->show_at,
-            'scheduled_hide_at' => $request->hide_at,
-        ]);
-        return $this->success(new StaticBlockResource($block));
+        $updated = $this->commandService->scheduleVisibility($block, $request->validated());
+        return $this->success(new StaticBlockResource($updated));
     }
 
     /**
@@ -301,7 +222,7 @@ class StaticBlockController extends BaseController
      */
     public function preview(string $id): JsonResponse
     {
-        $block = StaticBlock::with('translations')->find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
         return $this->success([
@@ -315,7 +236,7 @@ class StaticBlockController extends BaseController
      */
     public function export(string $id): JsonResponse
     {
-        $block = StaticBlock::with('translations')->find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
         return $this->success([
@@ -329,33 +250,9 @@ class StaticBlockController extends BaseController
     /**
      * Import block.
      */
-    public function import(Request $request): JsonResponse
+    public function import(ImportStaticBlockRequest $request): JsonResponse
     {
-        $request->validate([
-            'identifier' => 'required|string|max:100|unique:static_blocks,identifier',
-            'type' => 'nullable|string',
-            'translations' => 'required|array',
-        ]);
-        
-        $block = DB::transaction(function () use ($request) {
-            $b = StaticBlock::create([
-                'identifier' => $request->identifier,
-                'type' => $request->type ?? 'html',
-                'settings' => $request->settings ?? [],
-                'is_active' => false,
-                'created_by' => auth()->id(),
-            ]);
-            
-            foreach ($request->translations as $locale => $trans) {
-                $b->translations()->create([
-                    'locale' => $locale,
-                    'title' => $trans['title'],
-                    'content' => $trans['content'],
-                ]);
-            }
-            return $b;
-        });
-        
+        $block = $this->commandService->import($request->validated());
         return $this->created(new StaticBlockResource($block));
     }
 
@@ -364,15 +261,10 @@ class StaticBlockController extends BaseController
      */
     public function findUsages(string $id): JsonResponse
     {
-        $block = StaticBlock::find($id);
+        $block = $this->queryService->find($id);
         if (!$block) return $this->notFound('Block not found');
         
-        $usages = DB::table('page_static_blocks')
-            ->join('pages', 'pages.id', '=', 'page_static_blocks.page_id')
-            ->where('static_block_id', $id)
-            ->select('pages.id', 'pages.slug', 'page_static_blocks.position')
-            ->get();
-        
+        $usages = $this->queryService->findUsages($id);
         return $this->success(['usages' => $usages, 'count' => $usages->count()]);
     }
 }

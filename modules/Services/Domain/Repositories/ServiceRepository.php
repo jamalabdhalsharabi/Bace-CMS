@@ -12,10 +12,22 @@ use Modules\Services\Domain\Models\Service;
 /**
  * Service Repository.
  *
+ * Read-only repository for Service model queries.
+ * All write operations must be performed through Action classes.
+ *
  * @extends BaseRepository<Service>
+ *
+ * @package Modules\Services\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ServiceRepository extends BaseRepository
 {
+    /**
+     * Create a new ServiceRepository instance.
+     *
+     * @param Service $model The Service model instance
+     */
     public function __construct(Service $model)
     {
         parent::__construct($model);

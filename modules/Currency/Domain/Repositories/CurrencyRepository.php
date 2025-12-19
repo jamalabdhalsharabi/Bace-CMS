@@ -11,10 +11,22 @@ use Modules\Currency\Domain\Models\Currency;
 /**
  * Currency Repository.
  *
+ * Read-only repository for Currency model queries.
+ * All write operations must be performed through Action classes.
+ *
  * @extends BaseRepository<Currency>
+ *
+ * @package Modules\Currency\Domain\Repositories
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class CurrencyRepository extends BaseRepository
 {
+    /**
+     * Create a new CurrencyRepository instance.
+     *
+     * @param Currency $model The Currency model instance
+     */
     public function __construct(Currency $model)
     {
         parent::__construct($model);

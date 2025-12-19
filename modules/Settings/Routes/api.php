@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Settings\Http\Controllers\Api\SettingController;
 
-Route::prefix('api/v1/settings')->middleware(['api'])->name('api.settings.')->group(function () {
+Route::prefix('api/v1/settings')->middleware(['api'])->name('api.v1.settings.')->group(function () {
     Route::get('/public', [SettingController::class, 'publicSettings'])->name('public');
 
     Route::middleware('auth:sanctum')->group(function () {

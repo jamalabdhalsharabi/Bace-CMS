@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Pricing\Http\Controllers\Api\PlanController;
 
-Route::prefix('api/v1/plans')->middleware(['api'])->name('api.plans.')->group(function () {
+Route::prefix('api/v1/plans')->middleware(['api'])->name('api.v1.plans.')->group(function () {
     Route::get('/', [PlanController::class, 'index'])->name('index');
     Route::get('/{id}', [PlanController::class, 'show'])->name('show');
 

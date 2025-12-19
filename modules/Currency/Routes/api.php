@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use Modules\Currency\Http\Controllers\Api\CurrencyController;
 
-Route::prefix('api/v1/currencies')->middleware(['api'])->name('api.currencies.')->group(function () {
+Route::prefix('api/v1/currencies')->middleware(['api'])->name('api.v1.currencies.')->group(function () {
     // Public routes
     Route::get('/', [CurrencyController::class, 'index'])->name('index');
     Route::get('/all', [CurrencyController::class, 'all'])->name('all');

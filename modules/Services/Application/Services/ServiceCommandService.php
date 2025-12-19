@@ -15,9 +15,26 @@ use Modules\Services\Domain\Models\Service;
 
 /**
  * Service Command Service.
+ *
+ * Orchestrates all write operations for services via Action classes.
+ * No direct Model usage - delegates all mutations to dedicated Actions.
+ *
+ * @package Modules\Services\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ServiceCommandService
 {
+    /**
+     * Create a new ServiceCommandService instance.
+     *
+     * @param CreateServiceAction $createAction Action for creating services
+     * @param UpdateServiceAction $updateAction Action for updating services
+     * @param DeleteServiceAction $deleteAction Action for deleting services
+     * @param PublishServiceAction $publishAction Action for publishing services
+     * @param DuplicateServiceAction $duplicateAction Action for duplicating services
+     * @param ReorderServiceAction $reorderAction Action for reordering services
+     */
     public function __construct(
         private readonly CreateServiceAction $createAction,
         private readonly UpdateServiceAction $updateAction,
