@@ -10,7 +10,9 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Unlock Comments Action.
  *
- * Unlocks all comments for a specific commentable entity.
+ * Handles unlocking previously locked comments for a specific commentable entity.
+ * Restores normal commenting functionality, allowing users to add replies,
+ * edit comments, and participate in discussions again.
  *
  * @package Modules\Comments\Application\Actions
  * @author  CMS Development Team
@@ -19,17 +21,35 @@ use Modules\Core\Application\Actions\Action;
 final class UnlockCommentsAction extends Action
 {
     /**
-     * Execute the unlock comments action.
+     * Execute the comment unlocking action.
      *
-     * @param string $modelType The commentable model type
-     * @param string $modelId The commentable model ID
+     * Unlocks all comments (root and replies) for a specific commentable entity
+     * by setting the is_locked flag to false. This restores:
+     * - Ability to add new replies
+     * - Permission to edit existing comments (within edit window)
+     * - Voting functionality on comments
      *
-     * @return int Number of comments unlocked
+     * Common use cases:
+     * - Reopening discussions after moderation review
+     * - Restoring commenting on updated or corrected content
+     * - Allowing continued discussion after temporary freeze
+     * - Reversing accidental or incorrect lock operations
+     *
+     * @param string $modelType The fully qualified commentable model class name
+     * @param string $modelId The UUID of the commentable model instance
+     *
+     * @return int Number of comments successfully unlocked
+     * 
+     * @throws \Illuminate\Database\QueryException When database update fails
+     * @throws \Exception When unlock operation encounters an error
      */
     public function execute(string $modelType, string $modelId): int
     {
         return Comment::where('commentable_type', $modelType)
             ->where('commentable_id', $modelId)
-            ->update(['is_locked' => false]);
+            ->update([
+                'is_locked' => false,
+                'updated_at' => now(),
+            ]);
     }
 }

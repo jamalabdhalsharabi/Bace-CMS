@@ -114,7 +114,7 @@ final class CommentRepository extends BaseRepository
     public function getReported(): Collection
     {
         return $this->query()
-            ->where('is_reported', true)
+            ->where('report_count', '>', 0)
             ->with(['user', 'commentable'])
             ->latest()
             ->get();

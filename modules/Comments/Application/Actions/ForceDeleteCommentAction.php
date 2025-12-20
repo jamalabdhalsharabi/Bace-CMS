@@ -10,8 +10,9 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Force Delete Comment Action.
  *
- * Permanently removes a comment from the database.
- * This bypasses soft-delete and cannot be undone.
+ * Handles the permanent removal of comments from the database, bypassing
+ * the soft delete mechanism. This action is irreversible and should only
+ * be used for confirmed spam, legal compliance, or data retention policies.
  *
  * @package Modules\Comments\Application\Actions
  * @author  CMS Development Team
@@ -20,11 +21,24 @@ use Modules\Core\Application\Actions\Action;
 final class ForceDeleteCommentAction extends Action
 {
     /**
-     * Execute the force delete action.
+     * Execute the permanent comment deletion action.
      *
-     * @param Comment $comment The comment to permanently delete
+     * Permanently removes the specified comment from the database, including
+     * all related data and relationships. This operation bypasses Laravel's
+     * soft delete mechanism and cannot be undone.
      *
-     * @return bool True if deletion was successful
+     * Warning: This action permanently destroys data and should only be used
+     * when absolutely necessary, such as:
+     * - Confirmed spam content that poses security risks
+     * - Legal compliance requirements (GDPR, right to be forgotten)
+     * - Data retention policy enforcement
+     *
+     * @param Comment $comment The comment instance to permanently delete
+     *
+     * @return bool True if the permanent deletion was successful, false otherwise
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException When comment is not found
+     * @throws \Exception When permanent deletion fails due to database constraints
      */
     public function execute(Comment $comment): bool
     {

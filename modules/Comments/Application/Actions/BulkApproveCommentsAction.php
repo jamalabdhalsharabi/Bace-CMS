@@ -10,8 +10,9 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Bulk Approve Comments Action.
  *
- * Approves multiple comments in a single database operation.
- * This action contains the complete business logic for bulk approval.
+ * Handles mass approval of multiple pending comments during moderation.
+ * Efficiently updates multiple comment statuses in a single database operation
+ * for improved performance when processing large batches of comments.
  *
  * @package Modules\Comments\Application\Actions
  * @author  CMS Development Team
@@ -20,14 +21,35 @@ use Modules\Core\Application\Actions\Action;
 final class BulkApproveCommentsAction extends Action
 {
     /**
-     * Execute the bulk approve action.
+     * Execute the bulk comment approval action.
      *
-     * @param array<string> $ids Array of comment IDs to approve
+     * Updates the status of all specified comments to 'approved' in a single
+     * database query. Approved comments become visible to the public and
+     * participate in the normal comment display flow.
      *
-     * @return int Number of comments approved
+     * This bulk operation is more efficient than individual approvals when
+     * moderators need to process many comments simultaneously, such as:
+     * - Clearing the moderation queue after reviewing multiple comments
+     * - Approving all comments from trusted users
+     * - Batch processing after spam filter review
+     *
+     * Note: Does not set approved_at or approved_by fields. Consider enhancing
+     * if audit trail is required for bulk operations.
+     *
+     * @param array<string> $ids Array of comment UUIDs to approve
+     *
+     * @return int Number of comments successfully approved
+     * 
+     * @throws \Illuminate\Database\QueryException When database update fails
+     * @throws \Exception When bulk operation encounters an error
      */
     public function execute(array $ids): int
     {
-        return Comment::whereIn('id', $ids)->update(['status' => 'approved']);
+        return Comment::whereIn('id', $ids)->update([
+            'status' => 'approved',
+            'approved_at' => now(),
+            'approved_by' => auth()->id(),
+            'updated_at' => now(),
+        ]);
     }
 }

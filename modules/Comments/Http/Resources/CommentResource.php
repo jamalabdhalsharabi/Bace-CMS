@@ -22,7 +22,8 @@ class CommentResource extends JsonResource
             ],
             'content' => $this->content,
             'status' => $this->status,
-            'likes_count' => $this->likes_count,
+            'upvotes' => $this->upvotes,
+            'downvotes' => $this->downvotes,
             'is_pinned' => $this->is_pinned,
             'replies' => $this->when($this->replies->isNotEmpty(), fn () =>
                 CommentResource::collection($this->replies)
