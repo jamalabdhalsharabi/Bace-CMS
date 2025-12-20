@@ -33,6 +33,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property int $downvotes Number of downvotes
  * @property int $report_count Number of user reports
  * @property bool $is_pinned Whether pinned to top
+ * @property bool $is_locked Whether comments are locked (prevents new replies)
  * @property string|null $ip_address Commenter's IP address
  * @property string|null $user_agent Commenter's browser user agent
  * @property \Carbon\Carbon|null $approved_at When comment was approved
@@ -80,6 +81,7 @@ class Comment extends Model
         'downvotes',
         'report_count',
         'is_pinned',
+        'is_locked',
         'ip_address',
         'user_agent',
         'approved_at',
@@ -97,6 +99,7 @@ class Comment extends Model
             'downvotes' => 'integer',
             'report_count' => 'integer',
             'is_pinned' => 'boolean',
+            'is_locked' => 'boolean',
             'approved_at' => 'datetime',
             'edited_at' => 'datetime',
         ];
@@ -311,16 +314,30 @@ class Comment extends Model
     }
 
     /**
-     * Increment the comment's like counter.
+     * Increment the comment's upvote counter.
      *
-     * Atomically increases the likes_count field by one.
-     * Used when users upvote or like a comment.
+     * Atomically increases the upvotes field by one.
+     * Used when users upvote a comment.
      *
      * @return self The current Comment instance for method chaining
      */
-    public function incrementLikes(): self
+    public function incrementUpvotes(): self
     {
-        $this->increment('likes_count');
+        $this->increment('upvotes');
+        return $this;
+    }
+
+    /**
+     * Increment the comment's downvote counter.
+     *
+     * Atomically increases the downvotes field by one.
+     * Used when users downvote a comment.
+     *
+     * @return self The current Comment instance for method chaining
+     */
+    public function incrementDownvotes(): self
+    {
+        $this->increment('downvotes');
         return $this;
     }
 

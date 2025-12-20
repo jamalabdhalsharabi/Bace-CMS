@@ -19,6 +19,8 @@ return [
 
     'spam_detection' => true,
 
+    'auto_hide_threshold' => 3,
+
     'notifications' => [
         'notify_author' => true,
         'notify_parent_commenter' => true,
