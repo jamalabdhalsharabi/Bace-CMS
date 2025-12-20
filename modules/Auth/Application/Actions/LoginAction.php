@@ -14,7 +14,13 @@ use Modules\Users\Domain\Models\User;
 /**
  * Login Action.
  *
- * Handles user authentication and token generation.
+ * Handles user authentication, credential validation, and API token generation.
+ * Implements secure login flow with activity logging and event dispatching.
+ * Validates user status and records login attempts for security monitoring.
+ *
+ * @package Modules\Auth\Application\Actions
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class LoginAction extends Action
 {
