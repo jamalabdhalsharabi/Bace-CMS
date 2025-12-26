@@ -19,11 +19,16 @@ use Modules\Core\Application\Actions\Action;
 final class ForceDeleteArticleAction extends Action
 {
     /**
-     * Execute the force delete action.
+     * Execute the permanent article deletion action.
      *
-     * @param string $id The ID of the article to permanently delete
+     * Permanently removes article and all related data from database.
+     * This bypasses soft delete and cannot be undone.
      *
-     * @return bool True if deletion was successful
+     * @param string $id The article UUID to permanently delete
+     * 
+     * @return bool True if permanent deletion was successful, false otherwise
+     * 
+     * @throws \Exception When permanent deletion fails
      */
     public function execute(string $id): bool
     {

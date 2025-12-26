@@ -19,14 +19,20 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string $code
  * @property string $name
- * @property string $symbol
- * @property string $symbol_position
- * @property string $decimal_separator
- * @property string $thousand_separator
- * @property int $decimal_places
- * @property bool $is_default
- * @property bool $is_active
- * @property int $ordering
+ * @property string $code ISO 4217 currency code (e.g., 'USD', 'EUR')
+ * @property string|null $numeric_code ISO 4217 numeric code
+ * @property string $symbol Currency symbol (e.g., '$', '€')
+ * @property string|null $symbol_native Native currency symbol
+ * @property string $symbol_position Symbol position ('before' or 'after')
+ * @property string $decimal_separator Decimal separator character
+ * @property string $thousands_separator Thousands separator character
+ * @property int $decimal_places Number of decimal places
+ * @property string $rounding_mode Rounding mode (half_up, half_down, etc.)
+ * @property float|null $rounding_increment Rounding increment value
+ * @property bool $is_default Whether this is the default currency
+ * @property bool $is_active Whether currency is active
+ * @property int $sort_order Display order
+ * @property string $created_by UUID of user who created the currency
  *
  * @property-read \Illuminate\Database\Eloquent\Collection<int, ExchangeRate> $exchangeRates Exchange rates from this currency
  * @property \Carbon\Carbon $created_at Record creation timestamp
@@ -46,22 +52,28 @@ class Currency extends Model
 
     protected $fillable = [
         'code',
+        'numeric_code',
         'name',
         'symbol',
+        'symbol_native',
         'symbol_position',
         'decimal_separator',
-        'thousand_separator',
+        'thousands_separator',
         'decimal_places',
+        'rounding_mode',
+        'rounding_increment',
         'is_default',
         'is_active',
-        'ordering',
+        'sort_order',
+        'created_by',
     ];
 
     protected $casts = [
         'decimal_places' => 'integer',
+        'rounding_increment' => 'decimal:4',
         'is_default' => 'boolean',
         'is_active' => 'boolean',
-        'ordering' => 'integer',
+        'sort_order' => 'integer',
     ];
 
     /**
@@ -86,7 +98,7 @@ class Currency extends Model
             $amount,
             $this->decimal_places,
             $this->decimal_separator,
-            $this->thousand_separator
+            $this->thousands_separator
         );
 
         return $this->symbol_position === 'before'
@@ -106,14 +118,14 @@ class Currency extends Model
     }
 
     /**
-     * Scope to order currencies by ordering field.
+     * Scope to order currencies by sort_order field.
      *
      * @param \Illuminate\Database\Eloquent\Builder<Currency> $query
      * @return \Illuminate\Database\Eloquent\Builder<Currency>
      */
     public function scopeOrdered($query)
     {
-        return $query->orderBy('ordering');
+        return $query->orderBy('sort_order');
     }
 
     /**

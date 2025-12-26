@@ -21,6 +21,7 @@ use Modules\Core\Traits\HasTranslations;
  * @property string $status Publication status (draft, pending, published, archived)
  * @property bool $is_homepage Whether this is the site homepage
  * @property bool $is_system Whether this is a protected system page
+ * @property bool $show_in_menu Whether page appears in navigation menus
  * @property string $template Page template to use for rendering
  * @property string|null $parent_id Foreign key to parent page
  * @property int $depth Nesting depth in page hierarchy (0 = root)
@@ -72,6 +73,7 @@ class Page extends Model
         'status',
         'is_homepage',
         'is_system',
+        'show_in_menu',
         'template',
         'parent_id',
         'depth',
@@ -93,6 +95,7 @@ class Page extends Model
         return [
             'is_homepage' => 'boolean',
             'is_system' => 'boolean',
+            'show_in_menu' => 'boolean',
             'depth' => 'integer',
             'sort_order' => 'integer',
             'version' => 'integer',

@@ -18,16 +18,17 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
  * @property string $id UUID primary key
  * @property string $revisionable_id UUID of the versioned entity
  * @property string $revisionable_type Polymorphic model type
- * @property string|null $user_id UUID of user who made the change
- * @property int $revision_number Sequential version number
- * @property array $data Complete entity data snapshot
- * @property array|null $changes Field-level change details
+ * @property string $created_by UUID of user who made the change
+ * @property int $version Sequential version number
+ * @property string $type Revision type (create, update, publish, unpublish, restore)
+ * @property array|null $old_data Previous entity data snapshot
+ * @property array $new_data Current entity data snapshot
+ * @property array|null $diff Field-level change details
  * @property string|null $summary Human-readable change summary
- * @property bool $is_auto Whether revision was auto-generated
  * @property \Carbon\Carbon $created_at Revision creation timestamp
  *
  * @property-read Model $revisionable The versioned entity (polymorphic)
- * @property-read \App\Models\User|null $user User who created this revision
+ * @property-read \App\Models\User $creator User who created this revision
  *
  * @method static \Illuminate\Database\Eloquent\Builder|Revision forModel(string $type, string $id) Filter by entity
  * @method static \Illuminate\Database\Eloquent\Builder|Revision manual() Filter manual revisions only
@@ -46,20 +47,21 @@ class Revision extends Model
     protected $fillable = [
         'revisionable_id',
         'revisionable_type',
-        'user_id',
-        'revision_number',
-        'data',
-        'changes',
+        'created_by',
+        'version',
+        'type',
+        'old_data',
+        'new_data',
+        'diff',
         'summary',
-        'is_auto',
         'created_at',
     ];
 
     protected $casts = [
-        'data' => 'array',
-        'changes' => 'array',
-        'is_auto' => 'boolean',
-        'revision_number' => 'integer',
+        'old_data' => 'array',
+        'new_data' => 'array',
+        'diff' => 'array',
+        'version' => 'integer',
         'created_at' => 'datetime',
     ];
 
@@ -86,9 +88,9 @@ class Revision extends Model
      *
      * @return BelongsTo<\App\Models\User, Revision>
      */
-    public function user(): BelongsTo
+    public function creator(): BelongsTo
     {
-        return $this->belongsTo(config('auth.providers.users.model'), 'user_id');
+        return $this->belongsTo(config('auth.providers.users.model'), 'created_by');
     }
 
     /**
@@ -99,7 +101,7 @@ class Revision extends Model
      */
     public function getFieldChange(string $field): ?array
     {
-        return $this->changes[$field] ?? null;
+        return $this->diff[$field] ?? null;
     }
 
     /**
@@ -116,13 +118,14 @@ class Revision extends Model
     }
 
     /**
-     * Scope to filter only manual (non-auto) revisions.
+     * Scope to filter revisions by type.
      *
      * @param \Illuminate\Database\Eloquent\Builder<Revision> $query
+     * @param string $type The revision type to filter by
      * @return \Illuminate\Database\Eloquent\Builder<Revision>
      */
-    public function scopeManual($query)
+    public function scopeOfType($query, string $type)
     {
-        return $query->where('is_auto', false);
+        return $query->where('type', $type);
     }
 }

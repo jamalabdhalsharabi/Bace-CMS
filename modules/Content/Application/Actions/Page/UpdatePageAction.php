@@ -10,12 +10,38 @@ use Modules\Content\Domain\Models\Page;
 use Modules\Content\Domain\Repositories\PageRepository;
 use Modules\Core\Application\Actions\Action;
 
+/**
+ * Update Page Action.
+ *
+ * Handles updating existing CMS pages with multi-language support.
+ *
+ * @package Modules\Content\Application\Actions\Page
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 final class UpdatePageAction extends Action
 {
+    /**
+     * Create a new UpdatePageAction instance.
+     *
+     * @param PageRepository $repository The page repository for data operations
+     */
     public function __construct(
         private readonly PageRepository $repository
     ) {}
 
+    /**
+     * Execute the page update action.
+     *
+     * Updates page data and translations.
+     *
+     * @param Page $page The page instance to update
+     * @param PageData $data The validated page data transfer object
+     * 
+     * @return Page The updated page with translations loaded
+     * 
+     * @throws \Exception When update fails
+     */
     public function execute(Page $page, PageData $data): Page
     {
         return $this->transaction(function () use ($page, $data) {

@@ -20,35 +20,37 @@ trait HasRevisions
 
     public function revisions(): MorphMany
     {
-        return $this->morphMany(Revision::class, 'revisionable')->orderByDesc('revision_number');
+        return $this->morphMany(Revision::class, 'revisionable')->orderByDesc('version');
     }
 
-    public function createRevision(?string $summary = null, bool $isAuto = true): Revision
+    public function createRevision(?string $summary = null, string $type = 'update'): Revision
     {
-        $lastRevision = $this->revisions()->max('revision_number') ?? 0;
+        $lastVersion = $this->revisions()->max('version') ?? 0;
+        $oldData = $this->getOriginal();
 
         return $this->revisions()->create([
-            'user_id' => auth()->id(),
-            'revision_number' => $lastRevision + 1,
-            'data' => $this->getRevisionData(),
-            'changes' => $this->getRevisionChanges(),
+            'created_by' => auth()->id(),
+            'version' => $lastVersion + 1,
+            'type' => $type,
+            'old_data' => $oldData,
+            'new_data' => $this->getRevisionData(),
+            'diff' => $this->getRevisionChanges(),
             'summary' => $summary,
-            'is_auto' => $isAuto,
         ]);
     }
 
     public function restoreRevision(Revision $revision): bool
     {
-        $data = $revision->data;
+        $data = $revision->new_data;
         unset($data['id'], $data['created_at'], $data['updated_at']);
         
         $this->fill($data);
         return $this->save();
     }
 
-    public function getRevision(int $number): ?Revision
+    public function getRevision(int $version): ?Revision
     {
-        return $this->revisions()->where('revision_number', $number)->first();
+        return $this->revisions()->where('version', $version)->first();
     }
 
     protected function getRevisionData(): array

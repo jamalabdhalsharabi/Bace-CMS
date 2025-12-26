@@ -11,9 +11,24 @@ use Modules\Media\Domain\Models\Media;
 
 /**
  * Delete Media Action.
+ *
+ * Permanently deletes media files and all variants from storage.
+ *
+ * @package Modules\Media\Application\Actions
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class DeleteMediaAction extends Action
 {
+    /**
+     * Execute the media deletion action.
+     *
+     * @param Media $media The media instance to delete
+     * 
+     * @return bool True if deletion was successful
+     * 
+     * @throws \Exception When deletion fails
+     */
     public function execute(Media $media): bool
     {
         $mediaId = $media->id;

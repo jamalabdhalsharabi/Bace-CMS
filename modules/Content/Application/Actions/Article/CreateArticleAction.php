@@ -14,19 +14,41 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Create Article Action.
  *
- * Handles the creation of a new article with translations.
+ * Handles the creation of new articles with multi-language support.
+ * Creates the article record along with all translations, calculates
+ * reading time, and triggers creation events for system notifications.
+ *
+ * @package Modules\Content\Application\Actions\Article
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class CreateArticleAction extends Action
 {
+    /**
+     * Create a new CreateArticleAction instance.
+     *
+     * @param ArticleRepository $repository The article repository for data operations
+     */
     public function __construct(
         private readonly ArticleRepository $repository
     ) {}
 
     /**
-     * Execute the action.
+     * Execute the article creation action.
      *
-     * @param ArticleData $data Article data DTO
-     * @return Article The created article
+     * Creates a new article with the provided data including all translations.
+     * The action performs the following steps:
+     * 1. Creates the main article record
+     * 2. Creates translation records for all provided locales
+     * 3. Calculates and updates reading time based on content
+     * 4. Triggers ArticleCreated event for notifications
+     *
+     * @param ArticleData $data The validated article data transfer object
+     * 
+     * @return Article The newly created article with relationships loaded
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException When related models not found
+     * @throws \Exception When article creation fails
      */
     public function execute(ArticleData $data): Article
     {

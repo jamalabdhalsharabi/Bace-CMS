@@ -11,8 +11,12 @@ use Modules\Taxonomy\Domain\Models\Taxonomy;
 /**
  * Article Taxonomy Service.
  *
- * Manages article categories and tags.
- * Single Responsibility: Taxonomy relationships.
+ * Manages article relationships with categories and tags.
+ * Handles taxonomy synchronization and related articles.
+ *
+ * @package Modules\Content\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ArticleTaxonomyService
 {

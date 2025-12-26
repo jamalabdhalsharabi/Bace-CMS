@@ -11,9 +11,21 @@ use Modules\Content\Domain\Repositories\PageRepository;
 
 /**
  * Page Query Service.
+ *
+ * Handles all read-only query operations for pages.
+ * Follows CQRS pattern by separating queries from commands.
+ *
+ * @package Modules\Content\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class PageQueryService
 {
+    /**
+     * Create a new PageQueryService instance.
+     *
+     * @param PageRepository $repository The page repository for data access
+     */
     public function __construct(
         private readonly PageRepository $repository
     ) {}

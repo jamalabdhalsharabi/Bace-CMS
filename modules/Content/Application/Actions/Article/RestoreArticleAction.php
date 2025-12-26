@@ -19,11 +19,16 @@ use Modules\Core\Application\Actions\Action;
 final class RestoreArticleAction extends Action
 {
     /**
-     * Execute the restore action.
+     * Execute the article restoration action.
      *
-     * @param string $id The ID of the article to restore
+     * Restores a previously soft-deleted article back to active status.
+     * Article becomes accessible again with all original data intact.
      *
+     * @param string $id The article UUID to restore
+     * 
      * @return Article|null The restored article or null if not found
+     * 
+     * @throws \Exception When restoration fails
      */
     public function execute(string $id): ?Article
     {

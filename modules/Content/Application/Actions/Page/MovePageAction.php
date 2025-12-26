@@ -19,12 +19,16 @@ use Modules\Content\Domain\Models\Page;
 final class MovePageAction extends Action
 {
     /**
-     * Execute the move action.
+     * Execute the page move action.
      *
-     * @param Page $page The page to move
-     * @param string|null $parentId The new parent ID (null for root)
+     * Moves page to different parent in hierarchy, updating depth and path.
      *
-     * @return Page The moved page
+     * @param Page $page The page instance to move
+     * @param string|null $parentId The new parent UUID (null for root level)
+     * 
+     * @return Page The moved page with updated hierarchy
+     * 
+     * @throws \Exception When move operation fails
      */
     public function execute(Page $page, ?string $parentId): Page
     {

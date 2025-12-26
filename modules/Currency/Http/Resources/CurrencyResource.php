@@ -18,11 +18,11 @@ class CurrencyResource extends JsonResource
             'symbol' => $this->symbol,
             'symbol_position' => $this->symbol_position,
             'decimal_separator' => $this->decimal_separator,
-            'thousand_separator' => $this->thousand_separator,
+            'thousands_separator' => $this->thousands_separator,
             'decimal_places' => $this->decimal_places,
             'is_default' => $this->is_default,
             'is_active' => $this->is_active,
-            'ordering' => $this->ordering,
+            'sort_order' => $this->sort_order,
         ];
     }
 }
