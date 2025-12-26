@@ -10,15 +10,29 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Duplicate Article Action.
  *
- * Creates a copy of an existing article.
+ * Creates a complete copy of an existing article including all translations.
+ * Useful for creating similar content or templates.
+ *
+ * @package Modules\Content\Application\Actions\Article
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class DuplicateArticleAction extends Action
 {
     /**
-     * Execute the action.
+     * Execute the article duplication action.
      *
-     * @param Article $article The article to duplicate
-     * @return Article The duplicated article
+     * Creates a new article as a copy of the source article with:
+     * - All translations duplicated with '(Copy)' suffix
+     * - Status reset to 'draft'
+     * - View count reset to 0
+     * - New unique slugs to avoid conflicts
+     *
+     * @param Article $article The source article to duplicate
+     * 
+     * @return Article The newly created duplicate article
+     * 
+     * @throws \Exception When duplication fails
      */
     public function execute(Article $article): Article
     {

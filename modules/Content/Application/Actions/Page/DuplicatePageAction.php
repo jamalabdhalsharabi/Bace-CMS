@@ -7,8 +7,26 @@ namespace Modules\Content\Application\Actions\Page;
 use Modules\Content\Domain\Models\Page;
 use Modules\Core\Application\Actions\Action;
 
+/**
+ * Duplicate Page Action.
+ *
+ * Creates a complete copy of an existing page including all translations.
+ *
+ * @package Modules\Content\Application\Actions\Page
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 final class DuplicatePageAction extends Action
 {
+    /**
+     * Execute the page duplication action.
+     *
+     * @param Page $page The source page to duplicate
+     * 
+     * @return Page The newly created duplicate page
+     * 
+     * @throws \Exception When duplication fails
+     */
     public function execute(Page $page): Page
     {
         return $this->transaction(function () use ($page) {

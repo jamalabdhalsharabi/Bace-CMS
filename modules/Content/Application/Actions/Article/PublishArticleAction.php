@@ -17,7 +17,13 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Publish Article Action.
  *
- * Handles publishing an article immediately or scheduling for later.
+ * Handles article publication workflow including immediate publishing,
+ * scheduled publishing, and unpublishing. Uses state machine pattern
+ * for managing article lifecycle transitions.
+ *
+ * @package Modules\Content\Application\Actions\Article
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class PublishArticleAction extends Action
 {
@@ -28,8 +34,14 @@ final class PublishArticleAction extends Action
     /**
      * Publish article immediately.
      *
-     * @param Article $article The article to publish
-     * @return Article The published article
+     * Transitions article to published state and makes it publicly visible.
+     * Sets published_at timestamp if not already set.
+     *
+     * @param Article $article The article instance to publish
+     * 
+     * @return Article The published article with updated status
+     * 
+     * @throws \Exception When state transition fails
      */
     public function execute(Article $article): Article
     {
@@ -48,9 +60,15 @@ final class PublishArticleAction extends Action
     /**
      * Schedule article for future publication.
      *
-     * @param Article $article The article to schedule
-     * @param Carbon $publishAt When to publish
-     * @return Article The scheduled article
+     * Transitions article to scheduled state with future publication date.
+     * Article will be automatically published at the specified time.
+     *
+     * @param Article $article The article instance to schedule
+     * @param Carbon $publishAt The future publication date/time
+     * 
+     * @return Article The scheduled article with updated timestamps
+     * 
+     * @throws \Exception When state transition fails
      */
     public function schedule(Article $article, Carbon $publishAt): Article
     {
@@ -68,8 +86,14 @@ final class PublishArticleAction extends Action
     /**
      * Unpublish a published article.
      *
-     * @param Article $article The article to unpublish
-     * @return Article The unpublished article
+     * Reverts article to draft status, removing it from public view.
+     * Useful for making corrections or temporarily hiding content.
+     *
+     * @param Article $article The article instance to unpublish
+     * 
+     * @return Article The unpublished article with draft status
+     * 
+     * @throws \Exception When status update fails
      */
     public function unpublish(Article $article): Article
     {

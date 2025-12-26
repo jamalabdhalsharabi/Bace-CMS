@@ -8,6 +8,15 @@ use Modules\Content\Domain\Models\Page;
 use Modules\Content\Domain\Repositories\PageRepository;
 use Modules\Core\Application\Actions\Action;
 
+/**
+ * Publish Page Action.
+ *
+ * Handles page publication workflow including publishing, unpublishing, and archiving.
+ *
+ * @package Modules\Content\Application\Actions\Page
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 final class PublishPageAction extends Action
 {
     public function __construct(

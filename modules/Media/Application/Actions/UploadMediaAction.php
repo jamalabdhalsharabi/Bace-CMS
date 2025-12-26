@@ -15,13 +15,35 @@ use Modules\Media\Jobs\GenerateMediaConversions;
 
 /**
  * Upload Media Action.
+ *
+ * Handles file uploads to the media library with automatic processing,
+ * variant generation, and metadata extraction.
+ *
+ * @package Modules\Media\Application\Actions
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class UploadMediaAction extends Action
 {
+    /**
+     * Create a new UploadMediaAction instance.
+     *
+     * @param MediaRepository $repository The media repository
+     */
     public function __construct(
         private readonly MediaRepository $repository
     ) {}
 
+    /**
+     * Execute the media upload action.
+     *
+     * @param UploadedFile $file The uploaded file
+     * @param array<string, mixed> $options Upload options
+     * 
+     * @return Media The created media record
+     * 
+     * @throws \Exception When upload fails
+     */
     public function execute(UploadedFile $file, array $options = []): Media
     {
         $disk = $options['disk'] ?? config('media.disk', 'public');

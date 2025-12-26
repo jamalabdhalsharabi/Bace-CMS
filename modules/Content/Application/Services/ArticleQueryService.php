@@ -12,11 +12,20 @@ use Modules\Content\Domain\Repositories\ArticleRepository;
 /**
  * Article Query Service.
  *
- * Handles read-only operations for articles.
- * Single Responsibility: Data retrieval only.
+ * Handles all read-only query operations for articles.
+ * Follows CQRS pattern by separating queries from commands.
+ *
+ * @package Modules\Content\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ArticleQueryService
 {
+    /**
+     * Create a new ArticleQueryService instance.
+     *
+     * @param ArticleRepository $repository The article repository for data access
+     */
     public function __construct(
         private readonly ArticleRepository $repository
     ) {}

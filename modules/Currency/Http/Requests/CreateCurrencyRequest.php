@@ -21,7 +21,7 @@ class CreateCurrencyRequest extends FormRequest
             'symbol' => ['required', 'string', 'max:10'],
             'symbol_position' => ['nullable', 'in:before,after'],
             'decimal_separator' => ['nullable', 'string', 'size:1'],
-            'thousand_separator' => ['nullable', 'string', 'size:1'],
+            'thousands_separator' => ['nullable', 'string', 'size:1'],
             'decimal_places' => ['nullable', 'integer', 'min:0', 'max:4'],
             'is_default' => ['nullable', 'boolean'],
             'is_active' => ['nullable', 'boolean'],

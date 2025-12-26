@@ -18,11 +18,20 @@ use Modules\Content\Domain\States\RejectedState;
 /**
  * Article Workflow Service.
  *
- * Manages article review and approval workflow using State Machine.
- * Single Responsibility: Workflow state transitions.
+ * Manages article review and approval workflow using State Machine pattern.
+ * Handles state transitions for editorial workflow.
+ *
+ * @package Modules\Content\Application\Services
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class ArticleWorkflowService
 {
+    /**
+     * Create a new ArticleWorkflowService instance.
+     *
+     * @param ArticleRepository $repository The article repository
+     */
     public function __construct(
         private readonly ArticleRepository $repository
     ) {}

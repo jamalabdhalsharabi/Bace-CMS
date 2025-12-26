@@ -30,9 +30,12 @@ class CurrencyController extends BaseController
      */
     public function index(): JsonResponse
     {
-        $currencies = $this->queryService->getActive();
-
-        return $this->success(CurrencyResource::collection($currencies));
+        try {
+            $currencies = $this->queryService->getActive();
+            return $this->success(CurrencyResource::collection($currencies));
+        } catch (\Exception $e) {
+            return $this->error('Failed to retrieve currencies: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -43,13 +46,17 @@ class CurrencyController extends BaseController
      */
     public function show(string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
+        try {
+            $currency = $this->queryService->find($id);
 
-        if (!$currency) {
-            return $this->notFound('Currency not found');
+            if (!$currency) {
+                return $this->notFound('Currency not found');
+            }
+
+            return $this->success(new CurrencyResource($currency));
+        } catch (\Exception $e) {
+            return $this->error('Failed to retrieve currency: ' . $e->getMessage());
         }
-
-        return $this->success(new CurrencyResource($currency));
     }
 
     /**
@@ -60,9 +67,12 @@ class CurrencyController extends BaseController
      */
     public function store(CreateCurrencyRequest $request): JsonResponse
     {
-        $currency = $this->queryService->create($request->validated());
-
-        return $this->created(new CurrencyResource($currency));
+        try {
+            $currency = $this->commandService->create($request->validated());
+            return $this->created(new CurrencyResource($currency), 'Currency created successfully');
+        } catch (\Exception $e) {
+            return $this->error('Failed to create currency: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -74,15 +84,19 @@ class CurrencyController extends BaseController
      */
     public function update(UpdateCurrencyRequest $request, string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
+        try {
+            $currency = $this->queryService->find($id);
 
-        if (!$currency) {
-            return $this->notFound('Currency not found');
+            if (!$currency) {
+                return $this->notFound('Currency not found');
+            }
+
+            $currency = $this->commandService->update($currency, $request->validated());
+
+            return $this->success(new CurrencyResource($currency), 'Currency updated successfully');
+        } catch (\Exception $e) {
+            return $this->error('Failed to update currency: ' . $e->getMessage());
         }
-
-        $currency = $this->queryService->update($currency, $request->validated());
-
-        return $this->success(new CurrencyResource($currency));
     }
 
     /**
@@ -94,18 +108,20 @@ class CurrencyController extends BaseController
      */
     public function destroy(string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
-
-        if (!$currency) {
-            return $this->notFound('Currency not found');
-        }
-
         try {
-            $this->queryService->delete($currency);
+            $currency = $this->queryService->find($id);
 
-            return $this->success(null, 'Currency deleted');
+            if (!$currency) {
+                return $this->notFound('Currency not found');
+            }
+
+            $this->commandService->delete($currency);
+
+            return $this->success(null, 'Currency deleted successfully');
         } catch (\RuntimeException $e) {
             return $this->error($e->getMessage(), 400);
+        } catch (\Exception $e) {
+            return $this->error('Failed to delete currency: ' . $e->getMessage());
         }
     }
 
@@ -134,64 +150,97 @@ class CurrencyController extends BaseController
     /** Get all currencies including inactive. */
     public function all(): JsonResponse
     {
-        $currencies = $this->queryService->getAll();
-        return $this->success(CurrencyResource::collection($currencies));
+        try {
+            $currencies = $this->queryService->getAll();
+            return $this->success(CurrencyResource::collection($currencies));
+        } catch (\Exception $e) {
+            return $this->error('Failed to retrieve currencies: ' . $e->getMessage());
+        }
     }
 
     /** Activate currency. */
     public function activate(string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
-        if (!$currency) return $this->notFound('Currency not found');
-        $currency = $this->commandService->activate($id);
-        return $this->success(new CurrencyResource($currency), 'Currency activated');
+        try {
+            $currency = $this->queryService->find($id);
+            if (!$currency) return $this->notFound('Currency not found');
+            $currency = $this->commandService->activate($id);
+            return $this->success(new CurrencyResource($currency), 'Currency activated');
+        } catch (\Exception $e) {
+            return $this->error('Failed to activate currency: ' . $e->getMessage());
+        }
     }
 
     /** Deactivate currency. */
     public function deactivate(string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
-        if (!$currency) return $this->notFound('Currency not found');
-        $currency = $this->commandService->deactivate($id);
-        return $this->success(new CurrencyResource($currency), 'Currency deactivated');
+        try {
+            $currency = $this->queryService->find($id);
+            if (!$currency) return $this->notFound('Currency not found');
+            $currency = $this->commandService->deactivate($id);
+            return $this->success(new CurrencyResource($currency), 'Currency deactivated');
+        } catch (\Exception $e) {
+            return $this->error('Failed to deactivate currency: ' . $e->getMessage());
+        }
     }
 
     /** Set default currency. */
     public function setDefault(string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
-        if (!$currency) return $this->notFound('Currency not found');
-        $currency = $this->commandService->setDefault($id);
-        return $this->success(new CurrencyResource($currency), 'Default currency set');
+        try {
+            $currency = $this->queryService->find($id);
+            if (!$currency) return $this->notFound('Currency not found');
+            $currency = $this->commandService->setDefault($id);
+            return $this->success(new CurrencyResource($currency), 'Default currency set');
+        } catch (\Exception $e) {
+            return $this->error('Failed to set default currency: ' . $e->getMessage());
+        }
     }
 
     /** Update exchange rate. */
     public function updateRate(UpdateRateRequest $request, string $id): JsonResponse
     {
-        $currency = $this->queryService->find($id);
-        if (!$currency) return $this->notFound('Currency not found');
-        $currency = $this->commandService->updateRate($id, $request->rate);
-        return $this->success(new CurrencyResource($currency), 'Exchange rate updated');
+        try {
+            $currency = $this->queryService->find($id);
+            if (!$currency) return $this->notFound('Currency not found');
+            $this->commandService->updateRate($id, $request->validated()['rate']);
+            return $this->success(null, 'Exchange rate updated');
+        } catch (\Exception $e) {
+            return $this->error('Failed to update exchange rate: ' . $e->getMessage());
+        }
     }
 
     /** Sync rates from external API. */
     public function syncRates(): JsonResponse
     {
-        $result = $this->commandService->syncRatesFromApi();
-        return $this->success($result, 'Exchange rates synced');
+        try {
+            $result = $this->commandService->syncRatesFromApi();
+            return $this->success($result, 'Exchange rates synced');
+        } catch (\Exception $e) {
+            return $this->error('Failed to sync exchange rates: ' . $e->getMessage());
+        }
     }
 
     /** Format amount in currency. */
     public function format(FormatAmountRequest $request): JsonResponse
     {
-        $formatted = $this->queryService->format($request->amount, $request->currency_code);
-        return $this->success(['formatted' => $formatted]);
+        try {
+            $validated = $request->validated();
+            $formatted = $this->queryService->format($validated['amount'], $validated['currency_code']);
+            return $this->success(['formatted' => $formatted]);
+        } catch (\Exception $e) {
+            return $this->error('Failed to format amount: ' . $e->getMessage());
+        }
     }
 
     /** Get supported currencies from API. */
     public function supported(): JsonResponse
     {
-        $currencies = $this->queryService->getSupportedCurrencies();
-        return $this->success($currencies);
+        try {
+            $currencies = $this->queryService->getSupportedCurrencies();
+            return $this->success($currencies);
+        } catch (\Exception $e) {
+            return $this->error('Failed to retrieve supported currencies: ' . $e->getMessage());
+        }
     }
 }

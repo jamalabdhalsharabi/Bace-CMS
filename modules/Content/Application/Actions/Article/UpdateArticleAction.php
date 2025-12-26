@@ -13,20 +13,37 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Update Article Action.
  *
- * Handles updating an existing article with translations.
+ * Handles updating existing articles with multi-language support.
+ * Updates the article record, translations, and recalculates reading time.
+ *
+ * @package Modules\Content\Application\Actions\Article
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class UpdateArticleAction extends Action
 {
+    /**
+     * Create a new UpdateArticleAction instance.
+     *
+     * @param ArticleRepository $repository The article repository for data operations
+     */
     public function __construct(
         private readonly ArticleRepository $repository
     ) {}
 
     /**
-     * Execute the action.
+     * Execute the article update action.
      *
-     * @param Article $article The article to update
-     * @param ArticleData $data Updated article data
-     * @return Article The updated article
+     * Updates an existing article with new data including translations.
+     * Preserves existing translations for locales not included in update.
+     *
+     * @param Article $article The article instance to update
+     * @param ArticleData $data The validated article data transfer object
+     * 
+     * @return Article The updated article with relationships loaded
+     * 
+     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException When article not found
+     * @throws \Exception When update operation fails
      */
     public function execute(Article $article, ArticleData $data): Article
     {

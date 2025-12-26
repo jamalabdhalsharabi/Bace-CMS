@@ -19,11 +19,15 @@ use Modules\Content\Domain\Models\Page;
 final class ReorderPagesAction extends Action
 {
     /**
-     * Execute the reorder action.
+     * Execute the page reordering action.
      *
-     * @param array<int, string> $order Array of page IDs in desired order
+     * Updates sort_order for multiple pages based on array position.
      *
+     * @param array<int, string> $order Array of page UUIDs in desired display order
+     * 
      * @return void
+     * 
+     * @throws \Exception When reordering fails
      */
     public function execute(array $order): void
     {

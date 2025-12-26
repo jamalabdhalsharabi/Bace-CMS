@@ -6,8 +6,22 @@ namespace Modules\Content\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Update Page Request.
+ *
+ * Validates input data for updating existing CMS pages with multi-language support.
+ *
+ * @package Modules\Content\Http\Requests
+ * @author  CMS Development Team
+ * @since   1.0.0
+ */
 class UpdatePageRequest extends FormRequest
 {
+    /**
+     * Determine if the user is authorized to make this request.
+     *
+     * @return bool Always true (authorization handled by middleware)
+     */
     public function authorize(): bool
     {
         return true;

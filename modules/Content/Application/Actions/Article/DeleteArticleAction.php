@@ -11,7 +11,12 @@ use Modules\Core\Application\Actions\Action;
 /**
  * Delete Article Action.
  *
- * Handles soft and hard deletion of articles.
+ * Handles article deletion operations including soft delete, permanent delete,
+ * and restoration. Tracks deletion metadata for audit purposes.
+ *
+ * @package Modules\Content\Application\Actions\Article
+ * @author  CMS Development Team
+ * @since   1.0.0
  */
 final class DeleteArticleAction extends Action
 {
@@ -22,8 +27,14 @@ final class DeleteArticleAction extends Action
     /**
      * Soft delete an article.
      *
-     * @param Article $article The article to delete
-     * @return bool
+     * Marks article as deleted while preserving data for potential restoration.
+     * Records the deleting user for audit trail.
+     *
+     * @param Article $article The article instance to soft delete
+     * 
+     * @return bool True if deletion was successful
+     * 
+     * @throws \Exception When deletion fails
      */
     public function execute(Article $article): bool
     {
@@ -35,8 +46,14 @@ final class DeleteArticleAction extends Action
     /**
      * Permanently delete an article.
      *
-     * @param string $id Article UUID
-     * @return bool
+     * Permanently removes article and all translations from database.
+     * This operation cannot be undone.
+     *
+     * @param string $id The article UUID to permanently delete
+     * 
+     * @return bool True if permanent deletion was successful
+     * 
+     * @throws \Exception When permanent deletion fails
      */
     public function forceDelete(string $id): bool
     {
@@ -46,8 +63,13 @@ final class DeleteArticleAction extends Action
     /**
      * Restore a soft-deleted article.
      *
-     * @param string $id Article UUID
-     * @return Article|null
+     * Restores a previously soft-deleted article back to active status.
+     *
+     * @param string $id The article UUID to restore
+     * 
+     * @return Article|null The restored article or null if not found
+     * 
+     * @throws \Exception When restoration fails
      */
     public function restore(string $id): ?Article
     {
