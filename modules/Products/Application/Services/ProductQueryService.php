@@ -41,6 +41,14 @@ final class ProductQueryService
     }
 
     /**
+     * Find product by ID including soft deleted.
+     */
+    public function findWithTrashed(string $id): ?Product
+    {
+        return $this->repository->findWithTrashed($id);
+    }
+
+    /**
      * Find product by SKU.
      */
     public function findBySku(string $sku): ?Product
@@ -83,10 +91,20 @@ final class ProductQueryService
     /**
      * Get low stock products.
      */
-    public function getLowStock(): Collection
+    public function getLowStock(int $perPage = 20): LengthAwarePaginator
     {
         return $this->repository
             ->with(['translation', 'inventory'])
-            ->getLowStock();
+            ->getLowStockPaginated($perPage);
+    }
+
+    /**
+     * Get out of stock products.
+     */
+    public function getOutOfStock(int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->repository
+            ->with(['translation', 'inventory'])
+            ->getOutOfStockPaginated($perPage);
     }
 }

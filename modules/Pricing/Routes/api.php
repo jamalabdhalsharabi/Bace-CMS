@@ -7,7 +7,7 @@ Route::prefix('api/v1/plans')->middleware(['api'])->name('api.v1.plans.')->group
     Route::get('/', [PlanController::class, 'index'])->name('index');
     Route::get('/{id}', [PlanController::class, 'show'])->name('show');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         Route::post('/', [PlanController::class, 'store'])->name('store');
         Route::put('/{id}', [PlanController::class, 'update'])->name('update');
         Route::delete('/{id}', [PlanController::class, 'destroy'])->name('destroy');

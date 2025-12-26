@@ -124,7 +124,7 @@ class UserBan extends Model
     {
         $this->update([
             'lifted_at' => now(),
-            'lifted_by' => $lifterId ?? auth()->id(),
+            'lifted_by' => $lifterId ?? request()->user()?->id,
         ]);
         return $this;
     }

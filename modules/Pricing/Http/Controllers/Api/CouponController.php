@@ -135,7 +135,7 @@ class CouponController extends BaseController
     public function validateCoupon(ValidateCouponRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $result = $this->couponService->validate($data['code'], auth()->id(), $data['plan_id']);
+        $result = $this->couponService->validate($data['code'], request()->user()?->id, $data['plan_id']);
         
         if (!$result['valid']) {
             return $this->error($result['error'], 422);

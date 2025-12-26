@@ -27,7 +27,7 @@ Route::prefix('api/v1/testimonials')->middleware(['api'])->name('api.v1.testimon
     | Protected Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // CRUD
         Route::post('/', [TestimonialManagementController::class, 'store'])->name('store');
         Route::put('/{id}', [TestimonialManagementController::class, 'update'])->name('update');

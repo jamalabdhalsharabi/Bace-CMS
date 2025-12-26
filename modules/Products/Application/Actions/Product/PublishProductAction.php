@@ -47,4 +47,13 @@ final class PublishProductAction extends Action
 
         return $product->fresh();
     }
+
+    public function unarchive(Product $product): Product
+    {
+        $this->repository->update($product->id, [
+            'status' => 'draft',
+        ]);
+
+        return $product->fresh();
+    }
 }

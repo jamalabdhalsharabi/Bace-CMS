@@ -21,14 +21,23 @@ final class DuplicateProductAction extends Action
             foreach ($product->translations as $trans) {
                 $clone->translations()->create([
                     'locale' => $trans->locale,
-                    'title' => $trans->title . ' (Copy)',
+                    'name' => $trans->name . ' (Copy)',
                     'slug' => $trans->slug . '-copy-' . time(),
+                    'short_description' => $trans->short_description,
                     'description' => $trans->description,
-                    'content' => $trans->content,
+                    'meta_title' => $trans->meta_title,
+                    'meta_description' => $trans->meta_description,
                 ]);
             }
 
-            $clone->categories()->sync($product->categories->pluck('id'));
+            // Sync categories if relationship exists
+            if (method_exists($clone, 'categories') && $product->relationLoaded('categories')) {
+                try {
+                    $clone->categories()->sync($product->categories->pluck('id'));
+                } catch (\Throwable $e) {
+                    // Skip if categories table doesn't exist
+                }
+            }
 
             foreach ($product->variants as $variant) {
                 $cloneVariant = $clone->variants()->create($variant->only([
@@ -37,7 +46,7 @@ final class DuplicateProductAction extends Action
                 $cloneVariant->update(['sku' => $variant->sku . '-copy-' . time()]);
             }
 
-            return $clone->fresh(['translations', 'categories', 'variants']);
+            return $clone->fresh(['translations']);
         });
     }
 }

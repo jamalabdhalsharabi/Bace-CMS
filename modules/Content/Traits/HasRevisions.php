@@ -29,7 +29,7 @@ trait HasRevisions
         $oldData = $this->getOriginal();
 
         return $this->revisions()->create([
-            'created_by' => auth()->id(),
+            'created_by' => request()->user()?->id,
             'version' => $lastVersion + 1,
             'type' => $type,
             'old_data' => $oldData,

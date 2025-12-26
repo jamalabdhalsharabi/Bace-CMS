@@ -86,6 +86,17 @@ final class ProductRepository extends BaseRepository
     }
 
     /**
+     * Find product by ID including soft deleted.
+     *
+     * @param string $id Product ID
+     * @return Product|null
+     */
+    public function findWithTrashed(string $id): ?Product
+    {
+        return $this->model->withTrashed()->find($id);
+    }
+
+    /**
      * Find product by slug.
      *
      * @param string $slug URL slug
@@ -162,5 +173,33 @@ final class ProductRepository extends BaseRepository
                 $q->whereColumn('quantity', '<=', 'low_stock_threshold')
             )
             ->get();
+    }
+
+    /**
+     * Get low stock products with pagination.
+     *
+     * @param int $perPage Items per page
+     * @return LengthAwarePaginator
+     */
+    public function getLowStockPaginated(int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->query()
+            ->whereHas('inventory', fn ($q) => 
+                $q->whereColumn('quantity', '<=', 'low_stock_threshold')
+            )
+            ->paginate($perPage);
+    }
+
+    /**
+     * Get out of stock products with pagination.
+     *
+     * @param int $perPage Items per page
+     * @return LengthAwarePaginator
+     */
+    public function getOutOfStockPaginated(int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->query()
+            ->where('stock_status', 'out_of_stock')
+            ->paginate($perPage);
     }
 }

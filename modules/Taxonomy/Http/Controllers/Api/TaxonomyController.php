@@ -36,7 +36,7 @@ class TaxonomyController extends BaseController
      */
     public function types(): JsonResponse
     {
-        $types = $this->queryService->getTypes();
+        $types = $this->queryService->getAllTypes();
 
         return $this->success(TaxonomyTypeResource::collection($types));
     }

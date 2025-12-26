@@ -111,7 +111,7 @@ class EventTicket extends Model
         $this->update([
             'status' => 'used',
             'checked_in_at' => now(),
-            'checked_in_by' => $userId ?? auth()->id(),
+            'checked_in_by' => $userId ?? request()->user()?->id,
         ]);
         return $this;
     }

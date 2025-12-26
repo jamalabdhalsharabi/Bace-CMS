@@ -168,7 +168,7 @@ class FormSubmission extends Model
             $this->update([
                 'status' => 'opened',
                 'opened_at' => now(),
-                'opened_by' => $userId ?? auth()->id(),
+                'opened_by' => $userId ?? request()->user()?->id,
             ]);
         }
         return $this;
@@ -196,7 +196,7 @@ class FormSubmission extends Model
         $this->update([
             'status' => 'completed',
             'completed_at' => now(),
-            'completed_by' => $userId ?? auth()->id(),
+            'completed_by' => $userId ?? request()->user()?->id,
         ]);
         return $this;
     }

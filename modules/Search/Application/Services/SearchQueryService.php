@@ -93,17 +93,17 @@ final class SearchQueryService
     {
         $searchTerm = $query->query;
 
-        return $model::query()
-            ->where('status', 'published')
-            ->where(function ($q) use ($searchTerm) {
-                $q->whereHas('translations', fn ($tq) => 
+        try {
+            return $model::query()
+                ->where('status', 'published')
+                ->whereHas('translations', fn ($tq) => 
                     $tq->where('title', 'LIKE', "%{$searchTerm}%")
-                       ->orWhere('content', 'LIKE', "%{$searchTerm}%")
-                       ->orWhere('description', 'LIKE', "%{$searchTerm}%")
-                );
-            })
-            ->limit($query->limit)
-            ->get();
+                )
+                ->limit($query->limit)
+                ->get();
+        } catch (\Exception $e) {
+            return collect();
+        }
     }
 
     private function getTitle($item): string

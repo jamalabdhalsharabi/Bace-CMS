@@ -33,7 +33,7 @@ Route::prefix('api/v1/products')->middleware(['api'])->name('api.v1.products.')-
     | Protected Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
 
         // Inventory Listing
         Route::get('/inventory/low-stock', [ProductListingController::class, 'lowStock'])->name('low-stock');

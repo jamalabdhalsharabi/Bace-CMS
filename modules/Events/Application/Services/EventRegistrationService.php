@@ -24,7 +24,7 @@ final class EventRegistrationService
     {
         return DB::transaction(function () use ($event, $data) {
             $registration = $event->registrations()->create([
-                'user_id' => $data['user_id'] ?? auth()->id(),
+                'user_id' => $data['user_id'] ?? request()->user()?->id,
                 'ticket_type_id' => $data['ticket_type_id'] ?? null,
                 'quantity' => $data['quantity'] ?? 1,
                 'status' => 'pending',
@@ -90,7 +90,7 @@ final class EventRegistrationService
     public function addToWaitlist(Event $event, array $data): EventRegistration
     {
         return $event->registrations()->create([
-            'user_id' => $data['user_id'] ?? auth()->id(),
+            'user_id' => $data['user_id'] ?? request()->user()?->id,
             'status' => 'waitlist',
             'attendee_name' => $data['attendee_name'],
             'attendee_email' => $data['attendee_email'],

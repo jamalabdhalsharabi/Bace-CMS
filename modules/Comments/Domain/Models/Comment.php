@@ -251,7 +251,7 @@ class Comment extends Model
         $this->update([
             'status' => 'approved',
             'approved_at' => now(),
-            'approved_by' => $approvedBy ?? auth()->id(),
+            'approved_by' => $approvedBy ?? request()->user()?->id,
         ]);
 
         return $this;

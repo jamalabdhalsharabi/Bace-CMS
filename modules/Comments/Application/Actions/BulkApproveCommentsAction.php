@@ -48,7 +48,7 @@ final class BulkApproveCommentsAction extends Action
         return Comment::whereIn('id', $ids)->update([
             'status' => 'approved',
             'approved_at' => now(),
-            'approved_by' => auth()->id(),
+            'approved_by' => request()->user()?->id,
             'updated_at' => now(),
         ]);
     }

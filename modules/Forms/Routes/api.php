@@ -8,7 +8,7 @@ Route::prefix('api/v1/forms')->middleware(['api'])->name('api.v1.forms.')->group
     Route::get('/slug/{slug}', [FormController::class, 'showBySlug'])->name('slug');
     Route::post('/{id}/submit', [FormController::class, 'submit'])->name('submit');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         Route::get('/', [FormController::class, 'index'])->name('index');
         Route::post('/', [FormController::class, 'store'])->name('store');
         Route::get('/{id}', [FormController::class, 'show'])->name('show');
@@ -20,7 +20,7 @@ Route::prefix('api/v1/forms')->middleware(['api'])->name('api.v1.forms.')->group
     });
 });
 
-Route::prefix('api/v1/submissions')->middleware(['api', 'auth:sanctum'])->name('api.v1.submissions.')->group(function () {
+Route::prefix('api/v1/submissions')->middleware(['api', 'auth.api'])->name('api.v1.submissions.')->group(function () {
     Route::get('/', [SubmissionController::class, 'index'])->name('index');
     Route::get('/{id}', [SubmissionController::class, 'show'])->name('show');
     Route::put('/{id}/status', [SubmissionController::class, 'updateStatus'])->name('status');

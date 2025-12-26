@@ -27,7 +27,7 @@ Route::prefix('api/v1/comments')->middleware(['api'])->name('api.v1.comments.')-
     Route::get('/stats', [CommentListingController::class, 'stats'])->name('stats');
 
     // Authenticated routes
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // Listing operations (read-only)
         Route::get('/pending', [CommentListingController::class, 'pending'])->name('pending');
         Route::get('/{id}', [CommentListingController::class, 'show'])->name('show');

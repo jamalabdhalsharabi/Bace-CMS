@@ -52,7 +52,7 @@ class CommentModerator
             return true;
         }
 
-        $userId = $data['user_id'] ?? auth()->id();
+        $userId = $data['user_id'] ?? request()->user()?->id;
 
         if (!$userId) {
             return false;

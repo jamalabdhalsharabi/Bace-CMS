@@ -140,7 +140,7 @@ trait HasWorkflow
     {
         $this->update([
             'status' => 'in_review',
-            'reviewed_by' => $reviewerId ?? auth()->id(),
+            'reviewed_by' => $reviewerId ?? request()->user()?->id,
         ]);
         return $this;
     }

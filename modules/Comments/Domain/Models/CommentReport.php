@@ -101,7 +101,7 @@ class CommentReport extends Model
         $this->update([
             'status' => $status,
             'reviewed_at' => now(),
-            'reviewed_by' => $reviewerId ?? auth()->id(),
+            'reviewed_by' => $reviewerId ?? request()->user()?->id,
             'review_notes' => $notes,
         ]);
         return $this;

@@ -26,7 +26,7 @@ Route::prefix('api/v1/services')->middleware(['api'])->name('api.v1.services.')-
     | Protected Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // CRUD
         Route::post('/', [ServiceManagementController::class, 'store'])->name('store');
         Route::put('/{id}', [ServiceManagementController::class, 'update'])->name('update');

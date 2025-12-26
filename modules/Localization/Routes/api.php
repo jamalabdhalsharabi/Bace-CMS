@@ -9,7 +9,7 @@ Route::prefix('api/v1/languages')->middleware(['api'])->name('api.v1.languages.'
     Route::get('/all', [LanguageController::class, 'all'])->name('all');
     Route::get('/{id}', [LanguageController::class, 'show'])->name('show');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // CRUD
         Route::post('/', [LanguageController::class, 'store'])->name('store');
         Route::put('/{id}', [LanguageController::class, 'update'])->name('update');
