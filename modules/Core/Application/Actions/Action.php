@@ -34,6 +34,6 @@ abstract class Action
      */
     protected function userId(): ?string
     {
-        return auth()->id();
+        return request()->user()?->id;
     }
 }

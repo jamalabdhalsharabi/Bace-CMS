@@ -50,7 +50,7 @@ final class ExchangeRateQueryService
 
     public function getUserAlerts(?string $userId = null): Collection
     {
-        return RateAlert::where('user_id', $userId ?? auth()->id())
+        return RateAlert::where('user_id', $userId ?? request()->user()?->id)
             ->where('is_active', true)
             ->with(['baseCurrency', 'targetCurrency'])
             ->get();

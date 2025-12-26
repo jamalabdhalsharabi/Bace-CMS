@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Products\Application\Services\ProductCommandService;
 use Modules\Products\Application\Services\ProductQueryService;
+use Modules\Products\Domain\DTO\ProductData;
 use Modules\Products\Http\Requests\CreateProductRequest;
 use Modules\Products\Http\Requests\CreateProductTranslationRequest;
 use Modules\Products\Http\Requests\DuplicateProductRequest;
@@ -55,7 +56,26 @@ final class ProductManagementController extends BaseController
     public function store(CreateProductRequest $request): JsonResponse
     {
         try {
-            $product = $this->commandService->create($request->validated());
+            $validated = $request->validated();
+            $productData = new ProductData(
+                sku: $validated['sku'],
+                barcode: $validated['barcode'] ?? null,
+                type: $validated['type'] ?? 'physical',
+                status: $validated['status'] ?? 'draft',
+                visibility: $validated['visibility'] ?? 'visible',
+                is_featured: $validated['is_featured'] ?? false,
+                track_inventory: $validated['track_inventory'] ?? true,
+                allow_backorder: $validated['allow_backorder'] ?? false,
+                requires_shipping: $validated['requires_shipping'] ?? true,
+                weight: isset($validated['weight']) ? (float) $validated['weight'] : null,
+                weight_unit: $validated['weight_unit'] ?? 'kg',
+                tax_class: $validated['tax_class'] ?? null,
+                has_variants: false,
+                translations: $validated['translations'] ?? [],
+                dimensions: $validated['dimensions'] ?? null,
+            );
+            
+            $product = $this->commandService->create($productData);
 
             return $this->created(new ProductResource($product), 'Product created');
         } catch (\Throwable $e) {
@@ -82,7 +102,26 @@ final class ProductManagementController extends BaseController
                 return $this->notFound('Product not found');
             }
 
-            $product = $this->commandService->update($product, $request->validated());
+            $validated = $request->validated();
+            $productData = new ProductData(
+                sku: $validated['sku'] ?? $product->sku,
+                barcode: $validated['barcode'] ?? $product->barcode,
+                type: $validated['type'] ?? $product->type,
+                status: $validated['status'] ?? $product->status,
+                visibility: $validated['visibility'] ?? $product->visibility,
+                is_featured: $validated['is_featured'] ?? $product->is_featured,
+                track_inventory: $validated['track_inventory'] ?? $product->track_inventory,
+                allow_backorder: $validated['allow_backorder'] ?? $product->allow_backorder,
+                requires_shipping: $validated['requires_shipping'] ?? $product->requires_shipping,
+                weight: isset($validated['weight']) ? (float) $validated['weight'] : $product->weight,
+                weight_unit: $validated['weight_unit'] ?? $product->weight_unit,
+                tax_class: $validated['tax_class'] ?? $product->tax_class,
+                has_variants: $product->has_variants,
+                translations: $validated['translations'] ?? [],
+                dimensions: $validated['dimensions'] ?? $product->dimensions,
+            );
+
+            $product = $this->commandService->update($product, $productData);
 
             return $this->success(new ProductResource($product), 'Product updated');
         } catch (\Throwable $e) {
@@ -317,7 +356,7 @@ final class ProductManagementController extends BaseController
                 return $this->notFound('Product not found');
             }
 
-            $this->commandService->forceDelete($product);
+            $this->commandService->forceDelete($id);
 
             return $this->success(null, 'Product permanently deleted');
         } catch (\Throwable $e) {

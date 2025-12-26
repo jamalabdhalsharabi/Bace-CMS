@@ -48,7 +48,7 @@ class SubscriptionController extends BaseController
      */
     public function index(): JsonResponse
     {
-        $subscriptions = $this->subscriptionService->getForUser(auth()->id());
+        $subscriptions = $this->subscriptionService->getForUser(request()->user()?->id);
         return $this->success(SubscriptionResource::collection($subscriptions));
     }
 
@@ -61,7 +61,7 @@ class SubscriptionController extends BaseController
     public function show(string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
-        if (!$subscription || $subscription->user_id !== auth()->id()) {
+        if (!$subscription || $subscription->user_id !== request()->user()?->id) {
             return $this->notFound('Subscription not found');
         }
         return $this->success(new SubscriptionResource($subscription));
@@ -76,7 +76,7 @@ class SubscriptionController extends BaseController
     public function store(CreateSubscriptionRequest $request): JsonResponse
     {
         $subscription = $this->subscriptionService->create(
-            auth()->id(),
+            request()->user()?->id,
             $request->plan_id,
             $request->validated()
         );
@@ -93,7 +93,7 @@ class SubscriptionController extends BaseController
     public function upgrade(ChangePlanRequest $request, string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
-        if (!$subscription || $subscription->user_id !== auth()->id()) {
+        if (!$subscription || $subscription->user_id !== request()->user()?->id) {
             return $this->notFound('Subscription not found');
         }
         $subscription = $this->subscriptionService->upgrade($subscription, $request->validated()['new_plan_id']);
@@ -110,7 +110,7 @@ class SubscriptionController extends BaseController
     public function downgrade(ChangePlanRequest $request, string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
-        if (!$subscription || $subscription->user_id !== auth()->id()) {
+        if (!$subscription || $subscription->user_id !== request()->user()?->id) {
             return $this->notFound('Subscription not found');
         }
         $subscription = $this->subscriptionService->downgrade($subscription, $request->validated()['new_plan_id']);
@@ -127,7 +127,7 @@ class SubscriptionController extends BaseController
     public function cancel(Request $request, string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
-        if (!$subscription || $subscription->user_id !== auth()->id()) {
+        if (!$subscription || $subscription->user_id !== request()->user()?->id) {
             return $this->notFound('Subscription not found');
         }
         $subscription = $this->subscriptionService->cancel($subscription, $request->reason);
@@ -143,7 +143,7 @@ class SubscriptionController extends BaseController
     public function pause(string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
-        if (!$subscription || $subscription->user_id !== auth()->id()) {
+        if (!$subscription || $subscription->user_id !== request()->user()?->id) {
             return $this->notFound('Subscription not found');
         }
         $subscription = $this->subscriptionService->pause($subscription);
@@ -159,7 +159,7 @@ class SubscriptionController extends BaseController
     public function resume(string $id): JsonResponse
     {
         $subscription = $this->subscriptionService->find($id);
-        if (!$subscription || $subscription->user_id !== auth()->id()) {
+        if (!$subscription || $subscription->user_id !== request()->user()?->id) {
             return $this->notFound('Subscription not found');
         }
         $subscription = $this->subscriptionService->resume($subscription);

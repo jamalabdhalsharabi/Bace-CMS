@@ -13,7 +13,7 @@ Route::prefix('api/v1/taxonomies')->middleware(['api'])->name('api.v1.taxonomies
     Route::get('/item/{id}', [TaxonomyController::class, 'show'])->name('show');
     Route::get('/item/{id}/stats', [TaxonomyController::class, 'contentStats'])->name('stats');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // CRUD
         Route::post('/', [TaxonomyController::class, 'store'])->name('store');
         Route::put('/{id}', [TaxonomyController::class, 'update'])->name('update');

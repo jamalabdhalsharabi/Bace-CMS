@@ -20,17 +20,17 @@ class SettingController extends BaseController
 
     public function publicSettings(): JsonResponse
     {
-        return $this->success($this->queryService->getPublic());
+        return $this->success($this->queryService->public());
     }
 
     public function index(): JsonResponse
     {
-        return $this->success($this->queryService->getAll());
+        return $this->success($this->queryService->all());
     }
 
     public function byGroup(string $group): JsonResponse
     {
-        return $this->success($this->queryService->getByGroup($group));
+        return $this->success($this->queryService->group($group));
     }
 
     public function show(string $key): JsonResponse

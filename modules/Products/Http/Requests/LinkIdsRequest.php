@@ -13,7 +13,7 @@ class LinkIdsRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'ids' => ['required', 'array'],
+            'ids' => ['present', 'array'],
             'ids.*' => ['uuid'],
         ];
     }

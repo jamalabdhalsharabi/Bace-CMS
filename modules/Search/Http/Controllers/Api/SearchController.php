@@ -7,6 +7,7 @@ namespace Modules\Search\Http\Controllers\Api;
 use Illuminate\Http\JsonResponse;
 use Modules\Core\Http\Controllers\BaseController;
 use Modules\Search\Application\Services\SearchQueryService;
+use Modules\Search\Domain\DTO\SearchQuery;
 use Modules\Search\Http\Requests\SearchIndexRequest;
 use Modules\Search\Http\Requests\SearchRequest;
 use Modules\Search\Http\Requests\SuggestionsRequest;
@@ -28,14 +29,13 @@ class SearchController extends BaseController
     {
         $validated = $request->validated();
 
-        $results = $this->queryService->search(
-            $validated['q'],
-            [
-                'indices' => $validated['indices'] ?? null,
-                'limit' => $validated['limit'] ?? config('search.per_page', 20),
-                'offset' => $validated['offset'] ?? 0,
-            ]
+        $searchQuery = new SearchQuery(
+            query: $validated['q'],
+            types: $validated['indices'] ?? [],
+            limit: $validated['limit'] ?? config('search.per_page', 20),
         );
+        
+        $results = $this->queryService->search($searchQuery);
 
         return $this->success($results);
     }

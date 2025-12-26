@@ -18,7 +18,7 @@ Route::prefix('api/v1/auth')->middleware(['api'])->name('api.v1.auth.')->group(f
     Route::post('/reset-password', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
 
     // Protected routes
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         Route::get('/me', [AuthenticationController::class, 'me'])->name('me');
         Route::post('/logout', [AuthenticationController::class, 'logout'])->name('logout');
         Route::post('/change-password', [PasswordController::class, 'change'])->name('password.change');

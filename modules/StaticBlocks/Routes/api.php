@@ -10,7 +10,7 @@ Route::prefix('api/v1/static-blocks')->middleware(['api'])->name('api.v1.static-
     Route::get('/{id}', [StaticBlockController::class, 'show'])->name('show');
     Route::get('/{id}/preview', [StaticBlockController::class, 'preview'])->name('preview');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // CRUD
         Route::post('/', [StaticBlockController::class, 'store'])->name('store');
         Route::put('/{id}', [StaticBlockController::class, 'update'])->name('update');

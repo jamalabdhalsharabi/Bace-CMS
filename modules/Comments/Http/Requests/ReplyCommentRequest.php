@@ -58,7 +58,7 @@ class ReplyCommentRequest extends FormRequest
             'content' => ['required', 'string', 'min:3', 'max:5000'],
         ];
 
-        if (!auth()->check() && config('comments.guest_comments', true)) {
+        if (!request()->user() && config('comments.guest_comments', true)) {
             $rules['author_name'] = ['required', 'string', 'max:100'];
             if (config('comments.require_email', true)) {
                 $rules['author_email'] = ['required', 'email', 'max:255'];

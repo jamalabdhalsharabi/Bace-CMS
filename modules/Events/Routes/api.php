@@ -39,7 +39,7 @@ Route::prefix('api/v1/events')->middleware(['api'])->name('api.v1.events.')->gro
     | Protected Routes
     |--------------------------------------------------------------------------
     */
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
 
         /*
         |--------------------------------------------------------------------------

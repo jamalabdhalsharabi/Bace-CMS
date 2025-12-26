@@ -36,7 +36,7 @@ final class StaticBlockRepository extends BaseRepository implements StaticBlockR
         $query = $this->query()->with('translation');
 
         if (isset($filters['active'])) {
-            $query->where('is_active', $filters['active']);
+            $query->where('status', $filters['active'] ? 'published' : 'draft');
         }
 
         if (!empty($filters['type'])) {
@@ -61,7 +61,7 @@ final class StaticBlockRepository extends BaseRepository implements StaticBlockR
     {
         return $this->query()
             ->where('identifier', $identifier)
-            ->where('is_active', true)
+            ->where('status', 'published')
             ->with('translation')
             ->first();
     }
@@ -72,7 +72,7 @@ final class StaticBlockRepository extends BaseRepository implements StaticBlockR
     public function getActive(): Collection
     {
         return $this->query()
-            ->where('is_active', true)
+            ->where('status', 'published')
             ->with('translation')
             ->get();
     }
@@ -84,7 +84,7 @@ final class StaticBlockRepository extends BaseRepository implements StaticBlockR
     {
         return $this->query()
             ->where('type', $type)
-            ->where('is_active', true)
+            ->where('status', 'published')
             ->with('translation')
             ->get();
     }
@@ -132,7 +132,7 @@ final class StaticBlockRepository extends BaseRepository implements StaticBlockR
         return DB::transaction(function () use ($original, $newIdentifier) {
             $clone = $original->replicate();
             $clone->identifier = $newIdentifier;
-            $clone->is_active = false;
+            $clone->status = 'draft';
             $clone->save();
 
             foreach ($original->translations as $trans) {

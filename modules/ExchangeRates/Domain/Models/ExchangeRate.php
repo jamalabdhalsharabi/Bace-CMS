@@ -72,7 +72,7 @@ class ExchangeRate extends Model
         $this->update([
             'is_frozen' => true,
             'frozen_at' => now(),
-            'frozen_by' => auth()->id(),
+            'frozen_by' => request()->user()?->id,
         ]);
         return $this;
     }

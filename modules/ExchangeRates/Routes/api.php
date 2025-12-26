@@ -8,7 +8,7 @@ Route::prefix('api/v1/exchange-rates')->middleware(['api'])->name('api.v1.exchan
     Route::get('/{baseId}/{targetId}', [ExchangeRateController::class, 'show'])->name('show');
     Route::post('/convert', [ExchangeRateController::class, 'convert'])->name('convert');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         Route::post('/fetch', [ExchangeRateController::class, 'fetch'])->name('fetch');
         Route::put('/', [ExchangeRateController::class, 'update'])->name('update');
         Route::post('/{id}/freeze', [ExchangeRateController::class, 'freeze'])->name('freeze');

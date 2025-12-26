@@ -9,7 +9,7 @@ Route::prefix('api/v1/menus')->middleware(['api'])->name('api.v1.menus.')->group
     Route::get('/location/{location}', [MenuController::class, 'byLocation'])->name('location');
     Route::get('/{id}', [MenuController::class, 'show'])->name('show');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         Route::post('/', [MenuController::class, 'store'])->name('store');
         Route::put('/{id}', [MenuController::class, 'update'])->name('update');
         Route::delete('/{id}', [MenuController::class, 'destroy'])->name('destroy');

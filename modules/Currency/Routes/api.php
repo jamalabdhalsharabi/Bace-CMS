@@ -12,7 +12,7 @@ Route::prefix('api/v1/currencies')->middleware(['api'])->name('api.v1.currencies
     Route::post('/format', [CurrencyController::class, 'format'])->name('format');
     Route::get('/{id}', [CurrencyController::class, 'show'])->name('show');
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth.api')->group(function () {
         // CRUD
         Route::post('/', [CurrencyController::class, 'store'])->name('store');
         Route::put('/{id}', [CurrencyController::class, 'update'])->name('update');

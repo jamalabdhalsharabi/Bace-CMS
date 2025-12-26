@@ -18,7 +18,7 @@ final class AuthQueryService
      */
     public function currentUser(): ?User
     {
-        return auth()->user();
+        return request()->user();
     }
 
     /**
@@ -26,7 +26,7 @@ final class AuthQueryService
      */
     public function isAuthenticated(): bool
     {
-        return auth()->check();
+        return request()->user() !== null;
     }
 
     /**

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Modules\Users\Domain\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -12,6 +11,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Modules\Auth\Traits\HasRoles;
 
 /**
  * Class User
@@ -36,10 +36,11 @@ use Laravel\Sanctum\HasApiTokens;
  * @property-read string $full_name
  * @property-read string|null $avatar_url
  */
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasApiTokens;
     use HasFactory;
+    use HasRoles;
     use HasUuids;
     use Notifiable;
     use SoftDeletes;
@@ -49,10 +50,20 @@ class User extends Authenticatable implements MustVerifyEmail
     protected $fillable = [
         'email',
         'password',
+        'name',
         'status',
         'email_verified_at',
         'last_login_at',
         'last_login_ip',
+        'avatar_id',
+        'two_factor_enabled',
+        'two_factor_secret',
+        'password_changed_at',
+        'must_change_password',
+        'locale',
+        'timezone',
+        'last_active_at',
+        'meta',
     ];
 
     protected $hidden = [

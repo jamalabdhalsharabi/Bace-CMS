@@ -162,7 +162,7 @@ class ProductInventory extends Model
             'quantity_before' => $quantityBefore,
             'quantity_after' => $this->quantity,
             'reason' => $reason,
-            'created_by' => $userId ?? auth()->id(),
+            'created_by' => $userId ?? request()->user()?->id,
         ]);
     }
 }

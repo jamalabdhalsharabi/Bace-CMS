@@ -31,6 +31,7 @@ final class RegisterAction extends Action
             $user = User::create([
                 'email' => $data->email,
                 'password' => Hash::make($data->password),
+                'name' => trim(($data->first_name ?? '') . ' ' . ($data->last_name ?? '')) ?: 'User',
                 'status' => 'active',
             ]);
 

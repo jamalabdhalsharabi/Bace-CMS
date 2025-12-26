@@ -174,7 +174,7 @@ interface RepositoryInterface
      *     'title' => 'New Article',
      *     'content' => 'Article content...',
      *     'status' => 'draft',
-     *     'author_id' => auth()->id(),
+     *     'author_id' => request()->user()?->id,
      * ]);
      * ```
      */

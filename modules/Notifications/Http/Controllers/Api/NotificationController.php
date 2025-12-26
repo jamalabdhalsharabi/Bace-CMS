@@ -28,7 +28,7 @@ class NotificationController extends BaseController
     public function index(Request $request): JsonResponse
     {
         $notifications = $this->queryService->getForUser(
-            auth()->id(),
+            $request->user()->id,
             filters: $request->only(['unread_only', 'type']),
             perPage: $request->integer('per_page', 20)
         );
@@ -41,9 +41,9 @@ class NotificationController extends BaseController
      *
      * @return JsonResponse The unread count
      */
-    public function unreadCount(): JsonResponse
+    public function unreadCount(Request $request): JsonResponse
     {
-        $count = $this->queryService->getUnreadCount(auth()->id());
+        $count = $this->queryService->getUnreadCount($request->user()->id);
 
         return $this->success(['count' => $count]);
     }
@@ -54,11 +54,11 @@ class NotificationController extends BaseController
      * @param string $id The UUID of the notification
      * @return JsonResponse The notification or 404 error
      */
-    public function show(string $id): JsonResponse
+    public function show(Request $request, string $id): JsonResponse
     {
         $notification = $this->queryService->find($id);
 
-        if (!$notification || $notification->user_id !== auth()->id()) {
+        if (!$notification || $notification->user_id !== $request->user()->id) {
             return $this->notFound('Notification not found');
         }
 
@@ -71,11 +71,11 @@ class NotificationController extends BaseController
      * @param string $id The UUID of the notification
      * @return JsonResponse The updated notification or 404 error
      */
-    public function markAsRead(string $id): JsonResponse
+    public function markAsRead(Request $request, string $id): JsonResponse
     {
         $notification = $this->queryService->find($id);
 
-        if (!$notification || $notification->user_id !== auth()->id()) {
+        if (!$notification || $notification->user_id !== $request->user()->id) {
             return $this->notFound('Notification not found');
         }
 
@@ -89,9 +89,9 @@ class NotificationController extends BaseController
      *
      * @return JsonResponse Count of marked notifications
      */
-    public function markAllAsRead(): JsonResponse
+    public function markAllAsRead(Request $request): JsonResponse
     {
-        $count = $this->commandService->markAllAsRead(auth()->id());
+        $count = $this->commandService->markAllAsRead($request->user()->id);
 
         return $this->success(['marked' => $count], 'All notifications marked as read');
     }
@@ -102,11 +102,11 @@ class NotificationController extends BaseController
      * @param string $id The UUID of the notification
      * @return JsonResponse Success message or 404 error
      */
-    public function destroy(string $id): JsonResponse
+    public function destroy(Request $request, string $id): JsonResponse
     {
         $notification = $this->queryService->find($id);
 
-        if (!$notification || $notification->user_id !== auth()->id()) {
+        if (!$notification || $notification->user_id !== $request->user()->id) {
             return $this->notFound('Notification not found');
         }
 
@@ -120,9 +120,9 @@ class NotificationController extends BaseController
      *
      * @return JsonResponse Count of deleted notifications
      */
-    public function destroyAllRead(): JsonResponse
+    public function destroyAllRead(Request $request): JsonResponse
     {
-        $count = $this->commandService->deleteAllRead(auth()->id());
+        $count = $this->commandService->deleteAllRead($request->user()->id);
 
         return $this->success(['deleted' => $count], 'Read notifications deleted');
     }

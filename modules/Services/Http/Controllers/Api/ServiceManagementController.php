@@ -150,7 +150,7 @@ final class ServiceManagementController extends BaseController
                 return $this->notFound('Service not found');
             }
 
-            $service = $this->commandService->startReview($service, auth()->id());
+            $service = $this->commandService->startReview($service, request()->user()?->id);
 
             return $this->success(new ServiceResource($service), 'Review started');
         } catch (\Throwable $e) {
